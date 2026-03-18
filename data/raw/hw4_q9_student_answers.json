@@ -1,0 +1,58 @@
+[
+  {
+    "student_id": "220221",
+    "question_id": "h4q9",
+    "answers": {
+      "a": "a(a|b)*b",
+      "b": "b*ab*ab*",
+      "c": "(a|b)*b(a|b)*b(a|b)*",
+      "d": "b^2ab*ab* | b*ab^2ab* | b*ab*ab^2 | b+ab+ab* | b+ab*ab+ | b*ab+ab+",
+      "e": "(ba)*b?",
+      "f": "ε | b(a|b)* | a(b|ε)(a|b)* | aa(a|b)(a|b)* | aba(a|b)(a|b)*",
+      "g": "a*b* | b*a*",
+      "h": "((aa|bb)*)(ab|ba)((aa|bb)*)"
+    }
+  },
+  {
+    "student_id": "230087",
+    "question_id": "h4q9",
+    "answers": {
+      "a": "a(a|b)*b",
+      "b": "b*ab*ab*",
+      "c": "(a|b)*b(a|b)*b(a|b)*",
+      "d": "(bbb*ab*ab*) ∪ (b*abbb*ab*) ∪ (b*ab*abbb*) ∪ (bb*abb*ab*) ∪ (bb*ab*abb*) ∪ (b*abb*abb*)",
+      "e": "(b(a|b))*(ε|b)",
+      "f": "Σ* \\ {aa, aba}",
+      "g": "a* ∪ b*",
+      "h": "(aa|bb)*(ab|ba)((aa|bb)*(ab|ba)(aa|bb)*(ab|ba))*(aa|bb)*"
+    }
+  },
+  {
+    "student_id": "220177",
+    "question_id": "h4q9",
+    "answers": {
+      "a": "a(a|b)*b",
+      "b": "b*ab*ab*",
+      "c": "(a|b)*b(a|b)*b(a|b)*",
+      "d": "(b{2,}ab*ab*) | (b*ab{2,}ab*) | (b*ab*ab{2,}) | (b+ab+ab*) | (b+ab*ab+) | (b*ab+ab+)",
+      "e": "(b(a|b))*(ε|b)",
+      "f": "ε | (a|b); all length-2 strings except aa; all length-3 strings except aba; and (a|b){4,}",
+      "g": "a* | b*",
+      "h": "((bb|aa)*(ab|ba)((bb|aa)*(ab|ba)(bb|aa)*)*)"
+    }
+  },
+  {
+    "student_id": "276981",
+    "question_id": "h4q9",
+    "answers": {
+      "a": "a(a|b)*b",
+      "b": "b*ab*ab*",
+      "c": "(a|b)*b(a|b)*b(a|b)*",
+      "d": "b*ab*abb*bb* | b*ab*bb*ab*b | bb*bb*ab*ab* | ...",
+      "e": "(ba|bb)*(b|λ)",
+      "f": "λ | a | b | ab | ba | bb | aaa | aab | ... | (a|b)^4(a|b)*",
+      "g": "a* | b*",
+      "h": "(aa|bb)*(ab|ba)(aa|bb)*(((aa|bb)*(ab|ba)(aa|bb)*)^2)*"
+    }
+  }
+]
