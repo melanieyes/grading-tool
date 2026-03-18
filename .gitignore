@@ -1,2 +1,96 @@
 .env
 .env
+
+# -----------------------
+# Environment / secrets
+# -----------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# -----------------------
+# Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# -----------------------
+# Virtual environments
+# -----------------------
+venv/
+.venv/
+env/
+ENV/
+
+# -----------------------
+# Jupyter
+# -----------------------
+.ipynb_checkpoints/
+
+# -----------------------
+# Build / packaging
+# -----------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -----------------------
+# Test / coverage / cache
+# -----------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+coverage.xml
+htmlcov/
+.coverage
+.coverage.*
+
+# -----------------------
+# Logs
+# -----------------------
+*.log
+logs/
+
+# -----------------------
+# IDE / editor files
+# -----------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# -----------------------
+# Model outputs / temp files
+# -----------------------
+outputs/
+tmp/
+temp/
+
+# -----------------------
+# Large model / data artifacts
+# adjust based on your project
+# -----------------------
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.h5
+*.pickle
+*.pkl
+*.joblib
+
+# -----------------------
+# Local data files
+# keep raw/generated data out of git unless needed
+# -----------------------
+data/outputs/
+data/tmp/
