@@ -85,7 +85,7 @@ def render_subpart_card(subpart_key: str, subpart_result: dict) -> None:
 
 
 def main() -> None:
-    st.title("HW4 Problem 9 Grading Tool")
+    st.title("Grading tool for CS302 Algorithms and Theory of Computing")
     st.caption("Hybrid deterministic + Gemini fallback grading")
 
     if not RESULTS_PATH.exists():
