@@ -71,6 +71,7 @@ logs/
 # Model outputs / temp files
 # -----------------------
 outputs/
+logs/
 tmp/
 temp/
 
