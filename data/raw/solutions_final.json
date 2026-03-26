@@ -2,96 +2,73 @@
   "course": "CS302",
   "term": "Fall 2025",
   "exam": "Final exam",
-  "solutions": [
-    {
-      "question_id": "q1",
-      "subparts": [
-        {
-          "part_id": "q1a",
-          "solution_text": "A P language is a language that is decidable by a standard Turing machine in polynomial time."
-        },
-        {
-          "part_id": "q1b",
-          "solution_text": "An NP language is a language that is decidable by a nondeterministic Turing machine in polynomial time. Equivalently, it has a verifier running in polynomial time on a deterministic Turing machine."
-        },
-        {
-          "part_id": "q1c",
-          "solution_text": "An NP-complete language is a language in NP such that every language in NP can be reduced to it in polynomial time."
-        },
-        {
-          "part_id": "q1d",
-          "solution_text": "P is a subset of NP. The set of NP-complete languages is also a subset of NP. A language L is NP-complete if L is in NP and every language in NP can be polynomial-time reduced to L."
-        }
-      ]
-    },
+  "solution_notes": "Authoritative ground truth solutions. Each solution is comprehensive and covers all reasoning steps required by the rubric. This file is used as the reference answer when grading student submissions.",
+  "questions": [
     {
       "question_id": "q2",
+      "benchmark_type": "true_false_with_explanation",
       "subparts": [
         {
-          "part_id": "q2a",
-          "answer": "True",
-          "explanation": "A language in NP is decidable by a nondeterministic Turing machine in polynomial time, so it is decidable."
-        },
-        {
           "part_id": "q2b",
-          "answer": "False",
-          "explanation": "NP contains all problems verifiable in polynomial time, and some of them may or may not be outside P. Therefore NonP intersect NP is not necessarily empty. In fact, if P != NP, then NP contains problems not in P."
+          "correct_answer": "False",
+          "total_points": 8,
+          "solution": "False. Non-P is defined as the class of problems that can only be solved by non-polynomial algorithms, meaning no polynomial-time algorithm exists for them. NP is the class of problems verifiable in polynomial time by a deterministic Turing machine (equivalently, decidable in polynomial time by a nondeterministic Turing machine). These two classes are not necessarily disjoint. Whether they overlap depends on whether P equals NP. If P ≠ NP, then there exist problems in NP that are not in P — for instance, NP-complete problems such as 3SAT would be in NP but not in P, meaning they are also in Non-P. Therefore Non-P ∩ NP would be non-empty. The statement claims the intersection is always empty, which is false because it assumes that every NP problem is in P, which is precisely what the open P vs NP question asks."
         },
         {
           "part_id": "q2c",
-          "answer": "True",
-          "explanation": "The language {a^n b^n | n >= 0} is in P. If 3SAT can be reduced to it in polynomial time, then 3SAT is in P. Since 3SAT is NP-complete, every language in NP reduces to 3SAT, so every NP language would be in P. Because P is always a subset of NP, it follows that P = NP."
-        },
-        {
-          "part_id": "q2d",
-          "answer": "False",
-          "explanation": "If SAT can be solved in polynomial time, then every problem in NP can be solved in polynomial time. But that does not imply that every possible problem can be solved in polynomial time, since there are problems outside NP."
+          "correct_answer": "True",
+          "total_points": 8,
+          "solution": "True. The language {a^n b^n | n ≥ 0} is in P because it can be decided in linear time: scan the input, count the a's, count the b's, and check they are equal with no interleaving. Now suppose there exists a polynomial-time reduction from 3SAT to this language. Then to solve any instance of 3SAT, we apply the reduction in polynomial time to obtain an instance of {a^n b^n | n ≥ 0}, and then decide that instance in polynomial time. The composition of two polynomial-time procedures is polynomial, so 3SAT would be solvable in polynomial time, meaning 3SAT ∈ P. Since 3SAT is NP-complete, every language in NP can be polynomial-time reduced to 3SAT. Combined with 3SAT ∈ P, every NP language is also in P, so NP ⊆ P. Since P ⊆ NP always holds, we conclude P = NP."
         },
         {
           "part_id": "q2e",
-          "answer": "False",
-          "explanation": "P != NP only implies that 3-color is not solvable in polynomial time if it is NP-complete. It does not imply a lower bound of at least 3^n time. There could still be algorithms running in time smaller than 3^n but larger than polynomial."
+          "correct_answer": "False",
+          "total_points": 8,
+          "solution": "False. P ≠ NP implies only that no polynomial-time algorithm exists for NP-complete problems such as 3-color. It says nothing whatsoever about a specific exponential lower bound. Even if we know 3-color has no polynomial algorithm, the best algorithm could still run in time 2^n, or O(1.89^n), or n^(log n) — all of which are super-polynomial but strictly less than 3^n. Establishing a lower bound of 3^n would require a completely separate complexity-theoretic argument. P ≠ NP is a statement about the non-existence of polynomial algorithms; it does not pin down where in the super-polynomial regime the best algorithm falls. Therefore the claim that any algorithm must take at least 3^n time does not follow from P ≠ NP alone."
         },
         {
           "part_id": "q2f",
-          "answer": "True",
-          "explanation": "2SAT is solvable in polynomial time. If 3SAT can be reduced to 2SAT in polynomial time, then 3SAT is in P. Since 3SAT is NP-complete, every NP problem reduces to 3SAT, so every NP problem can then be solved in polynomial time."
+          "correct_answer": "True",
+          "total_points": 8,
+          "solution": "True. 2SAT is known to be solvable in polynomial time (it can be solved in linear time using strongly connected components). If there exists a polynomial-time reduction from 3SAT to 2SAT, then any instance of 3SAT can be solved by first applying the reduction in polynomial time to produce a 2SAT instance, and then solving that 2SAT instance in polynomial time. The total time is polynomial, so 3SAT ∈ P. Since 3SAT is NP-complete, every language L in NP satisfies L ≤p 3SAT. With 3SAT ∈ P, it follows that every NP language is in P, so NP ⊆ P. Since P ⊆ NP always holds, P = NP. Therefore all NP-complete problems, and in fact all NP problems, can be solved in polynomial time."
         },
         {
           "part_id": "q2g",
-          "answer": "False",
-          "explanation": "Reducing 2SAT to 3SAT does not imply that all NP problems become polynomial-time solvable. 2SAT is already known to be easier than 3SAT, so this reduction does not show that 3SAT or all NP problems are in P."
+          "correct_answer": "False",
+          "total_points": 8,
+          "solution": "False. The direction of this reduction is critical. A polynomial-time reduction from 2SAT to 3SAT (written 2SAT ≤p 3SAT) means that 2SAT is polynomial-time reducible to 3SAT, i.e., 2SAT is no harder than 3SAT. This is the easy direction — it says nothing useful because 2SAT is already in P and is trivially easier than 3SAT. To conclude that all NP problems are solvable in polynomial time, we would need the reverse: a reduction from an NP-complete problem to something already known to be in P. Specifically, we would need 3SAT ≤p 2SAT, meaning 3SAT can be reduced to 2SAT in polynomial time, which would place 3SAT in P. The given reduction 2SAT ≤p 3SAT does not imply this and gives no new information about solving 3SAT or any NP-complete problem efficiently."
         },
         {
           "part_id": "q2h",
-          "answer": "False",
-          "explanation": "A problem could be neither in P nor NP-complete simply because it lies outside NP, such as the halting problem. That alone does not imply P != NP."
+          "correct_answer": "False",
+          "total_points": 8,
+          "solution": "False. A problem that is neither in P nor NP-complete does not have to be in NP at all. Consider the halting problem: it is undecidable, so it is not in P, and it is also not NP-complete (NP-complete problems are by definition in NP, and the halting problem is not even decidable). Yet the existence of the halting problem tells us nothing about whether P = NP. The statement P ≠ NP is a precise claim about the relationship between the complexity class P and the complexity class NP. It cannot be derived solely from the existence of a problem that happens to fall outside both P and NP-complete, since such a problem may lie entirely outside NP. Furthermore, even if the problem were in NP but not in P or NP-complete (an NP-intermediate problem, whose existence is guaranteed by Ladner's theorem assuming P ≠ NP), the implication would run the other way: P ≠ NP would imply NP-intermediate problems exist, not the converse."
         }
       ]
     },
     {
       "question_id": "q3",
-      "solution_text": "To show Knapsack is in NP, define a verifier. The input consists of the set of items, each with weight and value, together with a weight limit L and target value K. A certificate is a subset of the items. The verifier checks whether the total weight of the chosen subset is at most L and whether its total value is at least K. Both checks can be done by summing over the chosen items in polynomial time. Therefore Knapsack is in NP."
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "solution": "We prove that the Knapsack problem is in NP by constructing a polynomial-time verifier. Recall the decision version of Knapsack: given a set of n items where item i has weight w_i and value v_i, a weight capacity L, and a target value K, decide whether there exists a subset of items whose total weight is at most L and whose total value is at least K.\n\nCertificate: A subset T ⊆ {1, ..., n} indicating which items are selected. This certificate has size O(n) and is therefore polynomial in the input size.\n\nVerifier: On input (instance, T), the verifier computes two sums: the total weight Σ_{i ∈ T} w_i and the total value Σ_{i ∈ T} v_i. It then checks whether the total weight is at most L and whether the total value is at least K. If both conditions hold, it accepts; otherwise it rejects.\n\nPolynomial time: Both summations require a single pass over T, taking O(n) time. The two comparisons take O(1). The total running time of the verifier is O(n), which is polynomial in the input size.\n\nCompleteness and soundness: If a valid subset T exists (i.e., the Knapsack instance is a yes-instance), then providing T as the certificate causes the verifier to accept. Conversely, if no valid subset exists, no certificate can cause the verifier to accept.\n\nSince a polynomial-time verifier exists, the Knapsack problem is in NP."
     },
     {
       "question_id": "q4",
-      "solution_text": "Consider the decision version: given a weighted graph, two nodes, and a number k, determine whether there is a path between the two nodes with total weight at least k. A certificate is the path itself. A verifier checks that the path is valid, that consecutive vertices are connected by edges, that the path goes between the required nodes, and that the total weight is at least k. These checks can all be done in polynomial time by scanning the path once. Therefore the problem is in NP."
-    },
-    {
-      "question_id": "q5",
-      "solution_text": "To maximize the sum of a subset of a given set of numbers, include every non-negative element in the subset. If all elements are negative, then choose the single largest element. This produces a subset with maximum possible sum, because including any positive or zero element never decreases the sum, while including a negative element would only decrease it. The algorithm requires only one scan through the set, so it runs in linear time. Therefore MAX_SUM is in P."
-    },
-    {
-      "question_id": "q6",
-      "solution_text": "Let G=(V,E) be a weighted graph. We can solve the maximum spanning tree problem by running Kruskal’s algorithm with the edges sorted in decreasing order of weight, always adding the heaviest edge that does not create a cycle. By the cut property for maximum spanning trees, repeatedly choosing a heaviest safe edge yields a spanning tree of maximum total weight. Sorting takes O(|E| log |E|), and the remaining union-find operations are polynomial. Therefore the maximum spanning tree problem is in P."
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "solution": "We first state the decision version of the problem: given a weighted graph G = (V, E) with edge weights, two designated nodes s and t, and a number k, decide whether there exists a path from s to t whose total edge weight is at least k.\n\nWe prove this problem is in NP by constructing a polynomial-time verifier.\n\nCertificate: A sequence of vertices (v_0, v_1, ..., v_m) representing a path from s to t. The certificate has length at most |V| and is therefore polynomial in the input size.\n\nVerifier: On input (instance, certificate), the verifier performs the following checks:\n  (1) Endpoint check: verify that v_0 = s and v_m = t.\n  (2) Edge validity check: for each consecutive pair (v_i, v_{i+1}), verify that the edge (v_i, v_{i+1}) exists in E.\n  (3) Weight check: compute the sum of weights of all edges (v_i, v_{i+1}) along the path and verify that the total is at least k.\nIf all three checks pass, the verifier accepts; otherwise it rejects.\n\nPolynomial time: Check (1) takes O(1). Check (2) requires scanning m ≤ |V| edges, each verifiable in O(1) with an adjacency matrix or O(log |E|) with an adjacency list, giving O(|V|) total. Check (3) sums at most |V| weights in O(|V|) time. The total running time is O(|V| + |E|), which is polynomial in the input size.\n\nSince a valid path of total weight at least k exists if and only if the verifier accepts on that path as certificate, the problem is in NP."
     },
     {
       "question_id": "q7",
-      "solution_text": "Given an instance G=(V,E) of HAMILTONIAN with |V|=n, construct G' by taking two disjoint copies of G and no edges between the copies. Then |V'|=2n. If G has a Hamiltonian path, then one copy of G in G' has a path visiting all n vertices, which is exactly half of the vertices of G', so G' has a Tonian path. Conversely, if G' has a Tonian path, then it visits at least |V'|/2 = n vertices. Since the two copies are disjoint, any path must lie entirely inside one copy, and each copy has exactly n vertices. Therefore the path must visit all vertices of one copy, giving a Hamiltonian path in G. The construction is polynomial, so HAMILTONIAN <=p TONIAN."
+      "benchmark_type": "polynomial_reduction",
+      "total_points": 28,
+      "solution": "We describe a polynomial-time reduction from HAMILTONIAN to TONIAN, i.e., we show HAMILTONIAN ≤p TONIAN.\n\nConstruction: Given an instance G = (V, E) of HAMILTONIAN with |V| = n, construct a new graph G' = (V', E') as follows. Take two disjoint copies of G: let G1 = (V1, E1) and G2 = (V2, E2) where V1 and V2 are disjoint copies of V, and E1 and E2 are the corresponding copies of E. Set V' = V1 ∪ V2 and E' = E1 ∪ E2 with no edges between V1 and V2. Then |V'| = 2n.\n\nForward direction (G has a Hamiltonian path ⟹ G' has a Tonian path): Suppose G has a Hamiltonian path P that visits all n vertices of G exactly once. The copy of P within G1 is a path in G' that visits exactly n vertices. Since |V'| = 2n, this path visits n = |V'| / 2 vertices, which satisfies the Tonian condition of visiting at least half the vertices. Therefore G' has a Tonian path.\n\nBackward direction (G' has a Tonian path ⟹ G has a Hamiltonian path): Suppose G' has a Tonian path P' visiting at least |V'| / 2 = n vertices. Since there are no edges between V1 and V2, any path in G' must lie entirely within G1 or entirely within G2. Each of G1 and G2 has exactly n vertices. Therefore P' visits at least n vertices within a single copy, say G1. But G1 has only n vertices in total, so P' visits all n vertices of G1 exactly once (since a path cannot revisit vertices). This corresponds to a Hamiltonian path in G.\n\nPolynomial time: Constructing G' requires duplicating V and E, which takes O(|V| + |E|) time. This is polynomial in the size of G.\n\nConclusion: Since G has a Hamiltonian path if and only if G' has a Tonian path, and the construction runs in polynomial time, we have HAMILTONIAN ≤p TONIAN."
     },
     {
       "question_id": "q8",
-      "solution_text": "First, MATCH is in NP. A certificate is a binary string w in {0,1}^n. Given w, we can verify in polynomial time that for every string s in S, there exists at least one position i such that s_i = w_i. This takes O(|S|n) time. Next, we show MATCH is NP-hard by reducing 3SAT to MATCH. Let the 3SAT instance have variables x_1,...,x_n and clauses C_1,...,C_m. For each clause C_j, construct a string s^(j) of length n over {0,1,2} as follows: set s^(j)_i = 1 if x_i appears positively in C_j, set s^(j)_i = 0 if neg x_i appears in C_j, and set s^(j)_i = 2 otherwise. Let S be the set of all such strings. Now interpret any binary string w in {0,1}^n as a truth assignment, where w_i = 1 means x_i = True and w_i = 0 means x_i = False. If the 3SAT formula is satisfiable, then for each clause C_j at least one literal is true, so in the corresponding string s^(j), there is at least one position i where w_i = s^(j)_i. Thus w matches every string in S, so the MATCH instance is true. Conversely, if there exists a binary string w that matches every string in S, then for each clause string s^(j), there is some position i where w_i = s^(j)_i. Since w_i is only 0 or 1, this matched position cannot be 2, so it corresponds to a literal in the clause that is satisfied by the assignment induced by w. Hence every clause is satisfied, and the 3SAT formula is satisfiable. Therefore 3SAT <=p MATCH. Since MATCH is in NP and NP-hard, MATCH is NP-complete."
+      "benchmark_type": "np_completeness_proof",
+      "total_points": 40,
+      "solution": "We prove MATCH is NP-complete by proving (1) MATCH ∈ NP and (2) MATCH is NP-hard.\n\n--- Part 1: MATCH ∈ NP ---\n\nCertificate: A binary string w ∈ {0,1}^n.\n\nVerifier: On input (S, w), for every string s ∈ S, scan all n positions and check whether there exists at least one position i such that s_i = w_i. If this holds for every s ∈ S, accept; otherwise reject.\n\nPolynomial time: For each of the |S| strings, we scan n positions. The total running time is O(|S| · n), which is polynomial in the input size |S| · n.\n\nTherefore MATCH ∈ NP.\n\n--- Part 2: MATCH is NP-hard (reduction from 3SAT) ---\n\nWe show 3SAT ≤p MATCH. Let φ be a 3SAT formula with n variables x_1, ..., x_n and m clauses C_1, ..., C_m.\n\nConstruction: For each clause C_j (1 ≤ j ≤ m), construct a string s^(j) ∈ {0, 1, 2}^n as follows:\n  - s^(j)_i = 1  if x_i appears as a positive literal in C_j\n  - s^(j)_i = 0  if x_i appears as a negative literal (¬x_i) in C_j\n  - s^(j)_i = 2  if x_i does not appear in C_j\nLet S = { s^(1), s^(2), ..., s^(m) }. This is the MATCH instance.\n\nForward direction (φ satisfiable ⟹ MATCH instance is True): Suppose φ has a satisfying assignment. Encode it as a binary string w ∈ {0,1}^n where w_i = 1 if x_i = True and w_i = 0 if x_i = False. Consider any clause C_j. Since the assignment satisfies φ, at least one literal in C_j is true. If that literal is x_i (positive), then w_i = 1 = s^(j)_i. If that literal is ¬x_i (negative), then w_i = 0 = s^(j)_i. In either case, w and s^(j) agree at position i. Since this holds for every clause C_j, w matches every string in S. Therefore the MATCH instance outputs True.\n\nBackward direction (MATCH instance is True ⟹ φ satisfiable): Suppose there exists a binary string w ∈ {0,1}^n that matches every string in S. For each clause C_j, there is some position i where w_i = s^(j)_i. Since w_i ∈ {0, 1}, the matched position cannot have s^(j)_i = 2 (because 2 ∉ {0, 1}). Therefore s^(j)_i ∈ {0, 1}, meaning x_i appears in clause C_j. If w_i = s^(j)_i = 1, then x_i appears positively in C_j and w sets x_i = True, satisfying that literal. If w_i = s^(j)_i = 0, then ¬x_i appears in C_j and w sets x_i = False, satisfying that literal. In either case, clause C_j is satisfied. Since every clause is satisfied, the assignment induced by w satisfies φ.\n\nPolynomial time of reduction: We construct m strings each of length n, requiring O(m · n) time, which is polynomial in the size of φ.\n\nConclusion: Since MATCH ∈ NP and 3SAT ≤p MATCH (so MATCH is NP-hard), MATCH is NP-complete."
     }
   ]
 }
