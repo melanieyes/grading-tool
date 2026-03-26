@@ -1,0 +1,338 @@
+{
+  "course": "CS302",
+  "term": "Fall 2025",
+  "exam": "Final exam",
+  "rubric_version": "1.0",
+  "rubric_notes": "Each criterion is an atomic reasoning step. LLM graders award points per criterion independently. This enables fine-grained error analysis across benchmark_types.",
+  "questions": [
+    {
+      "question_id": "q2",
+      "benchmark_type": "true_false_with_explanation",
+      "total_points": 48,
+      "grading_note": "Each sub-part is worth 8 points: 1 point for the True/False answer, 7 points for the explanation. Award explanation points even if the T/F answer is wrong, as long as the reasoning itself is correct.",
+      "subparts": [
+        {
+          "part_id": "q2b",
+          "correct_answer": "False",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2b_1",
+              "points": 1,
+              "description": "Correct True/False answer: False"
+            },
+            {
+              "criterion_id": "q2b_2",
+              "points": 3,
+              "description": "Recognizes that NP contains problems that may or may not be in P, so Non-P and NP can overlap — the intersection is not necessarily empty"
+            },
+            {
+              "criterion_id": "q2b_3",
+              "points": 2,
+              "description": "Correctly invokes the P ≠ NP scenario: if P ≠ NP, then there exist NP problems that are not in P, which would be in both NP and Non-P"
+            },
+            {
+              "criterion_id": "q2b_4",
+              "points": 2,
+              "description": "Demonstrates understanding that 'Non-P' as defined (problems only solvable by non-polynomial algorithms) cannot be assumed disjoint from NP without resolving P vs NP"
+            }
+          ]
+        },
+        {
+          "part_id": "q2c",
+          "correct_answer": "True",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2c_1",
+              "points": 1,
+              "description": "Correct True/False answer: True"
+            },
+            {
+              "criterion_id": "q2c_2",
+              "points": 2,
+              "description": "Correctly identifies that {a^n b^n | n >= 0} is in P"
+            },
+            {
+              "criterion_id": "q2c_3",
+              "points": 2,
+              "description": "Concludes that if 3SAT reduces to a P language in polynomial time, then 3SAT is in P"
+            },
+            {
+              "criterion_id": "q2c_4",
+              "points": 2,
+              "description": "Uses NP-completeness of 3SAT: every NP problem reduces to 3SAT, so all NP problems would be in P"
+            },
+            {
+              "criterion_id": "q2c_5",
+              "points": 1,
+              "description": "Concludes P = NP (since P ⊆ NP always holds, showing NP ⊆ P suffices)"
+            }
+          ]
+        },
+        {
+          "part_id": "q2e",
+          "correct_answer": "False",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2e_1",
+              "points": 1,
+              "description": "Correct True/False answer: False"
+            },
+            {
+              "criterion_id": "q2e_2",
+              "points": 3,
+              "description": "Correctly explains that P ≠ NP only implies no polynomial-time algorithm exists for NP-complete problems — it says nothing about a specific lower bound like 3^n"
+            },
+            {
+              "criterion_id": "q2e_3",
+              "points": 2,
+              "description": "Points out that super-polynomial algorithms with running time strictly less than 3^n (e.g., 2^n or n^(log n)) could still exist"
+            },
+            {
+              "criterion_id": "q2e_4",
+              "points": 2,
+              "description": "Shows understanding that lower bound proofs require separate arguments beyond P ≠ NP"
+            }
+          ]
+        },
+        {
+          "part_id": "q2f",
+          "correct_answer": "True",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2f_1",
+              "points": 1,
+              "description": "Correct True/False answer: True"
+            },
+            {
+              "criterion_id": "q2f_2",
+              "points": 2,
+              "description": "Correctly states that 2SAT is in P"
+            },
+            {
+              "criterion_id": "q2f_3",
+              "points": 2,
+              "description": "Correctly concludes that a polynomial reduction from 3SAT to 2SAT would place 3SAT in P"
+            },
+            {
+              "criterion_id": "q2f_4",
+              "points": 3,
+              "description": "Uses NP-completeness of 3SAT: since all NP problems reduce to 3SAT, and 3SAT would be in P, all NP problems can be solved in polynomial time — so P = NP"
+            }
+          ]
+        },
+        {
+          "part_id": "q2g",
+          "correct_answer": "False",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2g_1",
+              "points": 1,
+              "description": "Correct True/False answer: False"
+            },
+            {
+              "criterion_id": "q2g_2",
+              "points": 3,
+              "description": "Correctly identifies the direction issue: reducing 2SAT to 3SAT means 2SAT is at most as hard as 3SAT, not that 3SAT is easy"
+            },
+            {
+              "criterion_id": "q2g_3",
+              "points": 2,
+              "description": "Explains that this reduction does not help solve 3SAT — it only says 2SAT can be transformed into 3SAT, not the reverse"
+            },
+            {
+              "criterion_id": "q2g_4",
+              "points": 2,
+              "description": "Demonstrates understanding that to conclude all NP problems are in P, we would need 3SAT (NP-complete) to reduce to something already in P — not the other way around"
+            }
+          ]
+        },
+        {
+          "part_id": "q2h",
+          "correct_answer": "False",
+          "total_points": 8,
+          "criteria": [
+            {
+              "criterion_id": "q2h_1",
+              "points": 1,
+              "description": "Correct True/False answer: False"
+            },
+            {
+              "criterion_id": "q2h_2",
+              "points": 3,
+              "description": "Correctly identifies that a problem outside both P and NP-complete could simply be outside NP entirely (e.g., undecidable problems like the halting problem), which tells us nothing about whether P = NP"
+            },
+            {
+              "criterion_id": "q2h_3",
+              "points": 2,
+              "description": "Recognizes that 'neither in P nor NP-complete' does not require the problem to be in NP — it could be in EXP, undecidable, etc."
+            },
+            {
+              "criterion_id": "q2h_4",
+              "points": 2,
+              "description": "Shows understanding that P ≠ NP is a statement about the relationship between two specific complexity classes, not derivable from the existence of arbitrary hard problems"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "q3",
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "grading_note": "Full credit requires all three components: certificate definition, verifier description, and polynomial-time argument. Partial credit is awarded for each correct component independently.",
+      "criteria": [
+        {
+          "criterion_id": "q3_1",
+          "points": 3,
+          "description": "Correctly defines the certificate: a subset of items (i.e., which items are selected for the knapsack)"
+        },
+        {
+          "criterion_id": "q3_2",
+          "points": 4,
+          "description": "Correctly describes the verifier: checks that the total weight of the selected items does not exceed the weight limit L, and that the total value meets or exceeds the target K"
+        },
+        {
+          "criterion_id": "q3_3",
+          "points": 4,
+          "description": "Correctly argues polynomial time: summing weights and values over the selected subset takes O(n) time where n is the number of items"
+        },
+        {
+          "criterion_id": "q3_4",
+          "points": 3,
+          "description": "Clearly states the conclusion: since a polynomial-time verifier exists, Knapsack is in NP"
+        },
+        {
+          "criterion_id": "q3_5",
+          "points": 2,
+          "description": "Bonus: correctly notes the certificate size is polynomial (a subset of n items is representable in O(n) bits)"
+        }
+      ],
+      "max_points_without_bonus": 14,
+      "bonus_note": "q3_5 is a bonus criterion worth up to 2 points; total is capped at 16."
+    },
+    {
+      "question_id": "q4",
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "grading_note": "Same structure as Q3. Key difficulty: students must frame this as a decision problem (is there a path of weight >= k?) before applying the verifier argument. Deduct 2 points if student only considers the optimization version without converting to a decision problem.",
+      "criteria": [
+        {
+          "criterion_id": "q4_1",
+          "points": 2,
+          "description": "Frames the problem as a decision problem: given graph G, nodes s and t, and threshold k, does there exist a path from s to t with total weight >= k?"
+        },
+        {
+          "criterion_id": "q4_2",
+          "points": 3,
+          "description": "Correctly defines the certificate: an explicit path (sequence of vertices) from s to t"
+        },
+        {
+          "criterion_id": "q4_3",
+          "points": 5,
+          "description": "Correctly describes the verifier: (1) checks consecutive vertices are connected by edges, (2) checks path starts at s and ends at t, (3) sums edge weights and checks total >= k"
+        },
+        {
+          "criterion_id": "q4_4",
+          "points": 3,
+          "description": "Correctly argues polynomial time: all checks (edge existence, endpoint verification, weight summation) can be done in O(|V| + |E|) time by scanning the path once"
+        },
+        {
+          "criterion_id": "q4_5",
+          "points": 3,
+          "description": "Clearly states the conclusion: since a polynomial-time verifier exists, the problem is in NP"
+        }
+      ]
+    },
+    {
+      "question_id": "q7",
+      "benchmark_type": "polynomial_reduction",
+      "total_points": 28,
+      "grading_note": "A complete reduction proof requires four components: the construction, the forward direction, the backward direction, and the polynomial-time argument. Missing any direction of correctness loses significant points. Award partial credit if construction is correct but one direction of proof is missing or flawed.",
+      "criteria": [
+        {
+          "criterion_id": "q7_1",
+          "points": 6,
+          "description": "Correct construction: given G = (V, E) with |V| = n, construct G' as two disjoint copies of G with no edges between them, giving |V'| = 2n"
+        },
+        {
+          "criterion_id": "q7_2",
+          "points": 7,
+          "description": "Forward direction (HAMILTONIAN → TONIAN): if G has a Hamiltonian path, then one copy of G in G' has a path visiting all n vertices, which is exactly n = |V'|/2 vertices, satisfying the Tonian condition"
+        },
+        {
+          "criterion_id": "q7_3",
+          "points": 7,
+          "description": "Backward direction (TONIAN → HAMILTONIAN): if G' has a Tonian path visiting >= n vertices, and the two copies are disconnected, the path must lie entirely within one copy of G (which has exactly n vertices), so the path visits all n vertices — a Hamiltonian path in G"
+        },
+        {
+          "criterion_id": "q7_4",
+          "points": 4,
+          "description": "Polynomial-time argument: the construction (copying V and E twice) runs in O(|V| + |E|) time"
+        },
+        {
+          "criterion_id": "q7_5",
+          "points": 4,
+          "description": "Clear conclusion: since the construction is polynomial and the two instances are equivalent (G has a Hamiltonian path iff G' has a Tonian path), HAMILTONIAN ≤p TONIAN"
+        }
+      ]
+    },
+    {
+      "question_id": "q8",
+      "benchmark_type": "np_completeness_proof",
+      "total_points": 40,
+      "grading_note": "NP-completeness requires two independent parts: (1) showing MATCH is in NP, and (2) showing MATCH is NP-hard via reduction. Both parts must be present for full credit. The reduction part is worth significantly more. Award NP membership points independently from NP-hardness points.",
+      "criteria": [
+        {
+          "criterion_id": "q8_1",
+          "points": 3,
+          "description": "NP membership — certificate: correctly identifies the certificate as a binary string w ∈ {0,1}^n"
+        },
+        {
+          "criterion_id": "q8_2",
+          "points": 3,
+          "description": "NP membership — verifier: correctly describes checking that for every s ∈ S, there exists at least one position i where s_i = w_i"
+        },
+        {
+          "criterion_id": "q8_3",
+          "points": 2,
+          "description": "NP membership — polynomial time: correctly argues verification takes O(|S| * n) time"
+        },
+        {
+          "criterion_id": "q8_4",
+          "points": 4,
+          "description": "NP-hardness — choice of reduction: correctly chooses to reduce from 3SAT (or another valid NP-complete problem such as SAT). Reductions from unrelated problems without justification receive 0."
+        },
+        {
+          "criterion_id": "q8_5",
+          "points": 7,
+          "description": "NP-hardness — construction: correctly constructs one string s^(j) per clause C_j of length n (number of variables), where s^(j)_i = 1 if x_i appears positively in C_j, s^(j)_i = 0 if ¬x_i appears in C_j, and s^(j)_i = 2 otherwise"
+        },
+        {
+          "criterion_id": "q8_6",
+          "points": 7,
+          "description": "NP-hardness — forward direction (3SAT satisfiable → MATCH true): if a satisfying assignment w exists for 3SAT, then for each clause at least one literal is true, meaning at least one position i satisfies w_i = s^(j)_i. Thus w matches every string in S."
+        },
+        {
+          "criterion_id": "q8_7",
+          "points": 7,
+          "description": "NP-hardness — backward direction (MATCH true → 3SAT satisfiable): if a binary string w matches every s^(j), then for each clause string s^(j), there exists a position i where w_i = s^(j)_i ∈ {0,1} (cannot be 2 since w is binary), meaning the corresponding literal in C_j is satisfied by the assignment induced by w. Hence all clauses are satisfied."
+        },
+        {
+          "criterion_id": "q8_8",
+          "points": 4,
+          "description": "NP-hardness — polynomial time of reduction: construction of |S| strings each of length n takes O(|S| * n) time, which is polynomial in the input size"
+        },
+        {
+          "criterion_id": "q8_9",
+          "points": 3,
+          "description": "Conclusion: clearly states that since MATCH is in NP and NP-hard (3SAT ≤p MATCH), MATCH is NP-complete"
+        }
+      ]
+    }
+  ]
+}
