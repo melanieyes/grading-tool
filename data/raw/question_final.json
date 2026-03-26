@@ -4,39 +4,18 @@
   "exam": "Final exam",
   "duration_minutes": 90,
   "total_points": 200,
+  "benchmark_notes": {
+    "selected_for": "Reasoning-type questions for LLM grading benchmark",
+    "total_selected_questions": 10,
+    "question_ids": ["q2b", "q2c", "q2e", "q2f", "q2g", "q2h", "q3", "q4", "q7", "q8"]
+  },
   "questions": [
-    {
-      "question_id": "q1",
-      "points": 20,
-      "question_text": "Give a short answer for each of the following questions.",
-      "subparts": [
-        {
-          "part_id": "q1a",
-          "question_text": "What is a P language?"
-        },
-        {
-          "part_id": "q1b",
-          "question_text": "What is an NP language?"
-        },
-        {
-          "part_id": "q1c",
-          "question_text": "What is an NP-complete language?"
-        },
-        {
-          "part_id": "q1d",
-          "question_text": "What is the relationship between P languages, NP languages, and NP-complete languages?"
-        }
-      ]
-    },
     {
       "question_id": "q2",
       "points": 48,
       "question_text": "Choose True/False (8 points) and give a short explanation (40 points) for each of the following statements.",
+      "benchmark_type": "true_false_with_explanation",
       "subparts": [
-        {
-          "part_id": "q2a",
-          "question_text": "If a language is in NP then it must be decidable."
-        },
         {
           "part_id": "q2b",
           "question_text": "Let Non-P be the class of problems that can be only solved by non-polynomial algorithms, then NonP ∩ NP = ∅."
@@ -44,10 +23,6 @@
         {
           "part_id": "q2c",
           "question_text": "If we can find a polynomial-time reduction from 3SAT to the language {a^n b^n | n ≥ 0} then P = NP."
-        },
-        {
-          "part_id": "q2d",
-          "question_text": "If we can solve the SAT problem in polynomial time then we can solve any problem in polynomial time."
         },
         {
           "part_id": "q2e",
@@ -70,31 +45,25 @@
     {
       "question_id": "q3",
       "points": 16,
+      "benchmark_type": "np_membership_proof",
       "question_text": "Prove that the Knapsack problem (as defined in the lecture) is in NP."
     },
     {
       "question_id": "q4",
       "points": 16,
+      "benchmark_type": "np_membership_proof",
       "question_text": "Prove that the problem of finding the longest path between two nodes in a weighted graph is in NP."
-    },
-    {
-      "question_id": "q5",
-      "points": 16,
-      "question_text": "Let MAX_SUM be the problem of finding a subset of a given set whose sum is maximized. Prove that MAX_SUM is in P."
-    },
-    {
-      "question_id": "q6",
-      "points": 16,
-      "question_text": "The maximum spanning tree problem is the problem of finding a spanning tree of a given weighted graph such that the total edge weight of the tree is maximized. Prove that the maximum spanning tree problem is in P."
     },
     {
       "question_id": "q7",
       "points": 28,
+      "benchmark_type": "polynomial_reduction",
       "question_text": "A Hamiltonian path in an undirected or directed graph is a path that visits each vertex exactly once. A Tonian path in an undirected or directed graph is a path that visits at least half of the vertices in the graph. Let HAMILTONIAN and TONIAN be the problems of determining whether a graph has a Hamiltonian path and a Tonian path, respectively. Prove that HAMILTONIAN ≤p TONIAN, meaning that any instance of the HAMILTONIAN problem can be reduced in polynomial time to an instance of the TONIAN problem."
     },
     {
       "question_id": "q8",
       "points": 40,
+      "benchmark_type": "np_completeness_proof",
       "question_text": "Let MATCH be the following problem\n- Input: A finite set S of strings, all of the same length n, over the alphabet {0, 1, 2}.\n- Output: Determine whether there is a string w ∈ {0, 1}^n such that for every string s ∈ S, the strings s and w have the same symbol in at least one position.\n\nExample 1:\n- Input: S = {01220, 21110, 21120, 00211, 11101}\n- Output: True, because the string w = 01001 matches the first three strings of S in the second position, and matches the last two strings of S in the last position.\n\nExample 2:\n- Input: S = {00, 11, 01, 10}\n- Output: False, since we can not find any binary string of length two that matches all strings of S in at least one position.\n\nProve that MATCH is NP-complete. (Hint: You may assume the following problems from lecture and homework are NP-complete: SAT, 3SAT, SUBSET-SUM, VERTEX-COVER, SET-COVER, CLIQUE, 3COLOR.)"
     }
   ]
