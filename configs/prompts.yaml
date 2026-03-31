@@ -1,0 +1,24 @@
+prompts:
+  prompt_v1:
+    name: "minimal_strict"
+    style: "short"
+    rubric_mode: "criterion_only"
+    allow_reference_solution: false
+
+  prompt_v2:
+    name: "rubric_plus_solution"
+    style: "structured"
+    rubric_mode: "criterion_only"
+    allow_reference_solution: true
+
+  prompt_v3:
+    name: "professor_aligned"
+    style: "detailed"
+    rubric_mode: "criterion_plus_reasoning"
+    allow_reference_solution: true
+
+  prompt_v4:
+    name: "conservative_review_heavy"
+    style: "strict_conservative"
+    rubric_mode: "criterion_plus_reasoning"
+    allow_reference_solution: true
