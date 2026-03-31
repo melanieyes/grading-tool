@@ -4,21 +4,56 @@ prompts:
     style: "short"
     rubric_mode: "criterion_only"
     allow_reference_solution: false
+    allow_implicit_reasoning: false
+    partial_credit_style: "strict"
+    grader_note: |
+      Award points only when a criterion is explicitly supported by the student's answer.
+      Do not infer missing steps.
+      This is the literal baseline prompt.
 
   prompt_v2:
-    name: "rubric_plus_solution"
+    name: "implicit_reasoning_allowed"
     style: "structured"
     rubric_mode: "criterion_only"
     allow_reference_solution: true
+    allow_implicit_reasoning: true
+    partial_credit_style: "moderate"
+    grader_note: |
+      The rubric is the main grading authority, but you may award credit when a reasoning step is clearly implied
+      by the student's explanation, even if not written in textbook wording.
+      For short reasoning answers, compressed but conceptually correct explanations should still receive credit.
+      Do not require exact phrases like "every NP problem reduces to 3SAT" if the student's explanation clearly
+      conveys the same idea.
+      Penalize genuine conceptual mistakes, not merely brevity.
 
   prompt_v3:
     name: "professor_aligned"
     style: "detailed"
     rubric_mode: "criterion_plus_reasoning"
     allow_reference_solution: true
+    allow_implicit_reasoning: true
+    partial_credit_style: "generous"
+    grader_note: |
+      Grade like a careful professor grading a timed written exam.
+      The rubric is primary, but use the reference solution to understand acceptable reasoning patterns.
+      Award credit for conceptually correct reasoning even when the student skips intermediate formal steps,
+      as long as the intended logic is clear and mathematically sound.
+      In timed exams, students often compress reasoning. Do not over-penalize missing textbook phrasing when
+      the core complexity-theoretic idea is correct.
+      Use partial credit generously when the student demonstrates the right direction and most of the underlying logic.
+      Reserve major deductions for reversed reduction direction, incorrect complexity-class claims, invalid conclusions,
+      or missing core proof structure.
 
   prompt_v4:
     name: "conservative_review_heavy"
     style: "strict_conservative"
     rubric_mode: "criterion_plus_reasoning"
     allow_reference_solution: true
+    allow_implicit_reasoning: false
+    partial_credit_style: "strict"
+    grader_note: |
+      Be conservative.
+      If the student's answer is vague, incomplete, directionally confused, or mixes correct statements with major errors,
+      reduce points.
+      Prefer review_required=true whenever the answer may deserve human inspection.
+      This prompt is intentionally stricter and should be compared against the more professor-aligned prompts.
