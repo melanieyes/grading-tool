@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.grading.answer_loader import load_q9_student_answers
+from src.grading.answer_loader import final_rubric, question_rubric, solutios_final
 from src.grading.deterministic_checker import grade_regex_deterministically
 from src.grading.language_specs import LANGUAGE_SPECS
 from src.grading.llm_fallback_grader import LLMFallbackGrader

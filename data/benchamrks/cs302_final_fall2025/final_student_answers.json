@@ -525,6 +525,218 @@
       "student_answer": "We can reduce SET-COVER into this problem by duplicating each set to make a pair. Cost O(n) time, where set S is set of n where n is number of set in SET-COVER. If we can solve MATCH, then we can solve SET-COVER. => MATCH is NP-complete, since SET-COVER is NP-complete."
     }
   ]
+},
+{
+  "student_id": "011",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. Language in NP means it can be verified by a TM so it will halt."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. As long as P ≠ NP, NP will [contain] problems that are not polynomial. Some NP problems can be solved in non-polynomial time."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. If 3SAT reduced to {a^n b^n} and if we can solve {a^n b^n} in polynomial time then we can solve 3SAT in polynomial time."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. SAT is NP-complete, the hardest. So if we can solve it in polynomial time, we can do the same with others."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "P ≠ NP so NP problems cannot be solved in polynomial time. 3-color problem: check 3 color options for all vertices."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "Reduced 3SAT to 2SAT in O(n^3) does not guarantee we can solve all NP-complete in polynomial time."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "If 2SAT can be reduced to 3SAT in O(n^3), then we can solve all NP problems in polynomial time."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "If problem is not in P then it is in NP or NP-complete; if problem in NP-complete then it is in P."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "Certificate: the optimal solution from the knapsack. Verifier: define k is the max (optimal value), iterate through the solution and do the calculation. If the calculation result = k then we accept, reject otherwise. This iteration costs O(n), so Knapsack is in NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Certificate: the longest path (sequence of nodes and edges) with the max weight. Verifier: define K is the sum weight of the longest path, check if the nodes in the solution list are valid, check if (v_j, v_{j+1}) exist and no cycle, check if the sum of weight equals K. If all true then accept, reject otherwise. This costs O(|V|+|E|), so finding longest path between 2 nodes in a weighted graph is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "We can reduce Hamiltonian to Tonian by removing half of the nodes in H. The new graph has |V|/2 nodes. If we can solve H problem, then we can solve T problem in the new graph. If we can solve T problem, we can solve H problem in the original graph (run the algorithm with twice number of nodes)."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "Prove MATCH is in NP. Certificate: the w string that match the symbol in s at at least 1 position. Verifier: for each string s, compare each symbol in s with each symbol in string w, record the count. If any string's count < 1 then reject. If after checking all s strings, we detect at least 1 match in each s string, accept. This can be done in O(n), so MATCH is in NP. Prove any problem can be reduced to it. We can represent each s string and w string as Turing machines. For each s string we can form n clauses, with literals. Similar with the comparing of s_i with w. Finally, glue all by ∧ symbol: (s1 compare w) ∧ (s2 compare w) ∧ ... Each (s_i compare w) will be true if at least 1 symbol match. So the whole formula will be true if each (s_i compare w) true. We can represent this as SAT. SAT is NP-complete so MATCH is also NP-complete."
+    }
+  ]
+},
+{
+  "student_id": "012",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "Yes, by definition of NP, decided in D-time by non-deterministic TM."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. So P ⊆ NP ⊆ NonP."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. Because {a^n b^n | n ≥ 0} is context-free language which is in P. Then by assumption 3SAT ≤p L => 3SAT in P => P = NP, as 3SAT is NP-complete."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. As SAT is NP-complete, then solving SAT in polynomial time means we can solve any problem that reduces to SAT in polynomial time too."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False. Because 3-color is NP, it should be solved in polynomial time, not exponentially."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "False. 3SAT ≤p 2SAT, and 2SAT is NP-complete too. We have to show other polynomial time reduction from either 3SAT or 2SAT to other NP-complete problems too."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "Yes. 2SAT ≤p 3SAT. Then 2SAT can be NP-complete, so other NP problems can be reduced to 2SAT and solved in D-time."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. If it is not in P and not NP-complete, it can be in NP \\ P. So P ≠ NP."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "Certificate: a set of items and its weight. Verifiers: check if the total sum of each row is max. We would use for-loop to try the sum with different cases, so the time is polynomial. Therefore knapsack ∈ NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Certificate: given G(V,E) and 2 nodes (u,v) with its weighted value. Verifiers: 1. From u, run DFS/BFS until reaching v, and stop. 2. Save the weighted value in a list. 3. Repeat from step 1 for u with different adjacent nodes of u. 4. Finally, compare values in the list with the given value of (u,v). Time: O(|V|+|E|), which is polynomial, so the problem is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": ""
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "Certificate: given a set S and string w. Verifier: for i in S, for j in S[i], if S[i][j] = w[j], set var_check = True and continue, else var_check = False. If var_check = False return False; return True. Since we just use for-loop so the time is polynomial. Therefore MATCH ∈ NP."
+    }
+  ]
+},
+{
+  "student_id": "013",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. NP language is decidable in polynomial time on a non-deterministic Turing machine."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "True. Because NP is the class of problems that are solvable in polynomial time, so their intersection is empty."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. Since {a^n b^n ; n ≥ 0} ∈ P, when 3SAT ≤p {a^n b^n}, given 3SAT ∈ NP, then 3SAT ∈ P => P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. Since SAT ∈ NP-complete, so for all y ∈ NP, y ≤p SAT. Because SAT is harder, if SAT is solvable in polynomial time, so they are."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False. The time must be O(n^3)."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "True. 3SAT ≤p 2SAT, so 2SAT now is harder to solve, but since it's in P, so we can solve 2SAT in P too."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False. 2SAT ≤p 3SAT, so we don't guarantee that all NP can be solved in poly time."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "True. If it is not in P and it is not NP-complete, it can be in NP \\ P. So P ≠ NP."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "Certificate: a set of items and its weight. Verifiers: check if the total sum of each row is max. We would use for-loop to try the sum with different cases, so the time is just polynomial. Therefore knapsack ∈ NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Certificate: given G(V,E) and 2 nodes (u,v) with its weighted value. Verifiers: 1. From u, run DFS/BFS until reaching v, and stop. 2. Save the weighted value in a list. 3. Repeat from step 1 for u with different adjacent nodes of u. 4. Finally, compare values in the list with the given value of (u,v). Time: O(|V|+|E|), which is polynomial, so the problem is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "Hamiltonian: visit each node at least once. Tonian: visit at least half of the nodes. We can reduce Hamiltonian to Tonian by removing half of the nodes in H. The new graph has |V|/2 nodes. If we can solve H problem, then we can solve T problem in the new graph. If we can solve T problem, we can solve H problem in the original graph (run the algorithm with twice number of nodes)."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "1. Prove MATCH ∈ NP. For each position i in n, check if number of matching in all S is > 0; if all position = 0 then [reject]. If all s ∈ S match at least 1 element, satisfiable -> verifiable in O(n). Not satisfiable if [matches] at least > 0, satisfiable -> verifiable in O(n,m). Reduce from 3SAT. Treat each element as clause (v1, v2, v3) with True or False. If all false -> no SAT."
+    }
+  ]
+},
+{
+  "student_id": "014",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True because of the definition. A TM halts on all inputs."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "True because NP can be solved in polynomial time."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True, because 3SAT is NP-complete, so all problems in NP can be solved in polynomial time."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "False, we do not know the time to reduce other problems to SAT."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "True, it will take exponential time."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "True: reduce all NP-complete takes O(n^3), which is polynomial, 2SAT is also in P."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False, because we are not sure about other NP problems."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "The language for this problem is: Is there another choice of items that has the value >= k and within weight allowed? Verifier: given a set of chosen items, (1) calculate total [value/cost] and compare to k, (2) calculate total weight of item set then compare to the allowed weight given. Each step takes linear time, which is polynomial."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Language: given a path P between 2 nodes and total cost, is there another path longer than P? Verifier: given a solution, we need to check [path validity and cost]. At bottom: Given G and P, is path P their [target] path P's total cost > [k]? Verifier: sum of weights of the path, then compare to k (O(|E|)), which is polynomial."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "Let G be a graph that has 1 Hamiltonian path. Define new problem: a path that visits n-1 vertices (only 1 cannot be visited) -> remove the 2 edges connecting it to the path so it's isolated. Similarly for n-2, n-3, ..., n/2: just isolate the corresponding number of vertices, and for each number of vertices in the O(2n) for removing 2 edges. So HAMILTONIAN ≤p TONIAN."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "This problem is NP-complete because the SET COVER problem can be reduced to MATCH in polynomial time, and MATCH is an NP problem. MATCH is an NP problem: given a w string claimed as a solution to S, the verifier needs to check by looping through the set S and appending all strings [matching], store the index of the string into an array [position, index value of string] O(n), and find indices such that these indices span all position and cover all indices in S. SET COVER can be reduced to MATCH in polynomial time. Search for the index with the largest length in S'. For all set that contain 0, convert to string 0---; the same for 1 and 2. Append the empty string by phi if the original subset only lies in 0,1 or 2 elements (O(n)). If MATCH accepts, then SET COVER also accepts."
+    }
+  ]
 }
 
 ]
