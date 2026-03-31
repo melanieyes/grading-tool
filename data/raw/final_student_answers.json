@@ -1,0 +1,530 @@
+[
+  {
+    "student_id": "001",
+    "answers": [
+      {
+        "question_id": "q2a",
+        "student_answer": "True. L is in NP, then it can be decided with non-deterministic TM. Decidable: accept or reject only, don't loop forever. Also, NP is verified in polynomial time, so it must not loop."
+      },
+      {
+        "question_id": "q2b",
+        "student_answer": "False. Non-P can be solved by exponential algorithms. Non-P ∩ NP ≠ ∅ (Non P ∈ NP)."
+      },
+      {
+        "question_id": "q2c",
+        "student_answer": "True. Language A {a^n b^n | n ≥ 0} ∈ P. 3SAT ∈ NP. Then reduce 3SAT to A allow solving NP class in polynomial time too."
+      },
+      {
+        "question_id": "q2d",
+        "student_answer": "False. This only means that SAT is NP-complete. All other NP-complete problem can be solved in polynomial time too, by reduced into SAT."
+      },
+      {
+        "question_id": "q2e",
+        "student_answer": "False. 3-color problem is NP-complete. If P ≠ NP, we still can not show that reduce 3-color problem to any P problem solved in 3^n time."
+      },
+      {
+        "question_id": "q2f",
+        "student_answer": "True. 2SAT ∈ P (homework). 3SAT reduced to 2SAT in O(n^3) time => 3SAT solved in polynomial time => all NP-complete problem reduced to => 3SAT."
+      },
+      {
+        "question_id": "q2g",
+        "student_answer": "False. 3SAT ∈ NP, [UNCERTAIN], 2SAT ∈ P. But reduce 2SAT to 3SAT doesn't allow reduce other NP problems to 2SAT [UNCERTAIN]."
+      },
+      {
+        "question_id": "q2h",
+        "student_answer": "True. [Diagram of NP-complete / NP-hard / P overlap]. There must exist NP \\ P ≠ ∅ then P ≠ NP."
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "To verify knapsack problem, we need to check that solution to (1) the items of solution is valid (they belong to the original set, no duplicate or invalid value) O(n), and (2) sum of weights of items is smaller than the limit O(n), (3) sum of value of chosen items is greater than k O(n). K = {(set of item with w, value, and limit weight) | (1), (2), (3) conditions} ∈ NP as (1), (2), (3) can be checked in polynomial time O([UNCERTAIN])."
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "Prove that this problem can be verified in polynomial time. G: graph, node a, node b. Language: A = {(G, a, b) [UNCERTAIN] | sum of all edge weights of the path (a, ..., b) is [UNCERTAIN] k}. To verify this, we need to (1) check if this is a valid path, for each edge check if the 2nd vertex is also the start vertex of the next consecutive edge. (2) iterate through all edge weight to sum up total cost O(n) (then compare with [UNCERTAIN]). => A ∈ NP."
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "Construct a graph G' so that if G' has a Tonian path, by adding dummy vertices to G'(add m dummy nodes], we can always construct a graph G' from G and the TONIAN problem in G' is solved with the solution a -> b -> c -> d [4 out of 8 nodes]. Then Hamiltonian reduced to tonian, a -> b -> ... -> d is also the solution of Hamiltonian problem. Graph construction cost O(|V| + |E|). Check if that is valid tonian. => Hamiltonian ≤p tonian."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "Can verify instance w of MATCH in polynomial time by loop through each w element k times, for either each elements we loop through the alphabet in k times. Cost: n.k. => poly verifies => MATCH ∈ NP (1). 2/ Reduce NP to MATCH. Let reduce SAT to MATCH. [UNCERTAIN: example formula]. Convert the string to variables, each alphabet is a variables, and each element is a clause (can draw the implication graph) (cost polynomial). -> MATCH <=p SAT (2). (1) (2) => MATCH is NPC."
+      }
+    ]
+  }
+
+,{
+  "student_id": "002",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "T. NP can verify a problem can be solved in polynomial time -> can decide."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "F. Because NP can be solved in polynomial time. There is no algorithm can be solved in polynomial time. If a problem can only be solved in non-polynomial algorithms, we can't check whether that problem can actually halt or not go loop forever."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "T. Because each a has corresponding b, we can assign True. When there is at least 1 false, we can reject right away -> P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "F. Only if we can reduce SAT problem to that problem."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "F. We only need to pick edge (u,v) which are close to each other -> Complexity will be O(|V + E|)."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "T. 3SAT -> 3 clauses. 2SAT -> 2 clauses."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "T"
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": ""
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "We have 2 types of knapsack: Fractional Knapsack (pick a portion), Normal Knapsack (pick a specific object). Knapsack picks the biggest-weight object and doesn't re-visit previous [UNCERTAIN: connected/considered] options, so the number of options at everytime choosing will be smaller than the total available objects. -> This can be solved in polynomial time. 1. Certificate: the weight of closest options. 2. Verifier. Step 1: Consider all closest possible options, then compare the weights. If we can choose the biggest value, continue to move to other connected options. Step 2: move till there is no option left. Return the sum."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Longest path = biggest sum of weighted edges leading to those 2 nodes. 1. Certificate: We have a list of edges with their weights (original list S). We have a list of possible edges leading to the target T ([UNCERTAIN: new/list] list L). 2. Verifier. Step 1: we pick (u,v) to check whether the 2 nodes/edges next to each other can whether exist in original list. Step 2: If step 1 return true, sum up the results. Compare results with T. Return true. Only accept when there is at least 1 true. [UNCERTAIN: Time/Complexity] can be solved just in polynomial time."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "1) Certificate: Input S. Denote \"0\" of w as True, \"1\" of w as False. 2) Verifier: Step 1: check w and s have same length (for all strings s). If have same length, return True. Step 2: check [UNCERTAIN: just] position of w. If [UNCERTAIN: its] position is true, only return true if there is at least 1 true. For the true-true couple or false-false couple -> exclude that string s in S. Step 3: Move to next position of w. Continue to return true for at least 1 true in that same position of string s. Return false if there is at least 1 false in that same position of string s. Step 4: Move till the end of [UNCERTAIN: set/list] S. Only choose couples with similar results: all True (double True) or all False (double False). If the number of couples (valid) == number of strings in S, finally return True. -> This can be in polynomial time."
+    }
+  ]
+},
+{
+  "student_id": "003",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. Because it is decidable by a non-deterministic TM in polynomial time."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. An NP problem has a verifier in P, so they are in EXP. We cannot have NonP ∩ EXP = ∅."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. We have {a^n b^n} ∈ P. If 3SAT ≤p {a^n b^n} then 3SAT ∈ P. Because 3SAT is NP-complete, every L ∈ NP satisfy L ≤p 3SAT ∈ P so L ∈ P, therefore NP ⊆ P. We have P ⊆ NP, therefore P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "False. We can only conclude that any NP problem can be solved in polynomial time (proof similar to previous question). We cannot conclude for non-NP problems. We still cannot solve halting problem, let alone in P."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False. By having smarter algorithm (if v_a is connected to v_b then choose a different color) we can lower the upper bound to 3·2^(n-1) < 3^n."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "True. We have 2SAT ∈ P. If 3SAT ≤p 2SAT then 3SAT ∈ P. Because 3SAT is NP-complete, every L ∈ NP-complete satisfy L ≤p 3SAT ∈ P so L ∈ P, therefore NP-complete ⊆ P."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False. 2SAT is already [UNCERTAIN: easier than / inside] 3SAT, it does not change anything."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. Halting problem isn't in P nor NP-complete, but we still cannot have P = NP or P ≠ NP from that alone."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "We define a verifier that takes the total set of items as w and the subset of the original set and a number k as c [and the limit L]. The verifier checks if the items in the subset combined has weight ≤ L and value ≥ k. This can be done with a simple traversal to add all of them together, only at most n times (n is the number of items in the original set). This verifier is in P, so the language is in NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "We define a verifier that takes the original graph as w and a path in the graph and a number k as c. The verifier checks if this path is valid and the total weight is > k. This can be done by a simple loop to check and add all edges connecting adjacent vertices in the path, which is at most as long as n = |V|. This verifier is in P, so the language is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "Given graph G=(V,E), construct G'=(V',E'). For all v_i ∈ V, add v_i1 and v_i2 to V'. Therefore |V'|=2|V|. [UNCERTAIN: crossed-out edge-construction line]. Now, visually G' looks like G duplicated. It basically has 2 of G's as 2 forests in G'. If there exists a Tonian path in G', it must be limited to 1 forest in G'. But because it contains 1/2 |V'| = |V|, the path must be connecting every node in that forest. That is the Hamiltonian path on G (half of G'). The reduction process is only building G'. It is in polynomial time O(|V|+|E|) ∈ O(n^2). Because there exists a polynomial time reduction, we have HAMILTONIAN ≤p TONIAN."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "We want to show: 3SAT ≤p MATCH => MATCH is NP-complete."
+    }
+  ]
+},
+{
+  "student_id": "004",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True, it can be decided by some nondeterministic polynomial time turing machine."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "True, non-polynomial means the algorithms have running time greater than n^k. It can be 2^n or n!... While NP still includes algorithm having running time in polynomial."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. If 3SAT, an NP-complete problem, is reduced to that language l, which is in P, then it just means that language is in NP as well because l ⊆ NP. So in this case, the language is both in P and NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "False. SAT is NP-complete problem. If it is translated to a P problem, then that is in NP as well because P ⊆ NP. Then every problem in NP can be translated to that state problem in polynomial time. Though the statement is partly correct, it still misses the point 'problem in NP'."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False, because in case P ≠ NP, then P ⊂ NP is considered. The algorithm for solving 3-color problem, if takes at least 3^n, then it belongs to EXP. While P ⊂ NP ⊆ EXP, then it does not show that P ≠ NP or not. It just means that the problem exceeds P and NP."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "False. If 3SAT is NP-complete problem, while 2SAT is in P. 2SAT is in P, so then it is also in NP because P ⊆ NP. If every problem in NP can be translated to 2SAT then it will be NP-complete. So it just means 2SAT is NP-complete, not all NP-complete problems can be solved in polynomial time."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "True. If 2SAT, which is in P, is reduced to 3SAT, which is NP-complete, then 2SAT must be in NP, and every problems in NP can be translated to 3SAT and solved in polynomial time."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. Not in NP-complete so the problem not in NP. Not in P so the problem may not in NP as well. Then we cannot be sure that P ≠ NP but just know that the problem not in P, NP, NP-complete."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "If has running time of dynamic programming (O(logn)) -> polynomial class. It runs linearly like that so it is in P. P ⊆ NP so the problem is in NP as well."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Finding the longest path between 2 nodes is hard to execute, so we must find the verifier to prove it is in P then the problem is in NP. The problem is that we cannot know, when choosing starting at the first node, then choosing the next largest weighted graph will lead to the second node on this path. However, when using some kind of algorithm like dynamic programming to update the weight if choosing and not choosing the graph may be a verifier for that problem, then using dynamic programming algorithm means the verifier is in P, thus it is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "For the Tonian path, it may mean that that path visits at least half of the vertices in the graph, but not mention the vertex can be visited more than once. So changing the path existing in Hamiltonian is short path in Tonian and the path not existing in Hamiltonian is long path in Tonian. If it covers the shortest, meaning it covers the Hamiltonian. [UNCERTAIN: final incomplete phrase about Tonian]."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "empty"
+    }
+  ]
+},
+{
+  "student_id": "005",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "No."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "No. Since NP is the class of language that can be verified in polynomial time, not solved in polynomial time, NonP and NP may have some overlaps."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "Yes. We have the language L = {a^n b^n | n ≥ 0} is in P and 3SAT is in NP. If 3SAT ≤p L, we will have 3SAT ∈ P. At this point, P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "Yes. Since SAT is NP-complete which means that all y ∈ NP, y ≤p SAT. Since we have theorem shown that A ≤p B and B ∈ P then A ∈ P, and the fact that SAT can be reduced to many problems, we have a theorem that A ≤p B and B ∈ P then A ∈ P. Applying in this case, we have y ≤p SAT and SAT ∈ P then y ∈ P."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "No."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "Yes. Given that 2SAT ∈ P and 3SAT is NP-complete, we have 3SAT ≤p 2SAT and 2SAT ∈ P so 3SAT ∈ P based on theorem. Since 3SAT is NP-complete, all y in NP can be reduced to 3SAT, y ≤p 3SAT. From (1) and (2), we will have y ∈ P. There also has a theorem which is A ≤p B and B is NP-complete then A is [UNCERTAIN: NP-complete]. Therefore, y is NP-complete and y ∈ P."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "No. Since we only know that 2SAT ∈ P, the reduction in polynomial reduction does not guarantee that 3SAT or other NP problems can be solved in polynomial time."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "Yes. Since it is not in P and NP complete, it may be in NP. At this time, P ≠ NP since this problem cannot be solved in polynomial time."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "To know whether the knapsack problem is in NP or not, we need to build a verifier on inputs of a number of items and the weight's bound. To check that in the constraint of number of items and weight bound, the maximum value from the input is the most maximized outcomes, we can use an algorithm with the time complexity O(n). Since verifying this in polynomial time, we can conclude that knapsack problem is in NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "To know whether the problem of finding the longest path between 2 nodes in weighted graph is in NP or not, we need to show that it can be verified in polynomial time on inputs which are the path and the weight of that path. Since it takes polynomial time to verify the given inputs whether satisfying the condition or not, the problem of finding the longest path between 2 nodes in weighted graph is in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "To polynomial reducing the Hamiltonian problem to Tonian problem, we need to show 2 things: (1) If there is a Hamiltonian path, there is a Tonian path. Since the Hamiltonian path is the path that visits all vertices in the graph (each vertex visited once), it also means that this path has visited at least half of the vertices in the graph. Therefore, if it has the Hamiltonian path, it has the Tonian path. (2) If there is a Tonian path, there is a Tonian Hamiltonian path. Given that the Tonian path is the path that visits at least half of the vertices, [incomplete]."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": ""
+    }
+  ]
+},
+{
+  "student_id": "006",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True because NP language can be verified in polynomial time using a non-deterministic single tape Turing Machine => the machine always halt -> decidable."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. Some Non-P problems that can be verified in polynomial time then they are in NP, so NonP ∩ NP is not empty."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "a^n b^n is context-free language and every context-free language is a member of class P => a^n b^n ∈ P. So if we can reduce 3SAT to a^n b^n and solve it in polynomial time, 3SAT ∈ P => P = NP (3SAT is NP-complete) => TRUE."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. Because according to Cook-Levin Theorem, SAT is NP-complete, meaning all problems in NP can be reduced to SAT in polynomial time. So, if we can solve SAT in polynomial time, we can solve all problems in NP in polynomial time by reducing them to SAT in polynomial time."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "True. Because if P ≠ NP then there are no algorithms for solving 3-color problem can be done in polynomial time => must take at least 3^n - non polynomial time."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "True. 2SAT can be solved in polynomial time => 2SAT ∈ P. So if 3SAT can be reduced to 2SAT in O(n^3) - polynomial time, it can be solved in polynomial time. Since 3SAT is NP complete, meaning that all problems in NP can be reduced to 3SAT in polynomial time, all NP problems can be solved in polynomial time."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "FALSE. 2SAT can be solved in polynomial time while 3SAT is NP Complete, there is no point in reducing a P problem to NP problem."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "FALSE. A problem not in P => solved in non-polynomial time. Not in NP Complete. No problems in NP can be reduced to this problem - can't be verified in polynomial time => doesn't affect the relationship between P and NP."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "Verifier Algorithm V (use dynamic programming): Initialize a table to store values of different set of items. Compute values of smaller set of items first then store them in the table. Use the updated values in the table to compute values for bigger set of items by adding values of new items to existing sets. Choose the highest value by scanning through the table. Running time: all steps can be done in polynomial time. => Knapsack problem can be verified in polynomial time => it is in NP. (cont): check if the highest value just chosen corresponds to the same set of items as the input A. If yes -> accept, If no -> reject. Language: L = {A | A is the most optimized available set of items given the knapsack capacity k}."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Verifier Algorithm: Language: L = {w | w is the longest path between v_i, v_j in G=(V,E)}. Choose a node among the two given nodes v_i, v_j. Compute DFS on that node until it reaches the [UNCERTAIN: furthest / last] other node. Backtracking to explore all paths leading to the other node and store result in an array of linked list. Choose the longest list in that array. Compare with the input path. If similar, accept. If not, reject."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": ""
+    },
+    {
+      "question_id": "q8",
+      "student_answer": ""
+    }
+  ]
+},
+{
+  "student_id": "007",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. Since NP class allows a polynomial verifier hence there is guarantee of a finite execution to brute force for every NP-problem, making them decidable."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. TSP is an optimization problem [no for] can only be solved by non-polynomial algorithms yet TSP ∈ NP."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. L = {a^n b^n | n ≥ 0} ∈ P class, so if we can find a polynomial-time reduction from 3SAT to L then we can prove P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. SAT is shown as NP-complete problem by Cook-Levin theorem, if SAT ∈ P then NP-complete = P. Then we can solve any problem in P in polynomial time."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "False."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. On Halting problem in not P or NP. There is undecidable problem but there is no verifier that can check in polynomial time [exp: what is the best first move in chess], it is not P and not NP-complete yet P is still different from NP."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "In Knapsack problem, the searching space is exponential. For every possible solution (a 2D list of selected items) we can always verify the solution whether the solution is optimal by replacing pair of item with a better pair of allowed unchosen item [order constrains w-w(item1)+w(item2) ≤ ...] under polynomial time O(n). => Knapsack problem is in NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "The problem of finding the longest path between two nodes in a weighted graph has a search space of exponential. But verifying a path in the weighted graph G is less than or equal to another path (a reduced problem) can be done in polynomial time (O(n)). => The problem is in NP class. P/S: we check by replacing and edge between any pairs of vertices with another edge + O(|E|)."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": ""
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "To prove MATCH is NP-complete, we need to show that: MATCH is in NP. MATCH can be reduced from 3SAT. Proof: MATCH is in NP. By simply brute force, the TC is in O(2^n). But by a verifier V to verify every solutions of MATCH problem. Step 1: s is any possible string ∈ {0,1}^n. Step 2: For any digit i-th in s, iterate the same digit i-th for all strings in S (O(n)). If yes (same digit) remove that number out of S. Step 3: Repeat the same step 2 until we move to the last digit of s. Step 4: Return TRUE if S now is empty. False otherwise. V took O(n^2), polynomial, so MATCH is in NP. Proof MATCH can be reduced from 3SAT. Let f(w) a function such that for every w ∈ MATCH, there is a f(w) in 3SAT."
+    }
+  ]
+},
+{
+  "student_id": "008",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. Just by definition, a Turing machine should be able to verify this in polynomial time."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "True. By definition, NP of problems must be [UNCERTAIN: solvable] in polynomial time. False, since we haven't been able to prove P = NP, it is still possible that some problems in NP can only be solved by non-polynomial algorithms."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "False. 3SAT is not NP-complete. True. {a^n b^n | n ≥ 0} language is in P."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "True. By Cook-Levin theorem, SAT is NP-complete. Therefore any problem in NP can be reduced to SAT in polynomial time."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "True. If P ≠ NP, NP cannot be solved in polynomial time. False. We can conclude that 3-color problem cannot be solved in polynomial time but we cannot say that it cannot be faster than 3^n. For example, it can still possibly be solved in n! or 2^n."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "False. It is not proven that 3SAT is NP-complete. True. Since 3SAT is in NP complete, and 2SAT is in P."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False. 3SAT is by definition harder, so 2SAT reduced to 3SAT doesn't have much impact when 2SAT is reduced to 3SAT."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. Some problems are just not verifiable in polynomial time (like chess). Those problems are outside of the NP class."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "Given a witness (a proposed solution to the knapsack problem), we can easily verify it in polynomial time. 1. Ensure the chosen items are in the original set O(n). 2. Calculate sum of the chosen items weight O(n). 3. Check if the sum is less than a budget B O(1)."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Given a path between 2 nodes in a weighted graph, we can decide if its cost is less than a budget B in polynomial time. 1. Ensure the path exists O(|V|+|E|). 2. Calculate the cost of the path O(|V|+|E|). 3. Compare cost vs budget O(1)."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "We can reduce any instance of HAMILTONIAN problem to TONIAN in polynomial time. As Hamiltonian results in a path P_H that contains exactly one of each vertex, P_H = {v1, v2, ..., vn}. We can create a Tonian path P_T from this path by picking a random vertex v_i (i ≤ n/2) in the first half of the path and follow the path P_H for at least n/2 more vertices. This reduction is in polynomial time O(n) (n is number of vertices |V|)."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "We first need to prove MATCH is in NP. We just need to loop through set S and for each position in n to verify a given solution. O(n·|S|). Since the set S is finite and all strings have the same length, time complexity to verify is O(n). Therefore MATCH is in NP. I will prove SAT 3COLOR can be reduced to MATCH in polynomial time. Each color can be an index by a symbol in the alphabet {0,1,2}."
+    }
+  ]
+},
+{
+  "student_id": "009",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. The solution must be verifiable for it to be in NP."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. A problem solved by non-polynomial algorithm can still be verified by polynomial verifier."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "True. 3SAT is NP-complete, which means solving it implies P = NP. Reduce to a^n b^n takes polynomial, solving takes polynomial, so the total would still be polynomial."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "False. If we can solve SAT in polynomial time then we can solve NP problem in polynomial time. There are problems beyond NP."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False. It can still take 2.5^n or 2^n as long as it is exponential."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "False, you must also prove 2SAT can be solve in polynomial time."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False, we must be able to solve 3SAT in polynomial time to conclude that."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. Halting problem is neither in P nor NP. NP-hard problem is not in P, and not necessary in NP either."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "For each item you can either pick it, or not pick it. This will create branches, which we can then use non-deterministic Turing Machine to enumerate all branches at once. Since each branch can only have up to [items] nodes, it can be solve in polynomial time using nondeterministic Turing Machine."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "For each iteration from the start node, you enumerate all the way to get to the neighboring nodes. In the worst case, you have to search for all the nodes and edges, which can be done in polynomial time using nondeterministic path by assume the current path is correct and search through all the unvisited neighbor edge at once. Therefore the problem is also in NP."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "Let G be the graph of Hamiltonian, we can construct the graph G' of Tonian as below. For all nodes in G, add 1 leaf to it. Pick a node, any node in G, add another leaf to it. Now G' will have 2|V|+1 vertices, so the path have to cover at least |V|+1 vertices. This path will have the form of starting from a leaf we just add, another leaf, go through all of the original graph. The solution of Hamiltonian will then be just G' removing all the leaves we added."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "Match can be reduced to SAT by follow: S = {I1={i11,...,i1n}, I2...}. We trim all the position with i_c = 2 so we are left with strings. Let A = a1, a2, ... be our solution. We construct, since XOR can be construct from AND, OR, NOT. X1 = {a1 XOR i1} OR (a2 XOR i2) ... This will check if there is a string that can match I1 alone then we can do X1 AND X2 AND X3 ... AND X|S|. This will check if there is a string satisfying all the input in S at some position. More explicitly, we can construct X1 as follow, if i_j = 1, we have a_j, else we have NOT a_j. For example, we have I1 = 101. X1 = a1 OR NOT a2 OR a3. Let then I2 = 011. X2 = NOT a1 OR a2 OR a3. Then our final formula to check matching both I1 and I2 will be X = X1 AND X2. X = (a1 OR NOT a2 OR a3) AND (NOT a1 OR a2 OR a3). Does A = a1,a2,a3 exist? Solving this will solve MATCH."
+    }
+  ]
+},
+{
+  "student_id": "010",
+  "answers": [
+    {
+      "question_id": "q2a",
+      "student_answer": "True. It can be decided given enough memory and running time."
+    },
+    {
+      "question_id": "q2b",
+      "student_answer": "False. Non-P = EXP \\ P. Therefore Non-P ∩ NP = (EXP \\ P) ∩ NP ≠ ∅ (as NP ⊆ EXP and P ⊆ NP). Example: if it can be solved in exponential, it can be verified in polynomial."
+    },
+    {
+      "question_id": "q2c",
+      "student_answer": "Let L = {a^n b^n | n > 0}. 3SAT is NP complete. If it is known that L is in P, then there is polynomial time reduction => 3SAT ≤p L => 3SAT in P => Every NP is in P => NP ⊆ P => P = NP."
+    },
+    {
+      "question_id": "q2d",
+      "student_answer": "False. We can only solve all NP problems. There are still other non-NP problems (e.g. Halting problem)."
+    },
+    {
+      "question_id": "q2e",
+      "student_answer": "False. We can reduce search space by not checking if a color is used in adjacent nodes => there is algorithm that need less than 3^n."
+    },
+    {
+      "question_id": "q2f",
+      "student_answer": "For this to be true, we need 2SAT to be in P also."
+    },
+    {
+      "question_id": "q2g",
+      "student_answer": "False. We need 3SAT to be in P, which is not clear if it is true or not for now."
+    },
+    {
+      "question_id": "q2h",
+      "student_answer": "False. Counterexample: that problem is not in NP and still satisfy the constraint but say nothing about P and NP."
+    },
+    {
+      "question_id": "q3",
+      "student_answer": "We can verify if a given solution (a set of items) is valid: total weight is at most w and total value is less or equal in k, in O(n), which is polynomial => Knapsack is in NP."
+    },
+    {
+      "question_id": "q4",
+      "student_answer": "Let the problem be equivalent to: L = {<w,k> | length of w > k} where w is a path in G(V,E). We can verify if a solution is accepted or not in O(|E|) by checking if every edge in w is in E and sum of length is ≥ k => L is in NP (O(|E|) is polynomial)."
+    },
+    {
+      "question_id": "q7",
+      "student_answer": "If we can solve TONIAN => There is a path with at least half of the nodes. Let it be P -> then let P' be the corresponding in tance in Hamilton. Since at least half of new graph G' is visited, every original node in G is also visited at least once (as they are duplicated). Also, due to the cycle nature due to duplication, we can always shorten P' so that every node is visited exactly once."
+    },
+    {
+      "question_id": "q8",
+      "student_answer": "We can reduce SET-COVER into this problem by duplicating each set to make a pair. Cost O(n) time, where set S is set of n where n is number of set in SET-COVER. If we can solve MATCH, then we can solve SET-COVER. => MATCH is NP-complete, since SET-COVER is NP-complete."
+    }
+  ]
+}
+
+]
