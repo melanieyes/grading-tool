@@ -2,86 +2,96 @@
 
 ```text
 grading-tool/
-├── pyproject.toml
-├── README.md
-├── app/
-│   ├── streamlit_app.py
-│   ├── components/
-│   │   ├── charts.py
-│   │   ├── feedback_cards.py
-│   │   ├── sidebar.py
-│   │   └── tables.py
-│   └── pages/
-│       ├── 1_Load_Data.py
-│       ├── 2_Single_Grading.py
-│       ├── 3_Batch_Grading.py
-│       └── 4_Debug_and_Evals.py
-├── configs/
-│   ├── base.yaml
-│   ├── prompts.yaml
-│   └── scoring.yaml
-├── data/
-│   ├── final_solution_design.md
-│   ├── final.md
-│   ├── midterm1.md
-│   ├── midterm2.md
-│   ├── rubric_design.md
-│   ├── outputs/
-│   │   ├── graded_q9_results.json
-│   │   └── graded_q9_summary.csv
-│   └── raw/
-│       ├── final_rubric.json
-│       ├── final_student_answers.json
-│       ├── professor_grade.json
-│       ├── question_final.json
-│       └── solutions_final.json
-├── logs/
-│   ├── grading_runs.jsonl
-│   ├── llm_requests.jsonl
-│   └── llm_responses.jsonl
-├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── io_utils.py
-│   ├── pipeline.py
-│   ├── run_batch.py
-│   ├── __pycache__/
-│   ├── evals/
-│   │   ├── __init__.py
-│   │   ├── benchmark.py
-│   │   ├── error_analysis.py
-│   │   └── evaluation.md
-│   ├── grading/
-│   │   ├── __init__.py
-│   │   ├── answer_loader.py
-│   │   ├── deterministic_checker.py
-│   │   ├── feedback_builder.py
-│   │   ├── language_specs.py
-│   │   ├── llm_fallback_grader.py
-│   │   ├── prompt_strategy.md
-│   │   ├── question_loader.py
-│   │   ├── regex_normalizer.py
-│   │   ├── regex_parser.py
-│   │   ├── score_combiner.py
-│   │   └── __pycache__/
-│   ├── grading_tool.egg-info/
-│   │   ├── dependency_links.txt
-│   │   ├── PKG-INFO
-│   │   ├── requires.txt
-│   │   ├── SOURCES.txt
-│   │   └── top_level.txt
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── gemini_client.py
-│   │   └── __pycache__/
-│   └── schemas/
-│       ├── __init__.py
-│       ├── input_models.py
-│       ├── llm_models.py
-│       └── output_models.py
-└── tests/
-    ├── test_checker.py
-    ├── test_gemini_schema.py
-    ├── test_normalizer.py
-    └── test_pipeline.py
+.
+.env
+.gitignore
+FOLDER_STRUCTURE.md
+README.md
+app
+app/components
+app/components/charts.py
+app/components/feedback_cards.py
+app/components/sidebar.py
+app/components/tables.py
+app/pages
+app/pages/1_Load_Data.py
+app/pages/2_Single_Grading.py
+app/pages/3_Batch_Grading.py
+app/pages/4_Debug_and_Evals.py
+app/streamlit_app.py
+configs
+configs/base.yaml
+configs/prompts.yaml
+configs/scoring.yaml
+data
+data/benchamrks
+data/benchamrks/cs302_final_fall2025
+data/benchamrks/cs302_final_fall2025/final_rubric.json
+data/benchamrks/cs302_final_fall2025/final_student_answers.json
+data/benchamrks/cs302_final_fall2025/professor_grade.json
+data/benchamrks/cs302_final_fall2025/question_final.json
+data/benchamrks/cs302_final_fall2025/solutions_final.json
+data/final.md
+data/final_solution_design.md
+data/midterm1.md
+data/midterm2.md
+data/outputs
+data/outputs/graded_q9_results.json
+data/outputs/graded_q9_summary.csv
+data/outputs/reports
+data/outputs/runs
+data/rubric_design.md
+logs
+logs/app.log
+logs/grading_runs.jsonl
+logs/llm_requests.jsonl
+logs/llm_responses.jsonl
+pyproject.toml
+src
+src/__init__.py
+src/config.py
+src/grading_tool
+src/grading_tool.egg-info
+src/grading_tool.egg-info/PKG-INFO
+src/grading_tool.egg-info/SOURCES.txt
+src/grading_tool.egg-info/dependency_links.txt
+src/grading_tool.egg-info/requires.txt
+src/grading_tool.egg-info/top_level.txt
+src/grading_tool/cli
+src/grading_tool/cli/evaluate.py
+src/grading_tool/cli/grade.py
+src/grading_tool/evaluation
+src/grading_tool/evaluation/__init__.py
+src/grading_tool/evaluation/agreement.py
+src/grading_tool/evaluation/error_analysis.py
+src/grading_tool/evaluation/evaluation.md
+src/grading_tool/evaluation/metrics.py
+src/grading_tool/evaluation/reports.py
+src/grading_tool/grading
+src/grading_tool/grading/__init__.py
+src/grading_tool/grading/orchestrator.py
+src/grading_tool/grading/prompt_builder.py
+src/grading_tool/grading/prompt_strategy.md
+src/grading_tool/grading/question_type_router.py
+src/grading_tool/grading/response_parser.py
+src/grading_tool/grading/rubric_grader.py
+src/grading_tool/models
+src/grading_tool/models/__init__.py
+src/grading_tool/models/gemini_client.py
+src/grading_tool/schemas
+src/grading_tool/schemas/__init__.py
+src/grading_tool/schemas/benchmark.py
+src/grading_tool/schemas/evaluation.py
+src/grading_tool/schemas/grading.py
+src/grading_tool/utils
+src/grading_tool/utils/io.py
+src/grading_tool/utils/text.py
+src/io_utils.py
+src/pipeline.py
+src/run_batch.py
+tests
+tests/test_aggregation.py
+tests/test_evaluation_metrics.py
+tests/test_loader.py
+tests/test_rubric_grader_schema.py
 ```
