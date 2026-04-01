@@ -28,7 +28,7 @@ def _index_questions(question_file: dict[str, Any]) -> dict[str, dict[str, Any]]
                     "parent_question_id": qid,
                     "question_text": sp["question_text"],
                     "benchmark_type": benchmark_type,
-                    "score_max": 8.0,  # q2 subparts are each 8 points in your benchmark
+                    "score_max": 8.0,  # q2 subparts are each 8 points in curr benchmark
                 }
         else:
             out[qid] = {
