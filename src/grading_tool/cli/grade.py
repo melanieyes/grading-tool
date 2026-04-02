@@ -6,7 +6,9 @@ from src.grading_tool.grading.orchestrator import run_grading
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run rubric-based grading on a benchmark.")
+    parser = argparse.ArgumentParser(
+        description="Run rubric-based grading on a benchmark."
+    )
     parser.add_argument(
         "--benchmark_dir",
         default="data/benchmarks/cs302_final_fall2025",
@@ -44,6 +46,12 @@ def main() -> None:
         default=None,
         help="Optional debug limit on number of questions per student",
     )
+    parser.add_argument(
+        "--question_ids",
+        nargs="+",
+        default=None,
+        help="Optional specific question IDs to grade, e.g. q7 q8",
+    )
 
     args = parser.parse_args()
 
@@ -55,6 +63,7 @@ def main() -> None:
         model_name=args.model_name,
         limit_students=args.limit_students,
         limit_questions=args.limit_questions,
+        question_ids=args.question_ids,
     )
 
     print(f"Saved grading run to: {args.output_path}")
