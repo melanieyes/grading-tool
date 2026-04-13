@@ -5,9 +5,15 @@ grading-tool/
 ├── FOLDER_STRUCTURE.md
 ├── pyproject.toml
 ├── app/
-│   ├── streamlit_app.py
-│   ├── components/
-│   └── pages/
+│   ├── main.py
+│   ├── routes/
+│   │   ├── grading.py
+│   │   ├── health.py
+│   │   └── runs.py
+│   ├── schemas/
+│   │   └── api_models.py
+│   └── services/
+│       └── grader_service.py
 ├── configs/
 │   ├── base.yaml
 │   ├── prompts.yaml
@@ -31,6 +37,34 @@ grading-tool/
 ├── docs/
 │   ├── evaluation.md
 │   └── prompt_strategy.md
+├── frontend/
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public/
+│   ├── src/
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── mockData.ts
+│   │   ├── types.ts
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   └── TopNav.tsx
+│   │   ├── lib/
+│   │   └── pages/
+│   │       ├── HomePage.tsx
+│   │       ├── QuestionIntakePage.tsx
+│   │       ├── RubricReviewPage.tsx
+│   │       └── SubmissionGradingPage.tsx
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 ├── logs/
 │   ├── app.log
 │   ├── grading_runs.jsonl
@@ -38,14 +72,36 @@ grading-tool/
 │   └── llm_responses.jsonl
 ├── src/
 │   └── grading_tool/
-│       ├── __init__.py
 │       ├── cli/
+│       │   ├── evaluate.py
+│       │   └── grade.py
 │       ├── evaluation/
+│       │   ├── __init__.py
+│       │   ├── agreement.py
+│       │   ├── error_analysis.py
+│       │   ├── evaluation.md
+│       │   ├── metrics.py
+│       │   └── reports.py
 │       ├── grading/
+│       │   ├── __init__.py
+│       │   ├── orchestrator.py
+│       │   ├── prompt_builder.py
+│       │   ├── prompt_strategy.md
+│       │   ├── question_type_router.py
+│       │   ├── response_parser.py
+│       │   └── rubric_grader.py
 │       ├── models/
+│       │   ├── __init__.py
+│       │   └── gemini_client.py
 │       ├── schemas/
+│       │   ├── __init__.py
+│       │   ├── benchmark.py
+│       │   ├── evaluation.py
+│       │   └── grading.py
 │       ├── utils/
-│       └── config.py
+│       │   ├── io.py
+│       │   └── text.py
+│       └── __init__.py
 └── tests/
     ├── test_aggregation.py
     ├── test_evaluation_metrics.py
