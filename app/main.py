@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routes.health import router as health_router
+from app.routes.runs import router as runs_router
+from app.routes.grading import router as grading_router
+
 app = FastAPI(title="Fulbright Grade Master API")
 
 app.add_middleware(
@@ -11,18 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
+@app.get("/")
+def root():
+    return {"message": "Fulbright Grade Master API is running"}
 
-@app.get("/api/runs")
-def get_runs():
-    return [
-        {
-            "run_name": "demo_run",
-            "prompt_name": "prompt_v1",
-            "model_name": "gemini",
-            "mae": 1.2,
-            "pearson": 0.74
-        }
-    ]
+app.include_router(health_router)
+app.include_router(runs_router)
+app.include_router(grading_router)
