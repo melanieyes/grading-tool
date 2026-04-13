@@ -23,11 +23,15 @@ export default function SubmissionGradingPage() {
   async function handleRun() {
     try {
       setLoading(true)
+
       const parsed = JSON.parse(jsonInput)
+
       const result = await gradeBatch(parsed)
+
       setData(result)
-    } catch {
-      alert('Invalid JSON or backend error.')
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.message || 'Invalid JSON or backend error.')
     } finally {
       setLoading(false)
     }
@@ -151,9 +155,7 @@ export default function SubmissionGradingPage() {
                 {data.results.map((item: any) => (
                   <tr
                     key={item.student_id}
-                    className={
-                      item.review_required ? 'warn-row' : ''
-                    }
+                    className={item.review_required ? 'warn-row' : ''}
                   >
                     <td>{item.student_id}</td>
                     <td>{item.score}/10</td>
