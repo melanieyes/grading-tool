@@ -235,7 +235,6 @@ export function gradeSubmissions(
       const answer =
         submission.answers.find((item) => item.questionId.toLowerCase() === questionId)?.answer ?? ''
 
-      const normalized = answer.toLowerCase()
       const wordCount = answer.split(/\s+/).filter(Boolean).length
       const isVeryShort = wordCount < 12
 
