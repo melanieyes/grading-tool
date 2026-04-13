@@ -44,6 +44,7 @@ dist/
 # Test / coverage / cache
 # -----------------------
 .pytest_cache/
+.pycache/
 .mypy_cache/
 .ruff_cache/
 .cache/
@@ -95,3 +96,6 @@ temp/
 # -----------------------
 data/outputs/
 data/tmp/
+
+# Images
+*.png
