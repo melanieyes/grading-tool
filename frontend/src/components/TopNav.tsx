@@ -3,12 +3,16 @@ import { NavLink } from 'react-router-dom'
 export default function TopNav() {
   return (
     <header className="top-nav">
-      <div className="nav-inner">
+      <div className="shell nav-shell">
         <NavLink to="/" className="brand">
-          Fulbright Grade Master
+          <span className="brand-dot" />
+          <div className="brand-copy">
+            <strong>Fulbright Grade Master</strong>
+            <small>AI-assisted grading platform</small>
+          </div>
         </NavLink>
 
-        <nav className="main-nav" aria-label="Primary">
+        <nav className="nav-links">
           <NavLink to="/intake" className="nav-link">
             Question Intake
           </NavLink>
@@ -20,7 +24,7 @@ export default function TopNav() {
           </NavLink>
         </nav>
 
-        <NavLink to="/intake" className="nav-cta">
+        <NavLink to="/grading" className="cta-btn">
           Start Grading
         </NavLink>
       </div>

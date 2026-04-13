@@ -86,59 +86,89 @@ export default function RubricReviewPage() {
     approved: 'Approved',
   }[status]
 
-  const statusTone = {
-    draft: 'status-neutral',
-    revision_requested: 'status-warning',
-    revised_draft: 'status-info',
-    approved: 'status-success',
+  const statusClass = {
+    draft: 'status-pill status-pill--neutral',
+    revision_requested: 'status-pill status-pill--warning',
+    revised_draft: 'status-pill status-pill--info',
+    approved: 'status-pill status-pill--success',
   }[status]
 
   return (
-    <main className="page-content">
-      <section className="page-header-card">
-        <p className="eyebrow">Rubric Review</p>
-        <h1 className="page-title">Generate and refine the scoring guide</h1>
-        <p className="page-copy">
-          Review the rubric, request revisions with clear feedback, then approve the final version before grading.
-        </p>
-      </section>
-
-      <section className="section-panel">
-        <div className="kpi-grid compact">
-          <div className="kpi-card">
-            <h2>Questions</h2>
-            <p className="kpi-value">{questions.length}</p>
-          </div>
-
-          <div className="kpi-card">
-            <h2>Status</h2>
-            <p className={`kpi-value status ${statusTone}`}>{statusLabel}</p>
-          </div>
+    <main className="shell rubric-page">
+      <section className="panel rubric-hero">
+        <div className="rubric-hero-copy">
+          <p className="eyebrow">Rubric Review</p>
+          <h1 className="rubric-title">Generate and refine the scoring guide</h1>
+          <p className="rubric-copy">
+            Review the rubric, request revisions with specific feedback, then
+            approve the final draft before moving into grading.
+          </p>
         </div>
 
-        <div className="builder-grid">
-          <div className="editor-block">
-            <label htmlFor="rubric-questions">Question Source</label>
-            <textarea
-              id="rubric-questions"
-              value={questionText}
-              onChange={(event) => setQuestionText(event.target.value)}
-            />
-
-            <button type="button" className="primary-btn" onClick={handleGenerateRubric}>
-              Generate Rubric
-            </button>
+        <div className="rubric-hero-meta">
+          <div className="hero-stat">
+            <span>Questions</span>
+            <strong>{questions.length} detected</strong>
           </div>
+          <div className="hero-stat">
+            <span>Status</span>
+            <strong>{statusLabel}</strong>
+          </div>
+        </div>
+      </section>
 
-          <div className="editor-block">
-            <label htmlFor="rubric-draft">Current Rubric Draft</label>
-            <textarea
-              id="rubric-draft"
-              value={rubricText}
-              onChange={(event) => setRubricText(event.target.value)}
-            />
+      <section className="panel rubric-builder">
+        <div className="rubric-grid">
+          <section className="editor-card">
+            <div className="editor-card-head">
+              <div>
+                <p className="tiny-label">Source</p>
+                <h2>Question Source</h2>
+              </div>
+            </div>
 
-            <div className="button-row">
+            <div className="editor-stack">
+              <label htmlFor="rubric-questions" className="field-label">
+                Review question set
+              </label>
+              <textarea
+                id="rubric-questions"
+                className="editor-textarea editor-textarea--lg"
+                value={questionText}
+                onChange={(event) => setQuestionText(event.target.value)}
+              />
+            </div>
+
+            <div className="editor-actions">
+              <button type="button" className="primary-btn" onClick={handleGenerateRubric}>
+                Generate Rubric
+              </button>
+            </div>
+          </section>
+
+          <section className="editor-card">
+            <div className="editor-card-head">
+              <div>
+                <p className="tiny-label">Draft</p>
+                <h2>Current Rubric Draft</h2>
+              </div>
+
+              <div className={statusClass}>{statusLabel}</div>
+            </div>
+
+            <div className="editor-stack">
+              <label htmlFor="rubric-draft" className="field-label">
+                Edit rubric text
+              </label>
+              <textarea
+                id="rubric-draft"
+                className="editor-textarea editor-textarea--lg"
+                value={rubricText}
+                onChange={(event) => setRubricText(event.target.value)}
+              />
+            </div>
+
+            <div className="editor-actions">
               <button
                 type="button"
                 className="primary-btn"
@@ -149,27 +179,33 @@ export default function RubricReviewPage() {
 
               <button
                 type="button"
-                className="secondary-btn"
+                className="ghost-btn"
                 onClick={handleRequestRevision}
               >
                 Request Revision
               </button>
             </div>
-          </div>
+          </section>
         </div>
 
         {showRevisionPanel && (
-          <div className="review-panel">
-            <div className="review-panel-head">
+          <section className="editor-card revision-card">
+            <div className="editor-card-head">
               <div>
+                <p className="tiny-label">Feedback</p>
                 <h2>Revision Request</h2>
-                <p>Tell the system what should be improved before regenerating the rubric.</p>
               </div>
             </div>
 
-            <div className="review-form-grid">
-              <div className="editor-block">
-                <label htmlFor="revision-reason">Reason</label>
+            <p className="section-note">
+              Tell the system what should be improved before regenerating the rubric.
+            </p>
+
+            <div className="revision-grid">
+              <div className="editor-stack">
+                <label htmlFor="revision-reason" className="field-label">
+                  Revision reason
+                </label>
                 <select
                   id="revision-reason"
                   className="select-input"
@@ -184,10 +220,13 @@ export default function RubricReviewPage() {
                 </select>
               </div>
 
-              <div className="editor-block">
-                <label htmlFor="reviewer-comment">Reviewer Comment</label>
+              <div className="editor-stack">
+                <label htmlFor="reviewer-comment" className="field-label">
+                  Reviewer comment
+                </label>
                 <textarea
                   id="reviewer-comment"
+                  className="editor-textarea editor-textarea--md"
                   value={reviewerComment}
                   onChange={(event) => setReviewerComment(event.target.value)}
                   placeholder="Example: Add stronger reasoning criteria, differentiate full credit from partial credit, and include expected OS concepts such as context switching, responsiveness, and fairness."
@@ -195,7 +234,7 @@ export default function RubricReviewPage() {
               </div>
             </div>
 
-            <div className="button-row">
+            <div className="editor-actions">
               <button
                 type="button"
                 className="primary-btn"
@@ -206,49 +245,68 @@ export default function RubricReviewPage() {
 
               <button
                 type="button"
-                className="secondary-btn"
+                className="ghost-btn"
                 onClick={() => setShowRevisionPanel(false)}
               >
                 Cancel
               </button>
             </div>
-          </div>
+          </section>
         )}
 
         {previousRubric && (
-          <div className="compare-panel">
-            <div className="review-panel-head">
+          <section className="editor-card compare-card">
+            <div className="editor-card-head">
               <div>
+                <p className="tiny-label">Comparison</p>
                 <h2>Revision Comparison</h2>
-                <p>Compare the previous draft with the revised rubric.</p>
               </div>
             </div>
 
-            <div className="builder-grid">
-              <div className="editor-block">
-                <label htmlFor="previous-rubric">Previous Draft</label>
-                <textarea id="previous-rubric" value={previousRubric} readOnly />
+            <p className="section-note">
+              Compare the previous draft with the revised rubric.
+            </p>
+
+            <div className="rubric-grid">
+              <div className="editor-stack">
+                <label htmlFor="previous-rubric" className="field-label">
+                  Previous draft
+                </label>
+                <textarea
+                  id="previous-rubric"
+                  className="editor-textarea editor-textarea--lg preview-textarea"
+                  value={previousRubric}
+                  readOnly
+                />
               </div>
 
-              <div className="editor-block">
-                <label htmlFor="revised-rubric">Revised Draft</label>
-                <textarea id="revised-rubric" value={rubricText} readOnly />
+              <div className="editor-stack">
+                <label htmlFor="revised-rubric" className="field-label">
+                  Revised draft
+                </label>
+                <textarea
+                  id="revised-rubric"
+                  className="editor-textarea editor-textarea--lg preview-textarea"
+                  value={rubricText}
+                  readOnly
+                />
               </div>
             </div>
-          </div>
+          </section>
         )}
 
         {status === 'approved' && (
-          <div className="approval-banner">
+          <section className="approval-banner">
             <div>
+              <p className="tiny-label">Ready</p>
               <h2>Rubric approved</h2>
               <p>The scoring guide is ready for submission grading.</p>
             </div>
 
-            <Link to="/grading" className="primary-link-btn">
+            <Link to="/grading" className="primary-btn">
               Continue to Grading
             </Link>
-          </div>
+          </section>
         )}
       </section>
     </main>

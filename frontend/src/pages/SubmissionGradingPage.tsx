@@ -4,29 +4,27 @@ import { gradeBatch } from '../lib/api'
 export default function SubmissionGradingPage() {
   const [jsonInput, setJsonInput] = useState(`[
   {
-    "student_id": "001",
-    "answer": "Deadlock happens because processes wait for resources in circular wait. Use resource ordering to prevent it."
+    "student_id":"001",
+    "answer":"Deadlock happens because processes wait for resources in circular wait. Use resource ordering to prevent it."
   },
   {
-    "student_id": "002",
-    "answer": "Deadlock means programs wait forever."
+    "student_id":"002",
+    "answer":"Deadlock means programs wait forever."
   },
   {
-    "student_id": "003",
-    "answer": "Deadlock occurs when resources are locked and processes cannot continue. Prevention can use ordering."
+    "student_id":"003",
+    "answer":"Deadlock occurs when resources are locked. Prevention can use ordering."
   }
 ]`)
 
-  const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
   async function handleRun() {
     try {
       setLoading(true)
-
-      const submissions = JSON.parse(jsonInput)
-      const result = await gradeBatch(submissions)
-
+      const parsed = JSON.parse(jsonInput)
+      const result = await gradeBatch(parsed)
       setData(result)
     } catch {
       alert('Invalid JSON or backend error.')
@@ -36,65 +34,83 @@ export default function SubmissionGradingPage() {
   }
 
   return (
-    <main className="page-content">
-      <section className="page-header-card">
-        <p className="eyebrow">Submission Grading</p>
-        <h1 className="page-title">Batch grade a whole class</h1>
-        <p className="page-copy">
-          Upload multiple submissions and auto-grade instantly.
-        </p>
+    <main className="shell page">
+      <section className="page-head premium-head">
+        <div>
+          <p className="eyebrow">Live Grading</p>
+          <h1>Grade a whole class in one run</h1>
+          <p className="subtle">
+            Batch grading with review-first workflow and confidence flags.
+          </p>
+        </div>
+
+        <button
+          className="primary-btn"
+          onClick={handleRun}
+          disabled={loading}
+        >
+          {loading ? 'Grading...' : 'Run Batch Grading'}
+        </button>
       </section>
 
-      <section className="section-panel">
-        <div className="editor-block">
-          <label>Batch Submission JSON</label>
+      <section className="grading-layout">
+        <div className="panel premium-panel">
+          <div className="panel-head">
+            <h3>Submission Input</h3>
+            <span className="tiny-label">JSON Upload</span>
+          </div>
 
           <textarea
-            rows={14}
+            rows={18}
             value={jsonInput}
             onChange={(e) => setJsonInput(e.target.value)}
           />
+        </div>
 
-          <button
-            className="primary-btn"
-            onClick={handleRun}
-            disabled={loading}
-          >
-            {loading ? 'Grading...' : 'Run Batch Grading'}
-          </button>
+        <div className="grading-side">
+          <div className="metric-card big-metric">
+            <span>Students Loaded</span>
+            <strong>{data ? data.count : 3}</strong>
+          </div>
+
+          <div className="metric-card big-metric">
+            <span>Average Score</span>
+            <strong>{data ? data.average_score : '--'}</strong>
+          </div>
+
+          <div className="metric-card big-metric">
+            <span>Needs Review</span>
+            <strong>{data ? data.review_count : '--'}</strong>
+          </div>
+
+          <div className="metric-card">
+            <span>Status</span>
+            <strong>
+              {loading
+                ? 'Running'
+                : data
+                ? 'Completed'
+                : 'Idle'}
+            </strong>
+          </div>
         </div>
       </section>
 
       {data && (
         <>
-          <section className="section-panel">
-            <div className="kpi-grid">
-              <div className="kpi-card">
-                <h2>Students</h2>
-                <p className="kpi-value">{data.count}</p>
-              </div>
-
-              <div className="kpi-card">
-                <h2>Average Score</h2>
-                <p className="kpi-value">{data.average_score}</p>
-              </div>
-
-              <div className="kpi-card">
-                <h2>Needs Review</h2>
-                <p className="kpi-value">{data.review_count}</p>
-              </div>
+          <section className="panel priority-panel">
+            <div className="panel-head">
+              <h3>Priority Review Queue</h3>
+              <span className="tiny-label">
+                Inspect uncertain cases first
+              </span>
             </div>
-          </section>
 
-          <section className="section-panel">
-            <h2 className="section-title">Review Queue</h2>
-
-            <table className="results-table">
+            <table className="clean-table">
               <thead>
                 <tr>
                   <th>Student</th>
                   <th>Question</th>
-                  <th>Score</th>
                   <th>Confidence</th>
                   <th>Reason</th>
                 </tr>
@@ -105,7 +121,6 @@ export default function SubmissionGradingPage() {
                   <tr key={item.student_id}>
                     <td>{item.student_id}</td>
                     <td>{item.question_id}</td>
-                    <td>{item.score}/10</td>
                     <td>{Math.round(item.confidence * 100)}%</td>
                     <td>{item.reason}</td>
                   </tr>
@@ -114,15 +129,19 @@ export default function SubmissionGradingPage() {
             </table>
           </section>
 
-          <section className="section-panel">
-            <h2 className="section-title">All Results</h2>
+          <section className="panel">
+            <div className="panel-head">
+              <h3>All Results</h3>
+              <span className="tiny-label">
+                Final scoring output
+              </span>
+            </div>
 
-            <table className="results-table">
+            <table className="clean-table">
               <thead>
                 <tr>
                   <th>Student</th>
                   <th>Score</th>
-                  <th>Confidence</th>
                   <th>Status</th>
                   <th>Reasoning</th>
                 </tr>
@@ -133,12 +152,11 @@ export default function SubmissionGradingPage() {
                   <tr
                     key={item.student_id}
                     className={
-                      item.review_required ? 'flag-row' : ''
+                      item.review_required ? 'warn-row' : ''
                     }
                   >
                     <td>{item.student_id}</td>
                     <td>{item.score}/10</td>
-                    <td>{Math.round(item.confidence * 100)}%</td>
                     <td>
                       {item.review_required
                         ? 'Needs Review'

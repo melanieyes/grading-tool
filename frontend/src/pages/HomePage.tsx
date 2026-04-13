@@ -2,42 +2,83 @@ import { Link } from 'react-router-dom'
 
 export default function HomePage() {
   return (
-    <main className="page-content">
-      <section className="hero-panel compact-hero">
-        <p className="eyebrow">Fulbright University Vietnam</p>
-        <h1>Fulbright Grade Master</h1>
-        <p className="hero-copy narrow">
-          A cleaner workflow for question intake, rubric review, and submission grading.
-        </p>
+    <main className="shell home-page">
+      <section className="hero-card">
+        <div className="hero-left">
+          <p className="eyebrow">Fulbright University Vietnam</p>
 
-        <div className="hero-actions">
-          <Link to="/intake" className="primary-link-btn">
-            Start with Question Intake
-          </Link>
-          <Link to="/rubric" className="secondary-link-btn">
-            Review Rubric
-          </Link>
+          <h1 className="hero-title">
+            Clearer grading for reasoning work.
+          </h1>
+
+          <p className="hero-copy">
+            Intake questions, refine the rubric, and review flagged submissions
+            in one calm workflow.
+          </p>
+
+          <div className="hero-actions">
+            <Link to="/intake" className="primary-btn">
+              Start grading
+            </Link>
+
+            <Link to="/rubric" className="ghost-btn">
+              Review rubric
+            </Link>
+          </div>
+        </div>
+
+        <div className="hero-right">
+          <div className="hero-stat">
+            <span>Workflow</span>
+            <strong>3 clear steps</strong>
+          </div>
+
+          <div className="hero-stat">
+            <span>Review</span>
+            <strong>Flag uncertain cases</strong>
+          </div>
+
+          <div className="hero-stat">
+            <span>Output</span>
+            <strong>Score + explanation</strong>
+          </div>
         </div>
       </section>
 
-      <section className="feature-grid">
-        <Link to="/intake" className="feature-card feature-link">
-          <span className="feature-number">01</span>
-          <h2>Question Intake</h2>
-          <p>Add questions manually or upload a JSON file.</p>
-        </Link>
+      <section className="workflow-section">
+        <div className="section-intro">
+          <p className="eyebrow">Workflow</p>
+          <h2>Three focused steps</h2>
+        </div>
 
-        <Link to="/rubric" className="feature-card feature-link">
-          <span className="feature-number">02</span>
-          <h2>Rubric Review</h2>
-          <p>Generate, revise, and approve the scoring guide.</p>
-        </Link>
+        <div className="workflow-grid">
+          <Link to="/intake" className="workflow-step-card">
+            <div className="step-top">
+              <span className="step-index">01</span>
+              <span className="step-line" />
+            </div>
+            <h3>Question Intake</h3>
+            <p>Upload or paste exam questions and preview the structure clearly.</p>
+          </Link>
 
-        <Link to="/grading" className="feature-card feature-link">
-          <span className="feature-number">03</span>
-          <h2>Submission Grading</h2>
-          <p>Upload answers and preview scores with feedback.</p>
-        </Link>
+          <Link to="/rubric" className="workflow-step-card">
+            <div className="step-top">
+              <span className="step-index">02</span>
+              <span className="step-line" />
+            </div>
+            <h3>Rubric Review</h3>
+            <p>Generate scoring criteria, revise wording, and approve the final rubric.</p>
+          </Link>
+
+          <Link to="/grading" className="workflow-step-card">
+            <div className="step-top">
+              <span className="step-index">03</span>
+              <span className="step-line" />
+            </div>
+            <h3>Submission Grading</h3>
+            <p>Grade in batch, inspect flagged cases, and keep instructors in the loop.</p>
+          </Link>
+        </div>
       </section>
     </main>
   )
