@@ -1,6 +1,7 @@
 :root {
-  --brand-050: #f3f7ff;
-  --brand-100: #d8e4ff;
+  --brand-050: #f6f8ff;
+  --brand-100: #dce6ff;
+  --brand-200: #bfd0ff;
   --brand-400: #2d57cb;
   --brand-600: #0e319f;
   --brand-700: #08277f;
@@ -9,9 +10,14 @@
   --accent-500: #f3ad1e;
   --accent-600: #d69413;
 
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #ffffff;
+  --line: rgba(8, 39, 127, 0.12);
+
+  --ink-900: #102246;
   --ink-700: #1c2a4a;
-  --ink-600: #47587f;
-  --ink-500: #5c6d93;
+  --ink-600: #506182;
+  --ink-500: #6b7a9b;
 
   --display-font: Georgia, 'Times New Roman', Times, serif;
   --body-font: Georgia, 'Times New Roman', Times, serif;
@@ -32,8 +38,8 @@ body {
   font-family: var(--body-font);
   color: var(--ink-700);
   background:
-    radial-gradient(circle at 20% 0%, rgba(8, 39, 127, 0.11), transparent 40%),
-    linear-gradient(180deg, #eef3ff 0%, #f7f9ff 100%);
+    radial-gradient(circle at top left, rgba(14, 49, 159, 0.10), transparent 32%),
+    linear-gradient(180deg, #eef3ff 0%, #f8faff 55%, #f3f6ff 100%);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
