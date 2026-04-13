@@ -115,6 +115,7 @@ def run_grading(
     model_name: str | None = None,
     limit_students: int | None = None,
     limit_questions: int | None = None,
+    question_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Run grading over the benchmark and save results.
@@ -127,6 +128,7 @@ def run_grading(
         model_name: optional Gemini model override
         limit_students: optional debugging limit
         limit_questions: optional debugging limit per student
+        question_ids: optional explicit question IDs to grade, e.g. ["q7", "q8"]
 
     Returns:
         dict payload with run metadata and results
@@ -152,14 +154,19 @@ def run_grading(
     if limit_students is not None:
         students = students[:limit_students]
 
+    wanted_question_ids = set(question_ids) if question_ids else None
+
     for student in students:
         student_id = student["student_id"]
         answers = [
-                ans for ans in student.get("answers", [])
-                if ans["question_id"] in question_index and ans["question_id"] in rubric_index]
+            ans
+            for ans in student.get("answers", [])
+            if ans["question_id"] in question_index and ans["question_id"] in rubric_index
+        ]
 
-
-        if limit_questions is not None:
+        if wanted_question_ids is not None:
+            answers = [ans for ans in answers if ans["question_id"] in wanted_question_ids]
+        elif limit_questions is not None:
             answers = answers[:limit_questions]
 
         for ans in answers:
