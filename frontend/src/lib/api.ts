@@ -1,19 +1,21 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
-export async function fetchPromptRuns() {
-  console.log('API_BASE =', API_BASE)
-  console.log('Calling =', `${API_BASE}/api/runs`)
-
-  const response = await fetch(`${API_BASE}/api/runs`)
-
-  console.log('Response status =', response.status)
+export async function gradeBatch(submissions: {
+  student_id: string
+  answer: string
+}[]) {
+  const response = await fetch(`${API_BASE}/api/grade-batch`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ submissions }),
+  })
 
   if (!response.ok) {
-    throw new Error(`Failed to load runs: ${response.status}`)
+    throw new Error('Batch grading failed')
   }
 
-  const data = await response.json()
-  console.log('Response data =', data)
-
-  return data
+  return await response.json()
 }
