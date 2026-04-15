@@ -1,3 +1,4 @@
+```
 grading-tool/
 ├── .env
 ├── .gitignore
@@ -107,3 +108,4 @@ grading-tool/
     ├── test_evaluation_metrics.py
     ├── test_loader.py
     └── test_rubric_grader_schema.py
+```
