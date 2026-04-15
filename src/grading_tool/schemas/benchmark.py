@@ -86,3 +86,20 @@ class ProfessorGradeEntry(BaseModel):
 
 class ProfessorGradesFile(BaseModel):
     __root__: List[ProfessorGradeEntry]
+
+
+class BenchmarkManifest(BaseModel):
+    """
+    Portable benchmark descriptor for course/exam reuse.
+
+    All file paths can be relative to benchmark_dir or absolute.
+    """
+
+    course_id: str
+    exam_id: str
+    question_path: str
+    rubric_path: str
+    solutions_path: str
+    student_answers_paths: List[str]
+    professor_grade_path: Optional[str] = None
+    prompt_name: Optional[str] = None
