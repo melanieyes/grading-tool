@@ -7,12 +7,38 @@ from src.grading_tool.grading.orchestrator import run_grading
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run rubric-based grading on a benchmark."
+        description="Run rubric-based grading on a benchmark. Supports flexible JSON filenames and multiple answer files."
     )
     parser.add_argument(
         "--benchmark_dir",
         default="data/benchmarks/cs302_final_fall2025",
-        help="Directory containing question_final.json, final_rubric.json, final_student_answers.json, and solutions_final.json",
+        help="Directory containing benchmark JSON files (question/rubric/answers/solution).",
+    )
+    parser.add_argument(
+        "--manifest_path",
+        default=None,
+        help="Optional path to benchmark manifest JSON. If omitted, benchmark_manifest.json in benchmark_dir is auto-used when present.",
+    )
+    parser.add_argument(
+        "--question_path",
+        default=None,
+        help="Optional explicit path to question JSON file.",
+    )
+    parser.add_argument(
+        "--rubric_path",
+        default=None,
+        help="Optional explicit path to rubric JSON file.",
+    )
+    parser.add_argument(
+        "--solutions_path",
+        default=None,
+        help="Optional explicit path to solutions JSON file.",
+    )
+    parser.add_argument(
+        "--student_answers_paths",
+        nargs="+",
+        default=None,
+        help="Optional list of student answer JSON paths. If omitted, auto-discovers answer files in benchmark_dir.",
     )
     parser.add_argument(
         "--output_path",
@@ -64,6 +90,11 @@ def main() -> None:
         limit_students=args.limit_students,
         limit_questions=args.limit_questions,
         question_ids=args.question_ids,
+        question_path=args.question_path,
+        rubric_path=args.rubric_path,
+        solutions_path=args.solutions_path,
+        student_answers_paths=args.student_answers_paths,
+        manifest_path=args.manifest_path,
     )
 
     print(f"Saved grading run to: {args.output_path}")
