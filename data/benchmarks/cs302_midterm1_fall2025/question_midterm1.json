@@ -1,0 +1,83 @@
+{
+    "course": "CS302",
+    "term": "Fall 2025",
+    "exam": "Mid-term exam 1",
+    "duration_minutes": 85,
+    "total_points": 175,
+    "benchmark_notes": {
+      "selected_for": "Algorithm design and analysis benchmark",
+      "total_selected_questions": 7,
+      "question_ids": [
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7"
+      ]
+    },
+    "questions": [
+      {
+        "question_id": "q3",
+        "points": 12,
+        "benchmark_type": "short_answer",
+        "question_text": "Enumerate all the algorithm design techniques you have learned in this course so far. For each technique, list 4 problems where it can be applied to solve them efficiently."
+      },
+      {
+        "question_id": "q4",
+        "points": 40,
+        "benchmark_type": "algorithm_analysis",
+        "question_text": "Enumerate all algorithms we have learned to find the shortest path between two nodes in a weighted graph. For each algorithm, you need",
+        "subparts": [
+            {
+                "part_id": "q4i",
+                "question_text": "(i) Briefly explain how it finds the shortest path from node '1' to node '6' of the graph above"
+            },
+            {
+                "part_id": "q4ii",
+                "question_text": "(ii) What is the advantage of this algorithm?"
+            },
+            {
+                "part_id": "q4iii",
+                "question_text": "(iii) What is the disadvantage of this algorithm? And explain why this disadvantage occurs"
+            }         
+        ]
+      },
+      {
+        "question_id": "q5",
+        "points": 34,
+        "benchmark_type": "algorithm_evaluation",
+        "question_text": "We need to find the closest pair from two sorted arrays, check the solution suggested by ChatGPT and answer the questions below",
+        "subparts": [
+          {
+            "part_id": "q5a",
+            "question_text": "Do we have an algorithm that runs in O(m+n) using two pointers, as ChatGPT suggested? If yes, briefly explain why the 'two pointers' approach works. If no, provide a counterexample."
+          },
+          {
+            "part_id": "q5b",
+            "question_text": "Is the divide-and-conquer algorithm (suggested by ChatGPT) correct? Briefly explain why it is correct, or provide a counterexample if it is not."
+          },
+          {
+            "part_id": "q5c",
+            "question_text": "Is the time complexity stated by ChatGPT correct?"
+          },
+          {
+            "part_id": "q5d",
+            "question_text": "If not, provide the correct time complexity."
+          }
+        ]
+      },
+      {
+        "question_id": "q6",
+        "points": 40,
+        "benchmark_type": "algorithm_design",
+        "question_text": "Longest increasing path in matrix (from leetcode.com) Given an m x n integers matrix, develop an efficient algorithm to find the length of the longest increasing path in a matrix. From each cell, you can either move in four directions: left, right, up, or down. You may not move diagonally or move outside the boundary (i.e., wrap-around is not allowed)."
+      },
+      {
+        "question_id": "q7",
+        "points": 35,
+        "benchmark_type": "algorithm_design",
+        "question_text": "Billboard construction (from leetcode.com) You are installing a billboard and want it to have the largest height. The billboard will have two steel supports, one on each side. Each steel support must be an equal height. You are given a collection of rods that can be welded together. For example, if you have rods of lengths 1, 2, and 3, you can weld them together to make a support of length 6. Develop an efficient algorithm to Find the largest possible height of your billboard installation. If you cannot support the billboard, return 0. Find the two rod sets that support the largest height."
+      }
+    ]
+  }

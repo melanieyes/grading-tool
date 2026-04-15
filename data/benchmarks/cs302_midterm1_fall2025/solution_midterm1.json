@@ -1,0 +1,76 @@
+{
+    "course": "CS302",
+    "term": "Fall 2025",
+    "exam": "Mid-term exam 1",
+    "solution_notes": "Authoritative ground truth solutions for Mid-term 1. Each solution is comprehensive and covers the expected approaches to achieve full marks",
+    "questions": [
+      {
+        "question_id": "q3",
+        "benchmark_type": "short_answer",
+        "total_points": 12,
+        "solution": "The three algorithm design techniques are Divide and Conquer, Greedy, and Dynamic Programming. For full credit, 4 correct problem examples must be listed per technique. Examples: Divide & Conquer (Merge sort, Quick sort, Closest pair of points, Strassen's matrix multiplication); Greedy (Personal scheduling, Course scheduling, Kruskal's MST, Prim's MST); Dynamic Programming (Rod cutting, Knapsack, Bellman-Ford, Matrix chain multiplication)."
+      },
+      {
+        "question_id": "q4",
+        "benchmark_type": "algorithm_analysis",
+        "total_points": 40,
+        "solution": "The two algorithms learned to find the shortest path in a weighted graph are Bellman-Ford and Dijkstra.",
+        "subparts": [
+          {
+            "part_id": "q4i",
+            "correct_answer": "Bellman-Ford: Initializes distance to source node '1' as 0 and 100 (infinity) to other nodes, slowly adding vertices and updating distances. Dijkstra: From source node '1', distance is zero and 100 to other nodes, choosing the best vertex to connect based on distance and length of current nodes.",
+            "solution": "For Bellman-Ford: It initializes the distance to the source node as 0 and all other nodes to infinity. It then repeatedly relaxes all edges to find the shortest path. For Dijkstra: It initializes the distance to the source node as 0 and all others to infinity. It uses a greedy approach, picking the unvisited vertex with the smallest known distance to connect next."
+          },
+          {
+            "part_id": "q4ii",
+            "correct_answer": "Bellman-Ford: Can handle negative edge and cycle. Dijkstra: Faster.",
+            "solution": "The advantage of Bellman-Ford is its ability to handle graphs with negative edge weights and detect negative weight cycles. The advantage of Dijkstra is its speed; it is significantly faster than Bellman-Ford."
+          },
+          {
+            "part_id": "q4iii",
+            "correct_answer": "Bellman-Ford: Slower, because it searches thoroughly. Dijkstra: Cannot handle negative cycle and edge, because it has a greedy aspect.",
+            "solution": "The disadvantage of Bellman-Ford is that it is slower because it thoroughly searches and relaxes all edges in each pass. The disadvantage of Dijkstra is that it cannot correctly handle negative edge weights or negative cycles because of its greedy nature."
+          }
+        ]
+      },
+      {
+        "question_id": "q5",
+        "benchmark_type": "algorithm_analysis",
+        "total_points": 34,
+        "subparts": [
+          {
+            "part_id": "q5a",
+            "correct_answer": "Yes",
+            "solution": "Yes. A two-pointer approach starts with pointers at the beginning of both arrays. At each step, it calculates the difference, updates the minimum found so far, and increments the pointer that points to the smaller value. This ensures all elements are processed in O(m+n) time without skipping valid candidates."
+          },
+          {
+            "part_id": "q5b",
+            "correct_answer": "Yes",
+            "solution": "Yes, the divide-and-conquer algorithm is correct. By dividing array A and recursively searching, it guarantees that every element in A will eventually be matched with its closest element in B via binary search (either at the midpoint step or at the base case)."
+          },
+          {
+            "part_id": "q5c",
+            "correct_answer": "No",
+            "solution": "No, the time complexity stated by ChatGPT (O(log n * log m)) is incorrect."
+          },
+          {
+            "part_id": "q5d",
+            "correct_answer": "O(n log m)",
+            "solution": "The correct time complexity is O(n log m). Although it uses divide and conquer on array A, every single element in A is ultimately used as a target for a binary search in array B. Since there are n elements in A and binary search takes O(log m) on B, the total time is O(n log m)."
+          }
+        ]
+      },
+      {
+        "question_id": "q6",
+        "benchmark_type": "algorithm_design",
+        "total_points": 40,
+        "solution": "To find the longest increasing path efficiently, we must use Depth First Search (DFS) combined with Memoization (Dynamic Programming). From each cell, we explore its valid neighbors strictly greater in value. We store the longest path starting from cell (i, j) in a memoization table `memo[i][j]` to avoid redundant calculations. The time complexity of this approach is O(m * n) since each cell is computed exactly once. Brute force or greedy recursive approaches without memoization are too slow (exponential or factorial)."
+      },
+      {
+        "question_id": "q7",
+        "benchmark_type": "algorithm_design",
+        "total_points": 35,
+        "solution": "This problem requires an efficient Dynamic Programming algorithm. A brute-force recursive approach exploring all subset combinations takes O(3^n) and is too slow. \n\nThe optimal DP state tracks the height difference between the two supports. `dp[diff]` stores the maximum height of the taller support for a given difference `diff` between the two supports. We iterate through each rod, and for every existing `diff`, we create new states by either adding the rod to the taller support, the shorter support, or not using it. The final answer is `dp[0]`, representing the maximum height when the difference is zero."
+      }
+    ]
+  }

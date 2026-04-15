@@ -1,0 +1,960 @@
+[
+    {
+        "student_id": "001",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "- Divide and conquer: merge sort, quick sort, closest pair of points, power a^b\n- Greedy: personal scheduling, course scheduling, graphs\n- Dynamic programming: rod cutting, knapsack, bill board"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: From source node 1, distance is zero to node 1 and positive infinity to other nodes. Slowly adding vertices and update the distances.\nDijkstra: From source node 1, distance is zero to node 1 and positive infinity to other nodes. Choosing the best vertex to concect based on distance and length of current nodes."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman-Ford: Can handle negative edge & cycle.\nDijkstra: faster."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman-Ford: slower because it searches thoroughly.\nDijkstra: cannot handle negative cycle & edge because it has a greedy aspect."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. Because the two pointers traverse through two arrays without skipping any elements, all of them will be checked at least once. An item in A is compared to elements smaller than itself and 1 larger elements, since B is sorted this range will contain the nearest match of for the item in A."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes. For an element in A we can use binary search to find the nearest match in B. This is what happens the base case and the mid element in dividing. Because the base case happens when divide to 1 element, all element will be checked either with base case of mid element case."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "O(nlogm). Binary search on B (logm) is done for all elements in A (n). So the complexity is O(nlogm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Idea: greedy. \nComplexity: O(mnlog(mn)). \nInput: matrix. \nOutput: result. \nFunction: longest-increasing-path(matrix):\nm = len (matrix) \nif m==0: return 0 \nn = len(matrix[0]) \nif n==0: return 0 \nresult = 0 \na=new_array(m,n) \nc=new_array(m,n) \nfor i=1 to m: \nfor j=1 to n: \n a.append(tuple(matrix[i][j],i,j)) \na.sort(key: lambda t:t[0]) \nfor i=1 to mxn: \nhelper(a[i]) \nreturn result \nfunction helper (tuple) \nv = tuple[0] \nx = tuple[1]\ny = tuple[2] \nres=1 \nif matrix[x-1][y] valid and larger than  v \nres=max(res, c[x-1][y]) \nif matrix[x+1][y] valid and larger than v  \nres=max(res,c[x+1][y]) \nif matrix[x][y-1] valid and larger than v \nres=max(res,c[x][y-1] \nif matrix[x][y+1] valid and larger than v \nres=max(res,c[x][y+1] \nc[x][y]=res \nresult=max(result,res)" 
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Input: rods \nOuput: result: highest height, subset 1, subset 2. \nIdea: brute-force (exhaustive) \nComplexity: O(3^n) \nfunction find_rods(rods): \nreturn helper_recursion(1,0,0,1,{},{}) \nfunction helper_recursion (i, vl, vr, sl, sr) \nres=0,{},{} \n if vl==vr: res=vl,sl,sr \n if i>len(rods): return res \n tmp=helper_recursion(i+1,vl,vr,sl,sr) \n if tmp[0]>res[0]: res=tmp \n sl.add(rods[i]) \ntmp=helper_recursion(i+1,vl+rods[i],vr,sl,sr) \nif tmp[0]>res[0]: res=tmp \nsl.remove(rods[i]) \nsr.add(rods[i]) \ntmp=helper_recursion(i+1,vl,vr,sl,sr) \nif tmp[0]>res[0]: res=tmp \nsr.remove(rods[i])\nreturn res"
+            }
+        ]
+    },
+    {
+        "student_id": "002",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and conquer: sorting (quick sort), searching (binary search), closest pair, matrix multiplication.\nGreedy: shortest path, coin exchange, minimum spanning tree, knapsack \nDynamic programming: knapsack, shortest path, rod cutting, gene matching."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: DP-based, in each iteration, traverse through all edges to update shortest path. Number of iteration: |V|-1. Work with negative edges, but not negative cycle.\nDijkstra: Greedy-based. In each iteration, find the node with current shortest path to visit, then update the shortest path of the adjacent nodes. The process repeat |V| times. node with non-negative edges only."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman-ford: work with negative edges.\nDijkstra: fast."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman-ford: slow. Complexity O(|V||E|) \nDijkstra: cannot work with negative edges. Because Dijkstra's assumption is all non-negative edges so each node will be visited only once. In case of negative edges, a node might be updated to more time and need re-visit."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "a. Yes. we see that closest pair of a might be b_{j} or b_{j+1} (where b_{j} <= a_{i} < b_{j+1}). Hence, for each a we only need two check with only 2 values. The two-pointer help us do that efficently by moving the pointer on b as close as the pointer on a as possible (in terms of value, not index)."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes. Although stated as divide-and-conquer, the algorithm just iterate through all a_i and find element in b closest to it. This is similar to the two-pointer approach and is correct since all potential pairs are considered."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "Correct: O(n log m)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "def longest_path(): \n//If we consider each cell to be a node, and we add a directed edge between u, v if value in cell u smaller than cell v. We then have a DAG. Let's call it G(V, E). \nd[ ]=int[V] //d[i] keeps the value of shortest path that end at node i. initially d[i]=0 \nSort V in topological order (using dfs) \nfor u in V: \nfor v in adj(u): \nd[v] = max(d[v], d[u]+1)\nres = maximum value among all d[v], for all v belongs to V \nreturn res \nTime complexity: O(|V|+|E|)"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "//change array name \nLet a = rods \nConst Max = sum of all a_{i} //(total sum of all rods) \nint max_height() {\n// Greedy algorithm: Iterate from the largest height to the smallest height and add to the shorter pole \n//We have two vector representing the two steel supports, and two array checking if sum can be created from values in vector (e.g. d_1[10]=True mean that 10 can be summed up using value in V_1), intially: d_1[i]=d_2[i]=False, d_1[0]=d_2[10]=True \nv_1={} \nv_2={} \nd_1[]=int[Max] \nd_2[]=int[Max] \ns1=s2=0 //current height of 2 poles \nres = 0;\nfor (int i=n; i >= 1; i--) { \nif (s2 >= s1) { \n//update v_1 \ns_1+-=a[i]; \nv1.push_back(a[i]); \n//update d1 \nfor (int j=s_1; j >= a[i]; j--) { \nif (d_1[j-a[i]] == True) { \nd_1[j] = True; \n//repeat similarly with v_2 and d_2 \nif (s1 == s2) \nres = Max(res, s_1) \nif (s_1 > s_2 and d_1[s_1-s_2] == True) \nres = max(res, s_2) \nif (s_2 > s_1 and d_2[s_2-s_1] == True) \nres = max(res, s_2) \n} \nreturn res \n} \nTime complexity: O(nMax) where Max is total sum of all rods."
+            }
+            ]
+        },
+        {
+            "student_id": "003",
+            "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: Exponentiation, Sorting (Merge Sort), Matrix multiplication, Min/max problem.\nGreedy: Knapsack, Activity Selection, Course Scheduling. \nDynamic Programming: Knapsack, Fibonacci (Memoization), Common Subsequence, Rod Cutting. \nGraph: Single Source Shortest Path, Minimum Spanning tree, Topological Sorting, DFS/BFS."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: Examine each edge. (1,2), (1,3), (2,3), (2,4), (2,5), (4,5), (5,6). Relaxing all the path to 1 -> 6 by: d' = min{d[x] + cost(x,6), d[6]} where x is some nodes between (1,6). Always update and keep the minimum among edges above. The solution converges after 5 iterations guarantee shortest path solution. \nDijkstra: Put the lowest distance to queue. Examine each distance pop out of queue to other node, relaxing them using the same formula. Until no more shortest distance popped out, the solution converges."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "The advantage of Bellman Ford is always consider all cases, only update if d[x] + cost(x,y) < d[y] then d[y] = d[x] + cost(x,y) for every nodes connecting x, y. \nConstrained by negative weights, since it updates repeatedly."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Disadvantage of Dijkstra is only consider element popped out of queue as shortest, when it pops out it doesn't recalculate if, thus, is a more shorter path compare to the final solution (fails to negative weights edge)."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "No. It stills need to compare each results in O(n*m)."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "A into two halves. select mid point and compare with b'={min|A_{left}-b|, min|A_{right}-b}"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "T(n,m) = 2T(n/2) + logn + O(1) = O(logmax(n,m))"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q7",
+                "student_answer": ""
+            }
+        ]
+    },
+    {
+        "student_id": "004",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: Closest pair, Matrix multiplication, Sorting. \nGreedy: Knapsack, Dijistra, Activity Selection, Scheduling \nDynamic Programming: Rod Cutting, Longest common subsequence, Bellman-Ford, Coin change."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijkstra: Start from node s, mark s visited. Go through the edge with the least weight. Update the node we reach with shortest path, and its neighbor. Mark this node visited. Find the shortest path to the next node. Update that node neighbor, with the shortest path neighbor. Repeat until we reach destination d. \nBellman Ford: Initialize a |V|x|E| array. At each iteration, find the shortest path from a node to another with length i. Go to the next iteration. At the end, take the value at A[v][c]."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman Ford: Can hande negative edge weight. \nDijkstra: Fast (O(|V|log|E|)) Compare to Bellman Ford O(|V||E|)"
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman Ford: Slow because we have to fill in every entry of the table. \nDijkstra: Cannot hande negative edge weight, as assumption you can go from A to B with 1 edge is shortest when it's the minimum outgoing edge from A. If it have negative weight, A->B is not guarantee to be shortest."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "No. If start from left, it will get stuck at 2 as you cannot improve the distance. The input arrays are sorted increasingly. If you start from right, it will get stuck in the first step, as no move will improve its position either. When we have two pointers at the start, we will get stuck in local minimum, as next step will increase the loss."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes. It is essentially performing binary search every element in A."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "O(nlog(m))"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Input: matrix (m x m) \nOutput: int \nComplexity: O(m^2n^3) \nfunction path(Matrix M) \ndp_up = m x n matrix of 1s \ndp_down = m x n matrix of 1s \nfor i in range(m): \n  for j in range(n): \n    if M[m][n] < M[m+1][n]: \n      dp_up[m+1][n] = dp_up[m][n] + 1\n    else if M[m][n] > M[m+1][n]:\n      dp_down[m+1][n] = dp_down[m][n] + 1 \ndp_left = m * n matrix of 1s \ndp_right = m * n matrix of 1s \nfor i in range(m):\n  for j in range(n-1, 0, -1):\n    if M[m][n] < M[m][n-1]:\n      dp_left[m][n-1] = dp_left[m][n] + 1\n    else if M[m][n] > M[m+1][n]:\n      dp_left[m][n-1] = dp_right[m][n] + 1\n  return max-entry(dp_up, dp_down, dp_left, dp_right)"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Input: an array \nOutput: int, set, set \nfunction bill_board(array A)\n  for i in range(sum(A)):\n    dp = [0 * i]\n    subset_1 = []\n    subset_2 = []\n    for num in A:\n      for j in range(i, num-1, -1):\n        dp[j] = dp[i] or dp[i-num]\n        if dp[i]:\n          subset_1 = subset_1 U {num}\n        if dp[i-num]:\n          subset_2 = subset_2 U {num}\nreturn i, subset_1, subset_2\n  return 0, [], []"
+            }
+        ]
+    },
+    {
+        "student_id": "005",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "- Brute force (Exhaustive search): Matrix Multiplication \n- Divide and conquer: Merge Sort, Quick Sort, Closest Pair, Fibonacci sequence \n- Greedy: activity selection, Prim, kruskal, Money exchange \n- Dynamic programming: knapsack, Longest increasing sub sequence, Rod cutting, Pot of gold"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "For this graph with negative edge, we can only use Bellman-Ford. Path from 1 to 6 can go 1 -> 2 -> 4 -> 6. d(6)=3. As it has negative weight, can not use Dijkstra."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Advantage is the Bellman Ford can handle negative edges"
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman Ford cannot handle negative cycle and the time complexity is high as O(|V||E|) as it has to check for updates |V||E| times in the table."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes, we do have the two pointers approach run in O(m+n). As pointer move whichever has smaller element -> maximum times it will move is m+n times for both arrays."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "this is incorrect (inefficient). Wrong in the combine step: As the problem requires to find pair in each array S. But the pseudo code combine closest pair in left and in right (contradict to prompt). A=[0,2,2] B=[0,3,4,5] => GPT code will return |a-b| = |2-2|=0 (incorrect)"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "Incorrect"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "Correct: O((n+m)log(n+m))"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "We apply DFS approach (smallest possible and stack first) \n1/ Sorted the tiles in matrix.\nStart with the smallest tiles.\n2/ Consider the neighbor of it. if the weight is bigger, choose the direction go to the smallest possible tiles.\n3/ If there is no possible tiles to go to, break.\nTry to start with another tiles (from the sorted list) that is unvisited yet, then loop through 2 to 3, until all node tiles is visited. \nCan stop early when the remaining unvisited tiles is smaller than the temporary longest. (2: add a count that each time move, count += 1) and store a list of count of iterations. \nKey idea: explore all possible path by DFS and store it for comparison."
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "We use dynamic programming for this.\nIdea: we start with the first rod. Compute the difference in height between two sides. For each rod added to table, consider 3 cases:\n- add to the shorter side\n- add to larger side\n- or not add at all\nSo, Keep adding until we find the when diff = 0, trace back to find the possible subsets.\nThus, the complexity is O(sum of rod)"
+            }
+        ]
+    },
+    {
+        "student_id": "006",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "1. Divide and Conquer Algorithm\nProblem: Find max, min integer in a list, Sort an array of integer, Matrix multiplication, Find the closest pair, Sum range count\n2. Greedy Algorithm\nProblem: Schedule courses so the maximum number of courses fit. Choose number of activities so that we can do maximum activities. Money changing. Choose suitable vehicle to travel with minimum cost\n3. Dynamic Programing Algorithm\nProblem: Knapsack problem. Fibonacci number. Rod cutting. Max - min sub array.\n4. Graph Algorithm\nProblem: Find shortest path, Minimum Spanning Trees Coin change. Overlapping substructure."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijkstra Algorithm:\nFrom the starting node, assign the weight for its neighbor and relax the other node. Choose the shortest path/minimum weight. Continue relaxing the node. If it form a cycle, do not choose that path/edges\nBellman Ford Algorithm:\nRelax all the node of the graph. Traverse through the all the edges for |V| - 1 times. After |V| - 1 times, TRUE if there is no negative weight cycle."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman Ford: work for negative weight edges, detect negative cycle.\nDijkstra: Efficient for graph without negative edges weights, has memory usage and work better for sparse non-negative graph."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra Algorithm disadvantage: Can not work with negative weight edges, because it choose the shortest/minimum weight path/edges so with negative weight, after |V|-1 it can still continue choosing shortest path.\nBoth algorithms are not work with cycle graph because it will create an decreasing distance loop."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes, there is \"two pointers\" algorithm that sum in O(m+n), It work with conditions: We only have to traverse through each element in the array once (array already sorted). It work with a sorted array, meaning only move forward."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "It correct. Because at each step, it choose the minimum distance of the pair"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "O(nlogm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "\nFunction longest Increaming Path (matrix):\nDEFINE rows = number of rows in matrix\nDEFINE cols = member of columns in matrix\nCREATE memo = empty dictionary\n\nFUNCTION dfs(row, col):\n  if (row, col) exist in memo\n    return memo [(row,col)]\n  max_length = 0\n  directions =[(-1,0),(0,1),(1,0),(0,-1)] //direction: up, right, down, left.\n  FOR each (dr,dc) in directions:\n    new_row = row + dr\n    new_col = col + dc\n    if new_row and new_col are within matrix AND matrix[new_row][new_col] > matrix[row][col]:\n      path_length = dfs(new_row, new_col)\n      max_length = MAX(max_length, path_length)\nmemo [(row, col )]=max_length +1\nRETURN memo [(row,col)]\n\nmax_path = 0\nFOR i in range(0,rows):\n  FOR j in range(0,cols):\n    max_path = MAX(max_path, dfs)\nRETURN max_path"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "function tallest Billboard (rods[]):\nCREATE dictionary dp = {0:0}\nFor each rode in rods:\n  CREATE new dictionary cur = empty\n  For each (diff, height) in dp:\n    // Case 1: Add rod to the taller side.\n    newDiff1 = diff + rod\n    newHeight1 = height + rod\n    cur[newDiff1] = max(cur.get(newDiff1, 0), newHeight1)\n    // Case 2: Skip the rod (do nothing)\n    cur[diff] = max(cur.get(diff, 0), height)\n    // Case 3: Add rod to the shortest side\n    newDiff2 = diff - rod\n    newHeight2 = height.\n    cur[newDiff2] = MAX(cur.get(newDiff2, 0), newHeight2)\n  dp = cur\nRETURN dp.get(0,0)"
+            }
+        ]
+    },
+    {
+        "student_id": "007",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and conquer: Quick sort. Merge sort. Matrix multiplication. Find closest 2 points.\nGreedy algorithm: Knapsack. Money changing. Activity selection. Fulbright class select.\nDynamic algorithm: Knapsack. Rod cutting. Fibonacci. bill board construction."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman Force algorithm.\nStart at node 1. Set d[1]=0, d[v] = +infinity, \\pi[v] = nil. \nfor i=1 \\rightarrow |V|-1.\nfor eadge \\in (u,v) \\in G\nif d[v]>d[u]+w[u,v]\nd[v]=d[u]+w[u,v].\n\\pi[v]=u.\nfor each edge \\in G.\nif d[v]>d[u]+w[u,v]\nretum False.\nretum True, d.\n\nDikstra algorithm..\nStart at node 1 Set d[1]=0, d[v]= +infinity \\in V, \\pi[v]=nil.\nQ=V.\nwhen Q is not empty do:\n  u = extract-Min(Q).\n  for each edge (u, v) \\in E do.\n    if d[v]>d[u]+w.\n      d[v]=d[u]+w\n      \\pi[v]=u\nretin d, \\pi."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman Ford algorithm: O(|V||E|) (even O(|V|+|E|) in DAG). \nDijkstra algorithm : O(|E|+|V|.log|V|) faster.\nBellman Fore works for negative weight."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra doesn't works for negative weight edge. Both algorithm can not be use for negative cycle because the negative cycle can create a infinite decreasing in distance loop."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. Array A = [1, 2, 3, 18] closest pair (18,19)\nArray B = [10, 11, 12, 19, 20] => O(n+m).\nThe \"two pointers\" work because it goes through all elemet at both array. And pointer move is the one smaller make the distance smaller gradually"
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes. Because the algorithm causes 3 cases:\nCloset pair found in left subproblem.\ncloset pair found in right subproblem.\ncloset pair found at current midpoint. \n =>True divide and conquer them. "
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "False."
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "O(nlogm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "function LIP (matrix).\nlet m = number of row\nlet c = number of column.\nlet dic = an empty dictionary.\nNow use the logic of DFS to add the (row, c) (if they are exist in the matrix) into the emty dic.\nlet: max_length = 0, and direction = [ (-1,0), (0,1), (1,0), (0,-1) ]\nfor each (rd, cd) in directions:\n  new_r = r + rd.\n  new_c = c + cd.\n  if (new_r, new_c) in the matrix and matrix [new_r, new_c] > matrix [r, c].\n    path_length = dfs(new_r, new_c).\n    max_length = max(max_length, path_length).\n    dic[r, c] = max_length + 1.\n    retun dic[r, c].\n\nCreate: path = -\\infty\nfor i in range (0,r)\n  for j in range (0,c):\n    path = max(path, dfs(i,j))\nretum path."
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "function BC (rods)\ndictionary dp = {0:0}.\nfor each rod in rods:\n  set a new dictionary current = empty\n  for each (d,h) in d_1:\n   d_new = d + rod.\n  h_new = h + rod\n  current[d_new] = max[(curr[d_new],0),current[d]]\n  current[d] = max[(curr[d], get(d,0), h]\n  d2_new = d - rod\n  h2_new = h\n  current[d_new] = max(curr[d], get(d2_new, 0), h2_new)\n  dp = current.\nreturn dp.get(0, 0)."
+            }
+        ]
+    },
+    {
+        "student_id": "008",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: Fibonacci Sequence, find the maximum element, matrix multiplication, find the closet pair. \nDynamic Programming (knapsack, money changing, Rod cutting, Fibonacci sequence). \nGreedy Algorithm (Job scheduling, find disjoint adjancy, Find the sum of rod length, knapsack problem). \nGraph algorithm (Find the shortest path, Find the minimum weight of the graph, Find the minimum shortest tree, Check water flow or the Sales man problem)."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: Assign the first node 1 is 0,0, then look for both weight to 2 or 3 that V[u] > V[i] + weigh then we will loop until we reach 6. \nDijkstra: append the first node to queue then it V[u] > V[i] + weight then pop out the first element, loop until it reach 6"
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra. is faster than Bellman - Ford. Furthermore compare to algorithms like A* or other path - finding algorithm then Dijkstra is the fastest. \nBellman Ford can run. in negative weight graph and can have multiple choice in choosing path"
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "- Since Dijkstra cannot run in negative weight graph so when it reach to 4. Dijkstra have to run in a much longer node 4 to 5 to 6. Bellman - Ford have to run through all node to search for the shortest path. Sherefore, it take much slower than Dijkstra"
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "No. Suggest that if the array size is bigger, running loop with will result as overload. For example, A have. an array sice of 1000 element and B has 20000 element."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "No. For example, we have two array [1,2,3,4] and [3, 4, 5] then compare mid it with B we will have minus which will be Falses: mid = 2x - 2 Lthis is impossible False)"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "It have to be O(nlogn)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "r = row, c = column, dict = empty dict\n1) DFS: return dict(r,c).\n2) max_length=0, direction = [(-1,0),(0,1),(1,0),(0,-1)].\n3) For each (r_d, c_d) belongs to direction: r_1 = r_d + r, c_1 = c_d + c.\n4) If (r, c) in matrix and matrix(r_1, c_1) > matrix(r, c). \npath = dfs(c_1, r_1). length = max(length, path). dict[r, c] = length + 1. return dict[r, c]. \n5) path = 0. for i in (0, r):\n for j in (0, c):\n path = max(path, dfs(i,j)).\nreturn path."
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Function Billboard construction (rode):\ndictionary dp = {0,0}\nfor each rode in rode:\n Set a rod dictionary like above.\n current=empty.\nfor each (difference, length) in current:\n difference_new = difference + rod.\n height_new=height + rod.\n curr[d_new] = max(curr[d-new], 0, current[d]).\n curr[d]=max[(curr[d],get(d,0),h]\n d_alpha_new=d\n h_alpha_new=h\ncurrent[d_new] = max(curr[d], get[d_alpha_new,0],h_alpha_new - dp = current \nreturn dp.get(0,0)."
+            }
+            ]
+        },
+        {
+            "student_id": "009",
+            "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "divide and conquer algorithm: merge sort, quick sort, closet pair, matrix multiplication.\ngreedy algorithm: money chaning, knapsack, Activity selection, class room problem.\ngraph algorithm: shortest path. BFS, DFS traversal, minimun spandig tree. topological sort.\ndynamic graph algorithm: optimal sub-structure, overlapping sub-structur. Coin change, Matrix chain multiplication"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman: (1,2) (1,3). Node 4, 5, 6. Path: 1->2->4->6. 1->3->5. \nDijkstra: Dijkstra cant find the shortest path from the graph above because it included negative edges (It can occur wrong caculation on (3,5) and (4,6)."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman Ford: Work with negative edges, detect negative cycle, work best for all graph. \nDijkstra : Efficient for graphs with out negative edge weights, less memory usage and work better for sparse non-negative graph."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman: Can detect negative cycle but cannot give valid path (path sum undefined), performance is slow (Relaxes all edges repeatedly). Implementation is simple but heavy (Simple loop cause overhead. \nDijkstra: Can not handle negative edge weights (because: Looks in shortest path too early.) Cannot detect negative cycle. Performance is fast but complex."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes, we do have an algorithm that runs in O(m+n) with condition is: We only have to process each element in arrays once (means that that array's arr already sorted). Two pointers work because it also work with sorted arrays, only move forwards (no loop needed)"
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "No it is not correct. Because divide and conquer is divide the problem into subproblem and solve it but chat GPT divide the array into 2 post instead. Yes, because it is divide the problem into subproblem. We can optimize the solution by divide the array instead of process thee all of the element"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No."
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "O(nlogm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "if matrix is empty:\n return 0\nrows = number rows in matrix\ncols = number of columns in matrix\ndp[row][cols] = all 0\ndiretion = [(-1,0), (1,0), (0,1), (0,-1)]\nDefine function DFS(r,c)\n if dp[r][c] is not 0:\n  return dp[r][c]\n max len = 1\n for each (dr, dc) in directions:\n  nr <- r + dr\n  nc <- c + dc\n if nr, nc are within bounds AND matrix[nr][nc] > matrix[r][c]:\n  length <- 1 + DFS(nr, nc)\n  max_len = max(max_len, length)\n  dp[r][c] <- max_len\n  return dp[r][c]\n longest = 0\n for r=0 to rows-1:\n  for c=0 to cols-1:\n   longest = max(longest, DFS(r,c))\n return longest"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "A: array of rod length\ndp: maping of difference\ndp <- {0,0}\nfor each rod in A do:\n next_dp = copy of dp\n for each (diff, shorter_height) in dp do:\n  #case 1: skip this rod (no change needed because they already in next_dp)\n # case 2: add rod to the taller side:\n new_diff = diff + rod\n new_shorter = shorter_height\n next_dp[new_diff] <- max(next_dp.get(new_diff, new_shorter).\n # cases 3: add rod to the shorter side\n if rod <= diff then:\n  new_diff <- diff - rod\n  new_shorter <- shorter_height + rod.\n  next_dp[new_diff] <- max(next_dp.get(new_diff, 0), new_shorter)\n else:\n  new_diff <- rod - diff\n  new_shorter <- shorter_height + diff\n  next_dp[new_diff] <- max(next_dp.get(new_diff, 0), new_shorter)\n dp <- next_dp\n if 0 in dp then:\n  return dp[0]\n else\n  return 0"
+            }
+            ]
+        },
+        {
+            "student_id": "010",
+            "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "- Divide-and-Conquer algorithms: Merge Sort, Quick Sort, Binary Search, closet pair.\n- Greedy algorithms: Prim and Krusal, Coin change, minima Spanning tree, Dijkstra Algorithms.\n- Dynamic programming: Knapsack problem, rod cutting problem, Fibonanci Sequence, matrix multiplication.\n- Graph programming: Shortest path, Topological Sort"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijkstra Algorithms: Strart from 1, set distances = 0 while other = infinity, then we select the neighbor with smallest distance, update all of it neighbor distances, repeat until all nodes are visited.\nBellman-Ford Algorithms: initalize all distances, source = 0, other = infinity, for each and edge (u, v), repeat: if d(v) > d(u) + w(u,v); d(v) = d(u) + w(u,v)"
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "- Dijkstra: guarantee optimal solution when all weight are non negative.\n- Bellmom Ford: handle negative edge."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra: Fail with negative edge weight.\nBellman - Ford: inefficients for large graphs."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. The \"two pointers\" approach vse divide ond conquer technique to solve the problem"
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Create a matrix dp[m][n] initialize with 0 -> dp(i)(j) = longest increasing path start from (i)(j).\n- For each cell, perform a Depth-first Search:\n+ Explore 4 direction\n+ If the neighbors value is larger, recursively call DFS for that neighbor\n+ Store result in dp(i)(j)\n- Return maximum value in dp"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": ""
+            }
+        ]
+    },
+    {
+        "student_id": "011",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: Merge Sort, Quick Sort, Matrix Multiplication, Count inversion.\nGreedy: Find Shortest path, Spanning Tree, Cycle detection, Course Scheduling.\nDynamic Programming: Fibonancci, Knapsack, Rod cutting, Coin exchange."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman Ford #Set up\nSet src node value = 0\nremaining node = positive infinity\nFor V-1 times\nfor each edge (u,v)\n update v=value[u]+weight(u,v) if value at v > value[u] + weight(u,v)\nDijska #Set up\nSet src node value = 0\nremaing hole = +oo\nfor each vertex:\nupdate similar to the update logic in Bellman Ford\nchose the vertex with min value,\nrepeat the iteration"
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman Ford: Can use on negative weight edges. Have a variant for DAG with faster time.\nDijska: Fast"
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijska cannot use on negative edges graph or negative cycle. Assume a node has been chosen to process because it was the one with min value. In the next iteration it would not be chosen to process again even those at this iteration the value update at this node is smallest among other node."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. It run the worst of each array is gonna run through all element of its array which is m for array A, and n for array B. The 2 pointer's run concurrently, not in nested loop. So the worst case should be run through all array A, then through all array B, which is O(m+n)"
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "Yes"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Create graph from the matrix each cell will be each node, and has its associating adjacency node list.\nStart from the smallest node.\ngo throng iteratively go through the nodes in its adjacency list\nif the node in adjacency list > current node.\nappend that node to candidate list.\nafter iterate all adjacency nodes of that the current node. chose the node with largest value in that list to process hext.\nRepeative the process, if cannot find back track."
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Find 2 subsets, sum each subset equals to each other.\n#Base case\nIf len (rods) < 2 and rods[0] != rods[1]:\n return 0\ntotal value = sum(rods)\nif total value % 2 != 0\n return 0\nSet1 []\ntarget_sum = total value / 2\nrods.sort(rods)\nfor i in range (0, len (rods)):\n if target_sum == 0:\n return Set 1, rods \\ { set 1}\n Set 1.append(rods[i])\n target_sum -= rods[i]\n if target_sum < 0:\n for j in range (i+1, len (rods)):\n if (rods[j] + target_sum) in set1:\n id = get_index(rods[j] + target_sum)\n Set1[id] = rods[j]\n Set1.append(rods[i])\n target_sum -= rods[j]\n return 0"
+            }
+        ]
+    },
+    {
+        "student_id": "012",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: quick sort, merge sort, closestpair\nGreedy algorithm: activity selection, money exchange, shortest path\nDynamic Programming: rod cutting, Knapsack, fibonaca, peak element in anamay."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijksta: Start at node \"1\", set distance (1) = 0 and others as infinity. Go to other node with smalles distance to update the distance() after the move, then mark it as \"visited\" Repeat until reaching \"6\"\nBellman Ford: Start at node \"1\", set distance (1) = 0 & others as infinity. Relax through all nodes for v-1 times, if distance (v) > distance (u) then update it. Continue until reach \"6\" or reaching all nodes to check negative cycle optionally."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra: Time complexity O(ElogV) guarantee optimal shortest path.\nBellman Ford: Time Complexity O(V.E) Works for non-negative edges."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijksta: not work with non-negative edges because according to the greedy property of dijkstra, it will assume the \"visited\" node as optimal solution.\nBellman Ford: get worsed if it is large graph with positive edges."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. Because the pointer i and j will try to find the smallest element in each array A and B respectively, and then the distance between these 2 found smallest elements in each array will be guaranteed to be optimal."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes because for each recursion, it is guaranteed that the algorithm will find out the closest pair in left/right part by binary searching and in the end it will return the mininum closest pair in the whole subparts."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "Np"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "T(n)=O(logm+logn)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "function longestPath(matrix):\n increasing path = []\n for arr in matrix:\n  for i in arr:\n    check neighbor in 4 direction left, right, up, down\n    if direction exists\n    If the element in the neighbor exists and greater than arr[i], move the pointer to that neighbor and repeat the process until no more increase is introduced\n   append that path into increasing-path.\nreturn the path with longest length in the increasing-path"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "functon billboard(arr);\nif len(arr)<=2\nreturn\nif len(arr)==2 and arr[0]==arr[1]:\nreturn arr[0]\nreturn 0\nmid = len(arr)//2\nleft = 0\nright = len(arr) -1"
+            }
+        ]
+    },
+
+    {
+        "student_id": "013",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "All the algorithm design techniques:\nBrute-force: try all the ways (~ exhaustive search)\nDivide and conquer, Greedy Algorithm and Dynamic Algorithm.\n+ The brute force is the ancient way to try all the best to find the options needed. however it not suitable and takes a long time.\n+ the divide and conquer time consuming than other algorithm such as insertion or selection. only the log n or n log n, because it divide into 2.\n+ the problem can applied to greedy to find the best way to go, for example the map, the greedy algorithm take shortest path at every step however it can bring disadvantage as we are not sure whether the shortest lead to the short way.\n+ the dynamic algorithm conserve the problem when you find the order, a fibonacci number, you have to calculate again and again."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijskiha:\n- start from the node [source] and all other nodes to positive infinity.\n- All the choosed nodes hold the smallest weight at all the edge that connect to the nodes.\n- repeat the loop until it cannot find the processed nodes.\nComplexity O(C^2), with heap: O[(V+E)logV]\nBellman-Ford algorithm:\nalso start from the node [source] and all other nodes would set to infinity.\nRepeat V-1, each time process all the edge (u,v) until dist[v] > dist[u] + w(u,v) update the edge.\nAfter the loop, if we find the loop that have still the edge that can update -> lead to error. Complexity O(V+E)."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra: - Faster with non negative \n - With heap-tree diagram, faster. O((V+E)logV)\nBellman Ford: - Find the negative cycle.\n - Can handle and take in the negative value ."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra: cannot handle the negative. without heap, it is time consuming, require extra memory for to save the distance and visited nodes. \nBellman-Ford: slower than Dijkstra because have to sort through all the nodes and V~ not optimal for a multi vertices graph. Should use the heap to store the max and the min to form the tree so that reduce the time\n"
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes, we have, we will have 2 loop for A and B and then would be like A[i] - B[j] and we form a blank holder that can save the min, if the min is more minimal that we will set the new minimal to the current min and we return. If not we end the loop by return the pair."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "When we divide the array and use the binary search to find the A[mid] we use recursions for the left and use recursions for the right and combine each to find the pair. Not enough optimal because we have to do the binary search 2^m."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "The Master Theorem (formula):\n2T(n/2, m) + O(logn)\na=2, b=2, log_b a = 1\nf(n) = O(logm) < n^{log_b a} = n => T(n,m) = O(n)\nthe chatgpt state that O(logn+logm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "def longest_path:\n  if not matrix:\n    return 0\n  m, n = len(matrix), len(matrix[0])\n  dp = [[0] * n for _ in range(m)]\n  def depth_first_search(i, j):\n    if dp[i][j]:\n      return dp[i][j]\n    val = matrix[i][j]\n    best = 1\n    for x, y in [(-1,0), (1,0), (0,1), (0,-1)]:\n      nx, ny = i+x, j+y\n      if 0 <= nx < m and 0 <= ny < n and matrix[nx][ny] > val:\n        best = max(best, 1 + depth_first_search(nx, ny))\n    dp[i][j] = best\n    return best\nreturn max(depth_first_search(i, j) for i in range(m) for j in range(n))"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "def tallest_billboard(rods):\n  dp = {0:0}\n  for i in rods:\n    curr = dp.copy()\n    for diff, height in curr.items():\n      dp[diff+i]=max[dp.get(diff+i,0),height]\n      new_diff = abs(diff - i)\n      dp[new_diff] = max(dp.get(new_diff, 0), height + min(diff, i))\n  return dp[0]"
+            }
+        ]
+    },
+    {
+        "student_id": "014",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Quick sort, Merge sort - sort a list, find closet pair of points\nGreedy: Schedule rooms timeslot, activity selection, knapsack, rod cutting\nKruskal, Prim: create a minimum spanning tree\nBellman-ford: Shortest path\nDijkstra: Shortest path"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "For Bellman-ford: first it will set the distance of other nodes to the source node to infinity and the source node itself is trivially 0. Then, for each iteration later, the algorithm will iterate through all the edges of the graph and update node u's distances if d[u] > d[v] + w[(u,v)]. Then, for last iterations, we will have the shortest path from u to all other nodes.\nFor Dijkstra: at the first step, it's the same with Bellman-ford. However, for each iteration then, it only check for the neighborhood nodes of u and only update the distance of those nodes connect to u. Then it will continue the process the node with smallest weight connecting to u by using priority queue."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra: Don't need to check for all the edges at each iteration like Bellman-Ford.\nBellman-ford: can handle negative weight because it iterates through all the edges at each iteration to update distance continuously."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra: Can not handle negative weight\nBellman-ford: for each iteration, we have to check all the edges to update the distances of all nodes"
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "The algorithm causes smaller time complexity because we only need to shift one pointer which has smaller element in order to minimize the current distance until it reach the minimum. If A[i] < B[j], then we only need to shift pointer of A then |B[j] - A[i]| will get smaller. And because there're n elements in A and m elements in B then in worst case, it only cause O(m+n)."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Not totally correct. For example, if I have Array A = {1,2,3}, B={3,6,8}. Then in step 1 let pick the middle element of A, which is 2 (A[mid]=2). Now, suggested by chatgpt, we want to find element in B closet to x such that B[k] <= x <= B[k+1], which also is B[k] <= 2 <= B[k+1]. We can see that the elements in array B can't guarantee that condition. "
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Input: an (m x n) integer matrix.\nOutput: the length of the longest increasing path (length of a list).\nFirst, we will initialize a graph G=(V,E,w) where V is the set of vertices, reprensenting each matrix cells such that the cell's value is not repeated. E is the set of edges where the path between each vertices with the weigh w = |u-v| where u, v are the values of each matrix cells connecting on the graph. (only connecting in four direction mentioned). For example, in example 1, we will have 9-4-8-6-2-1-8"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": ""
+            }
+        ]
+    },
+    {
+        "student_id": "015",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and conquer: Merge sort, binary search, closest pair, matrix multiplication\nGreedy: Knapsack, money change, Dijkstra, activity selection\nDynamic programming: Longest string subsequence, knapsack, Fibonacci, Bellman Ford"
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Dijkstra will put all vertices in a priority queue with the cost to reach that vertex as the priority. In this case, it starts with the 1st node, visits all its adjacent nodes, updating their cost. Since 2 has lower cost to reach, it'll continue with 2 first. This process repeats until it visits all vertices.\nBellman Ford will go through all vertices n-1 times, each time comparing the current cost to reach of each vertex with the currently processed vertex + the weight of the edge connecting those two. It will then update with the minimum between those."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra is way faster in running time.\nBellman Ford can guarantee to find the shortest path even when the graph has negative edges."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra does not ensure the shortest path in graphs with negative edges because it is greedy.\nBellman Ford runs slower because it has to check for more cases that would be missed if the algorithm makes a greedy decision.\nThey both cannot find shortest path in graphs with negative cycles because that doesn't exist."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes, it works because since the arrays are sorted, moving the pointer that has the smaller element ensures that we don't make unnecessary comparison. As a result, we can go through arrays & check their distance where it matters."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "Yes, calling closest pair for the left, middle, and right will go through all elements in A eventually. And for each one of them, it uses binary search to look for the closest element from B. Therefore, it'd have checked all necessary comparison."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "No"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "It's O(nlogm)"
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "We will create an array of the same size called longest[n][m] that holds the longest increasing path ending at that position.\nInitialize all elements in longest[n][m] to have 1 by default.\nThen, we loop through the matrix, checking all the adjacent cells of a cell. If that adjacent cell has a smaller value than our current cell, set the longest to be min of current or the other cell + 1.\nfor each (cell in matrix):\n  for each (adjacentcell in cell.adjacent):\n    if (adjacentcell.value < cell.value):\n      longest[cell.n][cell.m] = min(longest[cell.n][cell.m], longest[adjacentcell.n][adjacentcell.m] + 1)\nWe repeat this for n*m times and returns the highest value in longest[][]. We can stop early if there is no change in longest[][] after an iteration"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "First, we calculate the maximum height achievable given the rods. max_height = rods.sum() / 2. Since we are finding the largest possible height, we will start with max_height and move down.\nfor (int i = max_height; i > 0; i--):"
+            }
+        ]
+    },
+    {
+        "student_id": "016",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Divide and Conquer: Merge Sort, Matrix Multiplication, Quick Sort, Closest pairs.\nGreedy algorithm: Activities selection, Money change, Travelling Saleman Problem (local minimum).\nDynamic Programming: Fibonacci, Knapsack problem, Rod cutting, String alignment.\nGraph Algorithm: Topological Sort, Find Minimum Spanning Tree, Shortest path between 2 pairs of nodes."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: Starting from node 1. For i = 0 to n-1 do:\n Relax all nodes and updates shortest path from node 1 node 2... 16.\nAfter n-1 iteration return value of d[6].\nDijkstra: Starting from node 1 find shortest path to node 2...6 and finalized node 1.\nFrom unfinalized nodes (in this case 2...6) choose the node with smallest path and update shortest paths and finalized that node.\nRepeat until finalized all 6 nodes and return d[6]."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Bellman-Ford: Can handle negative weighted graph.\nDijkstra: Faster to compute O(|E| + |V|log|V|) than Bellman-Ford O(|E||V|)."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Bellman-Ford: Slower Running Time O(|V||E|): all edges must be relaxed n-1 times (n=|V|) making it O(|V||E|).\nDoes not work on negative cycle; if negative cycle exists, shortest path through cycle is negative infinity.\nDijkstra: Fail on negative weight. When it visits a node, the algorithm finalized that node's shortest path. This assumption fails because a longer initial path followed by a negative edge could result in a shorter distance, but Dijkstra does not backtrack to do that."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "No. For example A=[4, 9], B=[-3, 7, 8]. If using 2 pointers on A[0] (and B[0]) then compare to B (and A respectively), it will fail because it will ignore the correct asnwer A[2], B[2]."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "It is correct as it is still go through A while guarantee getting shortest of A with B through binary search."
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "It is wrong"
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "T(n,m) = 2T(n/2) + logm = nlogn + logm => O(nlognlogm)."
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Funtion LongestIncreasingPath(matrix):\n if matrix is empty:\n  return 0\n m_rows=number of rows in matrix\n m_cols=number of column in matrix\n max=0\n for i=0 to m_rows:\n  for j=0 to n_cols:\n   max=MAX(max, dfs(matrix,i,j,memo))\n return max\n\nFunction dfs(matrix,row,col,memo):\n if memo[row][col]!=0:\n  return memo[row][col]\n direction = [(-1,0),(1,0),(0,-1),(0,1)]\n maxPath=1\n For each (dr,dc) in directions:\n  new_row=row+dr\n  new_col=col+dc\n//out of the matrix\n  if new_row<0 OR new_row>m_rows OR new_col<0 OR new_col>n_cols:\n   CONTINUE\n  if matrix[new_row][new_col]>matrix[row][col]:\n   currentPath=1+dfs(matrix,new_rol,new_col,memo)\n   maxPath=Max(maxPath,currentPath)\n{{{Supplement}}"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Function Construct_Billboard(rods):\n Sort rods in ascending order (in case input is unsorted).\n n = len(rods)\n For i = 0 to n-1 do:\n  Sum = Sum + rods[i]\n  Set.add(Sum)."
+            }
+        ]
+    },
+    {
+        "student_id": "017",
+        "answers": [
+            {
+                "question_id": "q1a",
+                "student_answer": "n^4"
+            },
+            {
+                "question_id": "q1b",
+                "student_answer": "log n"
+            },
+            {
+                "question_id": "q1c",
+                "student_answer": "1.2^n"
+            },
+            {
+                "question_id": "q3",
+                "student_answer": "Greedy algorithms: Scheduling problem, Closest pair, Brute force, Logistic.\nDivide and conquer: Quick sort, Merge Sort, Sorting.\nDynamic programming: Knapsack, Rod cutting, Coin exchange, DNA sequences.\nGraph: computer networks, Social networks, route finding, GPS/matrix."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman-Ford: shortest path from 1 to 6: 1 to 2 to 4 to 6 (d(6)=3)\nDijkstra: Shortest path from 1 to 6: 1 to 3 to 2 to 5 to 6\nPrim \nExhaustive Search: "
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Dijkstra: not allow negative path, fastest.\nBellman Ford: allow negative path.\nExhaustive search: consider all of the path."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Dijkstra: can't handle negative path.\nBellman Ford: can.\nExhaustive search: cost a lot of resource (O(V+E))."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Yes. The 2 pointers approach works because after a certain time of iterations, it will meet each other at a certain point."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": "It's incorrect. Consider the following case:"
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": "O(n+m) is correct but the divide and conquer is not."
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": "The time complexity for divide and conquer should be O(nlogn + mlogm)."
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Algorithms: longest_increasing_pat.\nInput: an (m x n) integers matrix.\nMy idea is to use the DFS approach to solve this prob.\nA[m][n]\ndef dfs(l,r,w,d):\n step=tempindex\n //Start from the left edge of the matrix.\n If right < left:\n  step = left or step = up or step = down.\n //Start from the right edge of the matrix.\n if left\n //Start from the middle of column\n //Start from the middle row"
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "Algorithms: billboard_construction\nInput: Array AB of length i,j\nOutput: 2 disjoint subsets have the same sum\ndp:{0,0}\nMy idea is we can choose either add the length to the left or to the right (if the left is shorter and vice versa).\nif left_rod_length < right_rod_length:\n left_rod_length += 1\nreturn max(left_rod_length + right_rod_length).\n dp.copy()\nif right_rod_length<left_rod_length\n right_rod_length +=\nreturn max_right_rod_length+left_rod_length)"
+            }
+        ]
+    },
+    {
+        "student_id": "018",
+        "answers": [
+            {
+                "question_id": "q3",
+                "student_answer": "Greedy Algorithm: Find Minimum Spanning Tree in a graph, Find Shortest path in graph (Dijkstra), Activity selection.\nDivide and Conquer: optimize time to multiply matrix, quick sort, merge sort, binary search.\nDynamic programming: Shortest path on negative graph (Bellman Ford), optimize fibonacci time complexity, rod cutting, knapsack problem."
+            },
+            {
+                "question_id": "q4i",
+                "student_answer": "Bellman Ford: for each iteration it will look at each node and calculate the distance from that node to node 1. It will do |V-1| iterations.\nDijkstra: It will check all the vertices one by one until it has completed the graph, in each vertex it will calculate the distance between that vertex and adjacent vertex."
+            },
+            {
+                "question_id": "q4ii",
+                "student_answer": "Advantage of Bellman Ford is it works on graph with negative weight.\nAdvantage of Dijkstra is its time complexity is nearby linear."
+            },
+            {
+                "question_id": "q4iii",
+                "student_answer": "Disadvantage of Dijkstra is that it does not work on negative edge because Dijkstra is greedy,once a node is considered visited, even if there is shorter path to that node, it won't be consider.\nDisadvantage of Bellman Ford is time complexity |V||E|, much slower than Dijkstra."
+            },
+            {
+                "question_id": "q5a",
+                "student_answer": "Since we have 2 sorted array, checking every element and move which one has a smaller will guarantee that |a-b| is minimized. because we check all the elements from both array, we are sure to find the pair that creates minimum |a-b|."
+            },
+            {
+                "question_id": "q5b",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5c",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q5d",
+                "student_answer": ""
+            },
+            {
+                "question_id": "q6",
+                "student_answer": "Time complexity: O(m x n).\nInput: matrix\nOutput: array that is longest in increasing path\n LIP: check every element in the matrix one by one:\n For each element, look 4 directions to see if there is a bigger number\n if there is, move to that direction and keep track of the path\n return the longest path in array format."
+            },
+            {
+                "question_id": "q7",
+                "student_answer": "[No answer provided]"
+            }
+        ]
+    },
+    {
+        "student_id": "019",
+        "answers": [
+        {
+            "question_id": "q3",
+            "student_answer": "Divide-and-Conquer: Insertion sort (Find min-max value), Merge Sort, Quick Sort, Selection Sort. Greedy Algorithm: Course scheduling, Calculate interval. Graph Algorithm: shortest path (pick a list of visited nodes with smallest weight), Google Map, delivery paths. Dynamic Programming:"
+        },
+        {
+            "question_id": "q4i",
+            "student_answer": "1) Prim: choose a start node, then save that node into a list of visited node. For visited node, find smallest path to other nodes. Make sure that a path is counted only when a node is already visited.\n2) Bellman-Ford: visit a node many times so that we can find the shortest path to a node. For example: d[2] we can have many paths: 2-1, 2-4,2-5, 2-3 or 5->3->1->2 and we choose the path with smallest weight.\n3) Pick smallest weighted path: 4-6 or 3-5 and choose one of those, for example: 4-6. Then choose next edges connected with those 2 nodes: 4-5, 2-4, 4-6 continue to choose which is smallest weighted graph."
+        },
+        {
+            "question_id": "q4ii",
+            "student_answer": "1) Prim easily visit nodes. Easily track nodes.\n2) Bellman-Ford: "
+        },
+        {
+            "question_id": "q4iii",
+            "student_answer": "Disadvantage of 3): we have to loop through nodes many times & save it their connections to make sure not to create cycles, resulting in heavy space complexity.\n1) Prim: too many edge comparisons."
+        },
+        {
+            "question_id": "q5a",
+            "student_answer": "This approach works because: 1) The start is correct: The pointers will start at beginning of the array, so it will not leave any number. 2) The end is correct: They will run all the possible subtractions of 2 arrays. 3) The break/update junction is correct: When one of pointers is updated, the possible subtractions of 2 subarrays are already compared."
+        },
+        {
+            "question_id": "q5b",
+            "student_answer": "Yes. Loop invariant here is: the recursion of closest-pair junction for both left and right subarray. Inside each recursion, the start and end are all correct, the length of subarray is also correct which make sures all possible subtractions are calculated."
+        },
+        {
+            "question_id": "q5c",
+            "student_answer": "Yes"
+        },
+        {
+            "question_id": "q5d",
+            "student_answer": ""
+        },
+        {
+            "question_id": "q6",
+            "student_answer": "Longest matrix size: n x m. \nCreate an array with same length. \nAssign longest [n][m] to have 1 by default. \nLoop through the matrix, check all the adjacent cells at a cell. \nIf that cell has a smaller value than our current cell, set the longest to be min of current or the cell + 1. \nfor each (cell in matrix): \n for each (adjacent cell in cell adjacent):\n  if (adj cell < cell value):\n   longest[cell n][cell m] = min(longest[cell n][cell m], longest [adj cell n][adj cell m] + 1) \n-> Repeat this for (nm) times and return highest value."
+        },
+        {
+            "question_id": "q7",
+            "student_answer": ""
+        }
+        ]
+    },
+    {
+        "student_id": "020",
+        "answers": [
+        {
+            "question_id": "q3",
+            "student_answer": "Divide and conquer: merge sort, quick sort, matrix multiplication, min node distance. Greedy algorithm: minimum spanning tree, shortest path, reccomendation, Google Map. Dynamic Programming: optimization, resource allocation, Ctrl + F. Graph Algorithm: neural network, AI, Facebook system."
+        },
+        {
+            "question_id": "q4i",
+            "student_answer": "Dijkstra: Given a list of unvisited nodes, X={A,B,C...}. Start from one node, such as 1, it will examine and update the distance from 1 to other nodes. if exists a path then update the sum. Otherwise, let dis(4) = infinity (for example). Then, we do continue for other nodes. We marked A as visited until it reaches node 6.\nBellman - Ford: Iteration 1: Start from node 1, we determine if there exist a path from 1 to other nodes. If yes, update distance. Otherwise, let it be infinity. From those nodes that's not infinity, examine its distance to other nodes next and update the value. We do it until reaching node 6. For next iteration we keep doing and updating the distance. The number of iteration is |V|-1."
+        },
+        {
+            "question_id": "q4ii",
+            "student_answer": "Advantage of Bellman-Ford is it suitable for negative weighted graph"
+        },
+        {
+            "question_id": "q4iii",
+            "student_answer": "Disadvantage of Dijkstra is it's not useful for the graph with negative weight. This disadvantage occurs because it doesn't go over and update again the path from the neighbor nodes to the current node, which has been visited."
+        },
+        {
+            "question_id": "q5a",
+            "student_answer": "No"
+        },
+        {
+            "question_id": "q5b",
+            "student_answer": "Yes"
+        },
+        {
+            "question_id": "q5c",
+            "student_answer": "Yes"
+        },
+        {
+            "question_id": "q5d",
+            "student_answer": ""
+        },
+        {
+            "question_id": "q6",
+            "student_answer": "def main():\n let A = matrix\n for i in range (row):\n  for j in range (col):\n   current = A[i][j]\n   update array.append(curr);\n   if i=0 and j=0:\n    left = A[i][j+1]\n    down = \n    if curr < left:\n     length += 1;\n     update-arr.append(left)\n     curr=left;\n     recursion the compare;\n    if curr < down:\n     length += 1\n     update_arr.app...\n   if i=0 and j!=0:\n    curr<left\n    curr<right\n    curr<down\n   if i=0 and j=n-1:\n    curr<right\n    curr<down\n   else:\n    right, down, left, up"
+        },
+        {
+            "question_id": "q7",
+            "student_answer": ""
+        }
+        ]
+    },
+    {
+        "student_id": "021",
+        "answers": [
+        {
+            "question_id": "q3",
+            "student_answer": "1. Divide and conquer: - Merge sort - Matrix multiplication - Exponential calculation - Closest pair. 2. Greedy: - Activity Selection - Scheduling - Find MST (Prim/Kruskal) - shortest path (Dijkstra). 3. Dynamic programming: - Knapsack - Rod cutting - Shortest path (Belman-Ford) - Longest common subsequence."
+        },
+        {
+            "question_id": "q4i",
+            "student_answer": "1. Dijkstra: First init d=infinity for every node. From node 1 add all neighbors u to a priority queue based on its weight and update d[u] if d[u] > d[v] + w. Repeat until all nodes visited. 2. Bellman - Ford: For every node in V, iterate through every edge in E to update d[u] if d[u] > d[v] + w. After this is done, iterate through all edges again to find negative cycle."
+        },
+        {
+            "question_id": "q4ii",
+            "student_answer": "1. Dijkstra: Lower time complexity: O(|E| + |V|log|V|). 2. Bellman-Ford: Works with negative edges."
+        },
+        {
+            "question_id": "q4iii",
+            "student_answer": "1. Dijkstra: Cannot work with negative edges because it uses greedy approach, so once a node is done it can still miss other shorter paths. 2. Bellman Ford: Higher time complexity because it has to iterate through every node and edge."
+        },
+        {
+            "question_id": "q5a",
+            "student_answer": "Yes. Because it uses the greedy approach: Since A and B are 2 sorted arrays, the pointers will eventually land on both min(A) and min(B), hence will give smallest value or max(A), max(B)."
+        },
+        {
+            "question_id": "q5b",
+            "student_answer": "Yes. Because it recursive searches left and right. If the smallest pair is in left, there no need to search in right, and vice versa. The left and right part will eventually be 1 element as base case which means all elements will be compared with B."
+        },
+        {
+            "question_id": "q5c",
+            "student_answer": "No"
+        },
+        {
+            "question_id": "q5d",
+            "student_answer": "O(nlogm)"
+        },
+        {
+            "question_id": "q6",
+            "student_answer": "Def longestIncreasingPath(matrix[m][n]):\n #Approach: For each row, find smallest element, then go 4 directions and add larger elements to a max heap, then DFS to find longest.\nmax = 0\nFor row in range m:\n s = min(row) //smallest index\n heap = {(row,S):[]} //Ex: (0,0):[(1,2),(3,4)]\n traverse(matrix, heap)\n max=max(max,DFS(heap)]\nreturn max\nDef traverse(matrix, heap):\n //get starting nodes from heap\n d=[-1, 0, 1]\nfor i in d:\n if matrix[x+i][y+i] > matrix[x][y]:\n   heap[(x,y)].add(matrix[x+i][y+i]\n   traverse(matrix, heap) //recursively add nodes until no increasing\nDef DFS(S, heap):\n count = 0"
+        },
+        {
+            "question_id": "q7",
+            "student_answer": "Def billboardConstruction(rods):\n Sum = rods.sum()\n if sum % 2 != 0:\n  return 0\n return sum/2 //O(n)\n// Divide n Conquer: recursively split left and right until base case = 2, then a"
+        }
+        ]
+    }
+]

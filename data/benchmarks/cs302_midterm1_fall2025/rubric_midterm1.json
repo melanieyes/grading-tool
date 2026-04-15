@@ -1,0 +1,215 @@
+{
+    "course": "CS302",
+    "term": "Fall 2025",
+    "exam": "Mid-term exam 1",
+    "rubric_version": "1.0",
+    "rubric_notes": "Each criterion acts as an atomic reasoning step reflecting the professor's strict grading notes. Exact point deductions from the provided graded exam are mapped to discrete criteria (e.g., Q6 penalizes lack of DP memoization, Q7 penalizes extensive brute-force algorithms).",
+    "questions": [
+      {
+        "question_id": "q3",
+        "benchmark_type": "short_answer",
+        "total_points": 12,
+        "grading_note": "Award up to 4 points per correct technique identified, prorated by the number of valid example problems provided (1 point per valid problem).",
+        "criteria": [
+          {
+            "criterion_id": "q3_1",
+            "points": 4,
+            "description": "Identifies Divide and Conquer and lists 4 valid problems (e.g., merge sort, quick sort, closest pair)"
+          },
+          {
+            "criterion_id": "q3_2",
+            "points": 4,
+            "description": "Identifies Greedy and lists 4 valid problems (e.g., interval scheduling, course scheduling, MST)"
+          },
+          {
+            "criterion_id": "q3_3",
+            "points": 4,
+            "description": "Identifies Dynamic Programming and lists 4 valid problems (e.g., rod cutting, knapsack)"
+          }
+        ]
+      },
+      {
+        "question_id": "q4",
+        "benchmark_type": "algorithm_analysis",
+        "total_points": 40,
+        "grading_note": "Points are split evenly between the Bellman-Ford and Dijkstra algorithms (20 points total per algorithm).",
+        "subparts": [
+          {
+            "part_id": "q4i",
+            "total_points": 20,
+            "criteria": [
+              {
+                "criterion_id": "q4i_1",
+                "points": 10,
+                "description": "Bellman-Ford: Explains logic correctly (initializing distances to source as 0 and others to infinity, then slowly updating/relaxing distances)"
+              },
+              {
+                "criterion_id": "q4i_2",
+                "points": 10,
+                "description": "Dijkstra: Explains logic correctly (greedy approach, initializing distances, and choosing the best vertex based on current known distance)"
+              }
+            ]
+          },
+          {
+            "part_id": "q4ii",
+            "total_points": 10,
+            "criteria": [
+              {
+                "criterion_id": "q4ii_1",
+                "points": 5,
+                "description": "Bellman-Ford: Identifies advantage (can handle negative edges and cycles)"
+              },
+              {
+                "criterion_id": "q4ii_2",
+                "points": 5,
+                "description": "Dijkstra: Identifies advantage (faster execution)"
+              }
+            ]
+          },
+          {
+            "part_id": "q4iii",
+            "total_points": 10,
+            "criteria": [
+              {
+                "criterion_id": "q4iii_1",
+                "points": 5,
+                "description": "Bellman-Ford: Identifies disadvantage (slower execution because it searches thoroughly)"
+              },
+              {
+                "criterion_id": "q4iii_2",
+                "points": 5,
+                "description": "Dijkstra: Identifies disadvantage (cannot handle negative edges/cycles because it relies on a greedy aspect)"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "question_id": "q5",
+        "benchmark_type": "algorithm_analysis",
+        "total_points": 34,
+        "subparts": [
+          {
+            "part_id": "q5a",
+            "total_points": 10,
+            "criteria": [
+              {
+                "criterion_id": "q5a_1",
+                "points": 10,
+                "description": "Answers Yes and clearly explains how the two pointers traverse the arrays without skipping elements, checking all necessary combinations in O(m+n)"
+              }
+            ]
+          },
+          {
+            "part_id": "q5b",
+            "total_points": 10,
+            "criteria": [
+              {
+                "criterion_id": "q5b_1",
+                "points": 10,
+                "description": "Answers Yes and explains that the recursive midpoint and base-case structure guarantees all elements in array A are matched against array B via binary search"
+              }
+            ]
+          },
+          {
+            "part_id": "q5c",
+            "total_points": 4,
+            "criteria": [
+              {
+                "criterion_id": "q5c_1",
+                "points": 4,
+                "description": "Correctly answers No"
+              }
+            ]
+          },
+          {
+            "part_id": "q5d",
+            "total_points": 10,
+            "criteria": [
+              {
+                "criterion_id": "q5d_1",
+                "points": 10,
+                "description": "Provides the correct time complexity O(n log m) and explains that the O(log m) binary search runs for all n elements of array A"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "question_id": "q6",
+        "benchmark_type": "algorithm_design",
+        "total_points": 40,
+        "grading_note": "A highly inefficient brute-force or purely greedy attempt with factorial/exponential complexity receives heavy deductions. Must use DP/memoization for full credit.",
+        "criteria": [
+          {
+            "criterion_id": "q6_1",
+            "points": 10,
+            "description": "Establishes standard DFS logic exploring valid 4-directional moves strictly greater than current cell"
+          },
+          {
+            "criterion_id": "q6_2",
+            "points": 20,
+            "description": "Implements Memoization (DP table) correctly to cache results and prevent exponential or factorial re-evaluations"
+          },
+          {
+            "criterion_id": "q6_3",
+            "points": 10,
+            "description": "Achieves efficient time complexity O(mn)"
+          }
+        ]
+      },
+      {
+        "question_id": "q7",
+        "benchmark_type": "algorithm_design",
+        "total_points": 35,
+        "grading_note": "Evaluate the student's solution against ONLY ONE of the two scenarios below. If the student uses an optimal Dynamic Programming approach, evaluate using the DP criteria (q7_dp_1 to q7_dp_5) for up to 35 points. If the student uses a brute-force Exhaustive Search/Backtracking approach, evaluate using the ES criteria (q7_es_1 to q7_es_4) for a maximum of 15 points. Do not combine points from both scenarios.",
+        "criteria": [
+          {
+            "criterion_id": "q7_dp_1",
+            "points": 13,
+            "description": "DP - State Definition: Correctly identifies the optimal DP state by tracking the height difference between the two supports (e.g., mapping the height difference to the maximum height of the taller support)."
+          },
+          {
+            "criterion_id": "q7_dp_2",
+            "points": 10,
+            "description": "DP - State Transitions: Correctly iterates through the rods and calculates new states based on the three valid choices for each rod: (1) not using the rod, (2) adding the rod to the taller support, or (3) adding the rod to the shorter support."
+          },
+          {
+            "criterion_id": "q7_dp_3",
+            "points": 4,
+            "description": "DP - Initialization: Correctly initializes the base case before iteration (e.g., setting the initial difference of 0 to have a maximum height of 0)."
+          },
+          {
+            "criterion_id": "q7_dp_4",
+            "points": 5,
+            "description": "DP - Result & Path Reconstruction: Correctly identifies the final max height at a difference of 0 AND includes logic (e.g., history tracking or state pointers) to reconstruct the two specific rod subsets."
+          },
+          {
+            "criterion_id": "q7_dp_5",
+            "points": 3,
+            "description": "DP - Time Complexity: Correctly identifies or derives the time complexity of the DP approach as O(N * S), where N is the number of rods and S is the maximum possible sum/height."
+          },
+          {
+            "criterion_id": "q7_es_1",
+            "points": 7,
+            "description": "Exhaustive Search - Recursive Logic: Correctly sets up a recursive/backtracking function that explores all three branches for each rod (add to subset 1, add to subset 2, or skip)."
+          },
+          {
+            "criterion_id": "q7_es_2",
+            "points": 4,
+            "description": "Exhaustive Search - Base Case & Validation: Correctly implements the base case when all rods are processed, verifying if subset 1 and subset 2 have an equal sum/height."
+          },
+          {
+            "criterion_id": "q7_es_3",
+            "points": 2,
+            "description": "Exhaustive Search - Tracking & Result: Correctly maintains the running subsets during recursion and successfully updates/returns the global maximum height and the associated sets when a valid combination is found."
+          },
+          {
+            "criterion_id": "q7_es_4",
+            "points": 2,
+            "description": "Exhaustive Search - Time Complexity: Correctly identifies or derives the time complexity of the exhaustive search approach as O(3^N) because each rod has three possible states."
+          }
+        ]
+      }
+    ]
+  }
