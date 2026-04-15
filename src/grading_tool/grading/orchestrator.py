@@ -6,41 +6,48 @@ from typing import Any
 from src.grading_tool.utils.io import load_json, save_json
 from src.grading_tool.grading.rubric_grader import RubricGrader
 
-
 def _index_questions(question_file: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """
-    Build a flat index from question_id/subpart_id -> metadata.
-
-    For q2, flatten subparts like q2b, q2c, ...
-    For other questions, keep their original question_id.
-    """
     out: dict[str, dict[str, Any]] = {}
+
+    # Specific point mappings for subquestions
+    subpart_points = {
+        "q4": {"i": 20.0, "ii": 10.0, "iii": 10.0},
+        "q5": {"a": 10.0, "b": 10.0, "c": 4.0, "d": 10.0}
+    }
 
     for q in question_file["questions"]:
         qid = q["question_id"]
 
-        if qid == "q2":
+        # If the question has subparts, flatten them
+        if q.get("subparts"):
             benchmark_type = q["benchmark_type"]
-            for sp in q.get("subparts", []):
+            for sp in q["subparts"]:
                 part_id = sp["part_id"]
+                
+                # Extract suffix to find points (e.g., 'i' from 'q4i')
+                suffix = part_id.replace(qid, "")
+                
+                # Get points from mapping; default to 0.0 if not found
+                score_max = subpart_points.get(qid, {}).get(suffix, 0.0)
+
                 out[part_id] = {
                     "question_id": part_id,
                     "parent_question_id": qid,
                     "question_text": sp["question_text"],
                     "benchmark_type": benchmark_type,
-                    "score_max": 8.0,  # q2 subparts are each 8 points in curr benchmark
+                    "score_max": score_max,
                 }
         else:
+            # Standard question handling
             out[qid] = {
                 "question_id": qid,
                 "parent_question_id": qid,
                 "question_text": q["question_text"],
                 "benchmark_type": q["benchmark_type"],
-                "score_max": float(q["points"]),
+                "score_max": float(q.get("points", 0.0)),
             }
 
     return out
-
 
 def _index_rubric(rubric_file: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """
@@ -51,8 +58,9 @@ def _index_rubric(rubric_file: dict[str, Any]) -> dict[str, dict[str, Any]]:
     for q in rubric_file["questions"]:
         qid = q["question_id"]
 
-        if qid == "q2":
-            for sp in q.get("subparts", []):
+        # If subparts exist, flatten them into the index
+        if q.get("subparts"):
+            for sp in q["subparts"]:
                 part_id = sp["part_id"]
                 out[part_id] = {
                     "question_id": part_id,
@@ -63,11 +71,12 @@ def _index_rubric(rubric_file: dict[str, Any]) -> dict[str, dict[str, Any]]:
                     "grading_note": q.get("grading_note"),
                 }
         else:
+            # Standard top-level question
             out[qid] = {
                 "question_id": qid,
                 "parent_question_id": qid,
                 "criteria": q.get("criteria", []),
-                "score_max": float(q["total_points"]),
+                "score_max": float(q.get("total_points", 0.0)),
                 "grading_note": q.get("grading_note"),
             }
 
@@ -83,10 +92,12 @@ def _index_solutions(solution_file: dict[str, Any]) -> dict[str, str]:
     for q in solution_file["questions"]:
         qid = q["question_id"]
 
-        if qid == "q2":
-            for sp in q.get("subparts", []):
+        # Check for subparts to extract the correct solution text for each
+        if q.get("subparts"):
+            for sp in q["subparts"]:
                 out[sp["part_id"]] = sp.get("solution", "")
         else:
+            # Single solution for the whole question
             out[qid] = q.get("solution", "")
 
     return out
@@ -94,10 +105,10 @@ def _index_solutions(solution_file: dict[str, Any]) -> dict[str, str]:
 
 def _validate_benchmark_files(benchmark_dir: Path) -> None:
     required = [
-        "question_final.json",
-        "final_rubric.json",
-        "final_student_answers.json",
-        "solutions_final.json",
+        "question_midterm1.json",
+        "rubric_midterm1.json",
+        "answers_midterm1.json",
+        "solution_midterm1.json",
     ]
 
     missing = [name for name in required if not (benchmark_dir / name).exists()]
@@ -136,10 +147,10 @@ def run_grading(
     benchmark_dir_path = Path(benchmark_dir)
     _validate_benchmark_files(benchmark_dir_path)
 
-    question_file = load_json(benchmark_dir_path / "question_final.json")
-    rubric_file = load_json(benchmark_dir_path / "final_rubric.json")
-    student_answers_file = load_json(benchmark_dir_path / "final_student_answers.json")
-    solution_file = load_json(benchmark_dir_path / "solutions_final.json")
+    question_file = load_json(benchmark_dir_path / "question_midterm1.json")
+    rubric_file = load_json(benchmark_dir_path / "rubric_midterm1.json")
+    student_answers_file = load_json(benchmark_dir_path / "answers_midterm1.json")
+    solution_file = load_json(benchmark_dir_path / "solution_midterm1.json")
 
     question_index = _index_questions(question_file)
     rubric_index = _index_rubric(rubric_file)
