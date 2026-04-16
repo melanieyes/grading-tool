@@ -1,0 +1,359 @@
+[
+  {
+    "student_id": "001",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "a^* | b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "((a|b)^*b)^*(aa)*a"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "((a|b)(a|b))^* | ((a|b)(a|b)(a|b))^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "L \\rightarrow abL | bL | \\lambda"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "L \\rightarrow aLb | M ; M \\rightarrow aaMb | \\lambda"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "The Turing machine is the most capable (upper bound of computational power) machine that human could make, so it is subject to finite resources, laws of physics (deterministic)."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "24^{12}. The state transition has the form: It maps a combination on the left to a combination to the right. |Q| \\times |\\Gamma| = 12, and |Q| \\times |\\Gamma| \\times |{L,R}| = 24. Number of mappings is 24^{12}."
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. It is a tuple of 7 components: Alphabet / Set of symbols \\Sigma, Set of tape symbols \\Gamma, Set of states Q, A blank tape symbol \\Box \\in \\Gamma, A starting state q0 \\in Q, Accepted/rejected states F \\subseteq Q, Transition function \\delta: Q \\times \\Gamma^k \\rightarrow Q \\times \\Gamma^k \\times {R,S}. #b. M is worse than a standard Turing machine. #c. M does not allow going to the left, so it cannot recall the data on the left side of the pointer. Therefore it only has finite memory (states and tapes)."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. It is a problem that given a finite amount of time, no computation model can have a definitive answer. #b. No. #c. Because the language set of strings is infinite, it cannot be compared."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "Using a PDA. Because Java is a context-free language, the simplest model to parse Java code and check for syntax error is PDA."
+      }
+    ]
+  },
+  {
+    "student_id": "002",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "a^* 1 b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "a(aa)^*| (a|b)*b b*a(aa)*"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "((a/b)^2)^* | ((a/b)^3)^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow SS \\perp T\nT \\rightarrow ab T | b T | a | \\lambda"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "ambiguous: S \\rightarrow ST | T\nunambiguous: S \\rightarrow ST / T \n T \\rightarrow aVTb | aVb | lambda \n V \\rightarrow a | \\lambda"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "For any physically realizable machine, there is a Turing Machine that can do the exact same thing. Any physically realizable Machine is a Turng Machine."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "In \\delta (transition function), there are |Q| \\times |\\Gamma| = 12 mappings. The number of TMs is the number of combination of different output for these 12 mappings, which is (|Q| \\times |\\Gamma| \\times 2)^{12} = 24^{12} \\times \\#\\{possible starting states\\} \\times \\#\\{possible accept states\\}"
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. k: number of tapes M = (Q, \\Sigma, \\Gamma, \\delta, q_0, F, \\Box) Start state empty character \\Box \\in \\Gamma Q: set of internal states F \\subseteq Q: accept state \\Sigma: input alphabet \\Gamma: alphabet \\delta: Q \\times \\Gamma^k \\rightarrow Q \\times \\Gamma^k \\times \\{R,S\\}. #b. weaker than standard TM. #c. Cannot move left \\rightarrow no more random access. There are more tapes, but the number of tapes is just finite, which cannot compensate the limit of not moving left."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. A problem proven that there is no TM that will always halt when input with any input and accept / reject state correctly. #b. Decidable. #c. Any Context-free grammar has a corresponding PDA that recognize its Language. A PDA is always decidable (never loop forever). Algo to solve: enumerate all strings of the two grammars then compare."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "A PDA. Because Java is a Context-free Language."
+      }
+    ]
+  },
+  {
+    "student_id": "003",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "a*|b*"
+      },
+
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "(aa)* b a (aa)*"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "((a|b)(a|b))^* | ((a|b)(a|b)(a|b))^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow ST | bS\nT \\rightarrow abS | \\epsilon"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "S \\rightarrow aaSb | T\n  T \\rightarrow aTb | \\epsilon"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "Anything built by human have at most the same computation power as a Turing machine"
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "None, it must not include alphabet symbol that is not either 0 or sigma. Therefore we cannot have this TM"
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. Turing machine M = \\{Q, \\Sigma, \\delta, q_0, F, \\Gamma^k, \\Box\\} Q: Set of states \\Sigma: alphabet q_0: Start State \\Gamma^k: memory tapes F: accepted State \\Box: blank state \\delta: Q \\times \\Gamma^k \\rightarrow Q \\times \\Gamma^k \\times \\{R,S\\}. #b. Less computation power. #c. It could not move to the left, meaning whatever the TM wrote in the past step cannot be access again. This is the same as having less memory access, or just straight up memory less"
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. A problem where there are no algorithm that guarantee halting and accept / reject correctly or it can be reduce to the Halting problem. #b. No. #c. CFG can generate unlimited amount of string, we must find a bijection between the language, meaning checking possibly infinite strings"
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "PDA. You need to check for {} syntax, and FA cannot recognize a^n b^n language. Everything else is like C where you only need to know the states currently."
+      }
+    ]
+  },
+  {
+    "student_id": "004",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "a^* | b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "(a|b)* (aa)*a"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "((a|b)(a|b))^* | ((a|b)(a|b)(a|b))^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S -> XY \n X -> bX | b | lambda \n Y -> aYb | aY | ab | a"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "S \\rightarrow aSb | lamda | aab | ab"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "Any physically realizable machine can be simulated by a basic Turing machine"
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "Infinite. Because from \\Sigma we can create an infinite number of strings with different structures."
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. M = (Q, \\Sigma, \\Gamma, \\delta, \\Box, q_0, F) Q: set of finite states \\Sigma: finite alphabet \\Gamma: finite stack alphabet q_0: start state, q_0 \\in Q F: accepted states F \\subseteq Q \\delta: \\Gamma \\times Q \\times \\Sigma \\rightarrow Q \\times \\Gamma^* \\times \\{R,S\\}. #b. More powerful than a standard turing machine. #c. Because ...."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. A problem that there is no machine that can determine a solution / causes contradiction in its own solution. #b. Decidable. #c. Context-free grammars can be checked by PDA, which always stop at an answer either accepted / not accepted."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "PDA as Java is a context-free language, yet we do not know the length of the code, so we cannot use DFA."
+      }
+    ]
+  },
+  {
+    "student_id": "005",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "empty string"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "\\Sigma^* (a \\cup b) (a \\cap b)^* a"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "((a|b)(a|b))^* | ((a|b)(a|b)(a|b))^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow AB | \\epsilon\nA \\rightarrow bA | \\epsilon"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "L_1 \\rightarrow aL_1b | \\epsilon\nL_2 \\rightarrow aL_2bb | \\epsilon"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "Using a tape large memory  that are capable of random accessing and swipe left to right to give immediate correctness check of an input or calculations."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "2^{|Q| \\times |\\Sigma| \\times 2^{|\\Gamma|}}. The Turing Machine has to consider every possible state transitions, of states, and alphabet set. Also, each moves to left-right also needed to take into account."
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. 7-tuple of: Q: Set of States, F: Set of accept states, \\Sigma: alphabet, \\delta: transition function with left-right function, q_0: Start state, q_{reject}, q_{halt}.#b. Blank #c. The computational power should be k-times faster than the standard Turing Machine.Since they are closed under union, multiple tapes should give the same correctness but also faster response to a standard one."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. If a problem isn't either be accepted or rejected (no halt or falls into a loop) then it is undecidable. #b. Undecidable. #c. Checking if a CFG is ambiguous is undecidable. Since we have to take account of every possible combinations of parse tree to make a conclusion of each strings."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "I think it is Turing Machine, since they are the most advanced and came before other models. Another advantage is Turing Machine are capable of checking the correctness of the input (which is syntax in this case), and able to access the strings freely + large memory storage."
+      }
+    ]
+  },
+  {
+    "student_id": "006",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "R_1 = a^* | b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "R_2 = (a|b)^*(aa)*a"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "R_3 = ((a|b)(a|b))^* | ((a|b)(a|b)(a|b))^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow B | BAB | \\epsilon\nB \\rightarrow bB | b | \\epsilon\nA \\rightarrow abA | ab | bA | \\epsilon"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "S \\rightarrow aSb | epsilon \n A -> a | aa | aA | epsilon"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "It states that if a problem can be solved by an algorithm / Lambda Calculus, then it is computational by Turing Machine."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "1 Turing Machine: Q = \\{q_0: start state, q_1: accept state, q_2: reject state\\}, \\Sigma = \\{0,1\\}, \\Gamma = \\{0,1,\\emptyset,\\Box\\}"
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. 7-tuple T = (Q, \\Sigma, \\Gamma, \\delta, q_0, q_{accept}, q_{reject}). Q: set of states, \\Sigma: set of variables, \\Gamma: set of tape alphabets, q_0: start state, q_{accept}: accept state, q_{reject}: reject state, \\delta: transition function: Q \\times \\Sigma^k \\times \\Gamma^k \\rightarrow Q \\times \\Gamma^k \\times \\{R, S\\}^k. #b. The same computational power. #c. A standard TM head can move left or right on the tape. It can read/write on positions it already passed. M has multiple tapes but it can only move right or stay, needs another tape to read/write on positions it already passed. Same computational power."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. A problem that can't be solved by Turing Machine. #b. Yes (Decidable). #c. Compare the languages generated by 2 CFGs using Turing Machine with unlimited tape alphabet. It will recursively compare 2 strings, if match marked with an alphabet, if not reject (halts). When the tape head reaches blank symbol (marked end of string) -> comparison completed -> 2 languages are similar -> accept. The machine always halts -> Decidable problem."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "DFA. If the input symbol belongs to syntax error -> transition to trap state (not accepted). Otherwise if the input symbol is valid -> transition to accepted state (accepted)."
+      }
+    ]
+  },
+  {
+    "student_id": "007",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "L1 = a^* | b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "L2 = (a|b)^*ba(aa)* | a(aa)*"
+      },
+      {
+        "question_id": "q2c_iii",
+        "student_answer": "L3 = (A \\cup B)^*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow AB\nA \\rightarrow \\lambda | bA\nB \\rightarrow \\lambda | abA | bB"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "S \\rightarrow AB\nA \\rightarrow aF\nB \\rightarrow bF | bbF\nF \\rightarrow aF | bF | \\lambda"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "Church-Turing thesis say that for any problem can be solved by an algorithm with finite resources must be also solvable by Turing machine."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "..."
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a.  #b. M is weaker than a standard Turing machine. #c. A standard Turing machine can move L and R freely allow TM to properly..."
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a.  #b. It is a decidable problem #c."
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "Turing machine"
+      }
+    ]
+  },
+  {
+    "student_id": "008",
+    "answers": [
+      {
+        "question_id": "q2c_i",
+        "student_answer": "R = a^* | b^*"
+      },
+      {
+        "question_id": "q2c_ii",
+        "student_answer": "R = (a|b)^*b(a|b)*a(aa)*"
+      },
+      {
+        "question_id": "q3",
+        "student_answer": "S \\rightarrow bS | abbT | \\epsilon"
+      },
+      {
+        "question_id": "q4",
+        "student_answer": "S \\rightarrow aSbb | aSb | \\epsilon"
+      },
+      {
+        "question_id": "q5",
+        "student_answer": "The Church-Turing state that..."
+      },
+      {
+        "question_id": "q6",
+        "student_answer": "3 \\times 2 \\times 4 = 24"
+      },
+      {
+        "question_id": "q7",
+        "student_answer": "#a. Turing Machine (TM) is a set of tuples. #b. M = (Q, \\Sigma, \\delta, \\Gamma, \\Box, q_{accept}, q_{reject}, k). #c. Q: a finite set of state, \\Sigma: a finite set of variable, \\delta: Q \\times \\Sigma \\times \\Gamma^k \\rightarrow Q \\times \\Gamma^k \\times \\{R, S\\}. M has limited computing power compared to standard TM. BC M can only handle of question that recognized by the RE while the set of problem that the standard TM can solve is not bounded solely by RE or CFL"
+      },
+      {
+        "question_id": "q8",
+        "student_answer": "#a. Undecidable problem is the problem that be accept / rejected by the ... #b. No. #c. It's undecidable. if the program detect CFG generate the same length then it will return back to the calling function but if the program Consider the following case: ... Contradict Keep running!"
+      },
+      {
+        "question_id": "q9",
+        "student_answer": "blank"
+      }
+    ]
+  }
+]

@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from tqdm import tqdm
+
 from src.grading_tool.utils.io import load_json, save_json
 from src.grading_tool.grading.rubric_grader import RubricGrader
 
@@ -92,19 +94,40 @@ def _index_solutions(solution_file: dict[str, Any]) -> dict[str, str]:
     return out
 
 
-def _validate_benchmark_files(benchmark_dir: Path) -> None:
-    required = [
-        "question_final.json",
-        "final_rubric.json",
-        "final_student_answers.json",
-        "solutions_final.json",
-    ]
+def _locate_benchmark_files(benchmark_dir: Path) -> dict[str, Path]:
+    """
+    Auto-detect and locate benchmark files.
+    Supports both 'final' and 'midterm2' naming patterns.
+    Returns dict mapping file type to Path.
+    """
+    files_found: dict[str, Path] = {}
+    
+    # Try to find each required file with flexible naming
+    for file_type, possible_names in [
+        ("questions", ["question_final.json", "question_midterm2.json"]),
+        ("rubric", ["final_rubric.json", "midterm2_rubric.json"]),
+        ("answers", ["final_student_answers.json", "midterm2_student_answers.json"]),
+        ("solutions", ["solutions_final.json", "solutions_midterm2.json"]),
+    ]:
+        found = None
+        for name in possible_names:
+            path = benchmark_dir / name
+            if path.exists():
+                found = path
+                break
+        if found is None:
+            raise FileNotFoundError(
+                f"Could not find {file_type} file in {benchmark_dir}. "
+                f"Tried: {possible_names}"
+            )
+        files_found[file_type] = found
+    
+    return files_found
 
-    missing = [name for name in required if not (benchmark_dir / name).exists()]
-    if missing:
-        raise FileNotFoundError(
-            f"Missing required benchmark files in {benchmark_dir}: {missing}"
-        )
+
+def _validate_benchmark_files(benchmark_dir: Path) -> None:
+    """Validate that all required benchmark files exist (now flexible naming)."""
+    _locate_benchmark_files(benchmark_dir)
 
 
 def run_grading(
@@ -135,11 +158,14 @@ def run_grading(
     """
     benchmark_dir_path = Path(benchmark_dir)
     _validate_benchmark_files(benchmark_dir_path)
+    
+    # Locate files with flexible naming support
+    files = _locate_benchmark_files(benchmark_dir_path)
 
-    question_file = load_json(benchmark_dir_path / "question_final.json")
-    rubric_file = load_json(benchmark_dir_path / "final_rubric.json")
-    student_answers_file = load_json(benchmark_dir_path / "final_student_answers.json")
-    solution_file = load_json(benchmark_dir_path / "solutions_final.json")
+    question_file = load_json(files["questions"])
+    rubric_file = load_json(files["rubric"])
+    student_answers_file = load_json(files["answers"])
+    solution_file = load_json(files["solutions"])
 
     question_index = _index_questions(question_file)
     rubric_index = _index_rubric(rubric_file)
@@ -156,7 +182,12 @@ def run_grading(
 
     wanted_question_ids = set(question_ids) if question_ids else None
 
-    for student in students:
+    print(f"Starting grading run: {run_name}")
+    print(f"Prompt: {prompt_name}")
+    print(f"Total students: {len(students)}")
+    print()
+
+    for student in tqdm(students, desc="Grading students", unit="student"):
         student_id = student["student_id"]
         answers = [
             ans
@@ -169,7 +200,7 @@ def run_grading(
         elif limit_questions is not None:
             answers = answers[:limit_questions]
 
-        for ans in answers:
+        for ans in tqdm(answers, desc=f"  Student {student_id}", unit="q", leave=False):
             qid = ans["question_id"]
             student_answer = ans.get("student_answer", "")
 
@@ -217,6 +248,27 @@ def run_grading(
             result_dict["parent_question_id"] = q_meta["parent_question_id"]
             results.append(result_dict)
 
+    # Calculate total points summary
+    total_points_awarded = sum(r.get("score_awarded", 0) for r in results)
+    total_points_max = sum(r.get("score_max", 0) for r in results)
+    overall_percentage = (total_points_awarded / total_points_max * 100) if total_points_max > 0 else 0.0
+    
+    # Calculate per-student totals
+    per_student_totals: dict[str, dict[str, float]] = {}
+    for result in results:
+        sid = result["student_id"]
+        if sid not in per_student_totals:
+            per_student_totals[sid] = {"awarded": 0.0, "max": 0.0}
+        per_student_totals[sid]["awarded"] += result.get("score_awarded", 0)
+        per_student_totals[sid]["max"] += result.get("score_max", 0)
+    
+    for sid in per_student_totals:
+        per_student_totals[sid]["percentage"] = (
+            per_student_totals[sid]["awarded"] / per_student_totals[sid]["max"] * 100
+            if per_student_totals[sid]["max"] > 0
+            else 0.0
+        )
+
     payload: dict[str, Any] = {
         "run_name": run_name,
         "prompt_name": prompt_name,
@@ -224,9 +276,21 @@ def run_grading(
         "benchmark_dir": str(benchmark_dir_path),
         "n_results": len(results),
         "n_skipped": len(skipped),
+        "total_points": {
+            "awarded": total_points_awarded,
+            "max": total_points_max,
+            "percentage": overall_percentage,
+        },
+        "per_student_totals": per_student_totals,
         "results": results,
         "skipped": skipped,
     }
 
     save_json(output_path, payload)
+    print()
+    print(f"✓ Grading complete!")
+    print(f"  Results: {len(results)} graded")
+    print(f"  Skipped: {len(skipped)}")
+    print(f"  Total Points: {total_points_awarded:.1f} / {total_points_max:.1f} ({overall_percentage:.1f}%)")
+    print(f"  Saved to: {output_path}")
     return payload

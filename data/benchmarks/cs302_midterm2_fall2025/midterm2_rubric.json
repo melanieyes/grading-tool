@@ -1,0 +1,191 @@
+{
+  "course": "CS302",
+  "term": "Fall 2025",
+  "exam": "Mid-term exam 2",
+  "rubric_version": "1.3_professor_aligned_targeted",
+  "rubric_notes": "Professor-aligned calibration with targeted tightening for highest-error questions and stricter guidance for q6/q9. Use coarse score bands, explicit contradiction penalties, and strict caps for incomplete multi-part answers.",
+  "questions": [
+    {
+      "question_id": "q2",
+      "benchmark_type": "automata_and_regex_design",
+      "total_points": 15,
+      "grading_note": "Professor pattern: mostly all-or-nothing on each regex subpart, with occasional small partial credit for near-miss expressions. Accept notation variants (e.g., ^* for *, / for |, Sigma-form notation) when language semantics are preserved.",
+      "subparts": [
+        {
+          "part_id": "q2c_i",
+          "total_points": 5,
+          "criteria": [
+            {
+              "criterion_id": "q2c_i_1",
+              "points": 5,
+              "description": "Correct regular expression for strings containing only a's or only b's (including empty), e.g. a*|b* (or equivalent). Use 5 for correct, 0 for incorrect; only rare partial when very close but malformed."
+            }
+          ]
+        },
+        {
+          "part_id": "q2c_ii",
+          "total_points": 5,
+          "criteria": [
+            {
+              "criterion_id": "q2c_ii_1",
+              "points": 5,
+              "description": "Correct regular expression ensuring an odd number of trailing a's, e.g. (a|b)*b(aa)*a | (aa)*a (or equivalent). Typical bands: 5 correct, about 2 for near-miss structure, 0 for fundamentally wrong language."
+            }
+          ]
+        },
+        {
+          "part_id": "q2c_iii",
+          "total_points": 5,
+          "criteria": [
+            {
+              "criterion_id": "q2c_iii_1",
+              "points": 5,
+              "description": "Correct regular expression for lengths divisible by 2 or 3, e.g. ((a|b)(a|b))* | ((a|b)(a|b)(a|b))* (or equivalent using Sigma). Typical bands: 5 correct, about 3 partially structured, 0 wrong/empty."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "q3",
+      "benchmark_type": "cfg_design",
+      "total_points": 20,
+      "grading_note": "Targeted calibration. Score bands: 20 only if grammar captures exactly b*(abb*)* (allows all valid strings and excludes clear invalid ones such as isolated a without required following b). About 10 when one major idea is correct but grammar is incomplete/overgenerating. Around 5 only for fragmentary attempts with at least one relevant production idea. Prioritize language behavior over variable names.",
+      "criteria": [
+        {
+          "criterion_id": "q3_1",
+          "points": 10,
+          "description": "Core correctness: grammar enforces that every generated a must be followed by at least one b (the essential abb* constraint), avoiding obvious invalid strings with unconstrained lone a."
+        },
+        {
+          "criterion_id": "q3_2",
+          "points": 10,
+          "description": "Completeness: grammar also supports the leading b* portion and repeated block behavior (abb*)* with workable recursion/termination so valid strings across the language family are generable."
+        }
+      ]
+    },
+    {
+      "question_id": "q4",
+      "benchmark_type": "unambiguous_cfg_design",
+      "total_points": 20,
+      "grading_note": "Professor pattern is coarse-banded: 20 only for both correct language and clear unambiguity; 10 for language-correct but ambiguous; around 4-5 for partly aligned structure; 0 for clearly wrong language.",
+      "criteria": [
+        {
+          "criterion_id": "q4_1",
+          "points": 10,
+          "description": "CFG correctly generates the language L={a^i b^j | j <= i <= 2j}. If ambiguous but language-correct, cap near 10 total before unambiguity criterion."
+        },
+        {
+          "criterion_id": "q4_2",
+          "points": 10,
+          "description": "CFG is strictly unambiguous (every string in the language has exactly one leftmost derivation or parse tree)"
+        }
+      ]
+    },
+    {
+      "question_id": "q5",
+      "benchmark_type": "theory_explanation",
+      "total_points": 10,
+      "grading_note": "Targeted calibration: near-binary scoring. Give 10 only when BOTH ideas are present: (1) intuitive/physical algorithmic computability and (2) equivalence to Turing-machine computability. If only one idea appears, cap around 5. Very vague slogan-like statements without clear thesis meaning should be 0-2.",
+      "criteria": [
+        {
+          "criterion_id": "q5_1",
+          "points": 5,
+          "description": "States the intuitive side: effectively calculable or physically realizable step-by-step computation is the target notion."
+        },
+        {
+          "criterion_id": "q5_2",
+          "points": 5,
+          "description": "States the formal side: this intuitive notion is captured by Turing-machine computability (TM as formal model/upper bound for algorithmic computation)."
+        }
+      ]
+    },
+    {
+      "question_id": "q6",
+      "benchmark_type": "combinatorics_of_tms",
+      "total_points": 20,
+      "grading_note": "Targeted calibration: grade by mathematical pipeline, not by prose length. Full credit requires coherent mapping count logic from domain size to codomain size to total function count. Suggested bands: 20 for complete and correct (including 24^12 core), 15-19 for nearly complete with minor arithmetic/notation slip, around 5 for partial setup without valid completion, 0 for unsupported claims (e.g., infinite or non-responsive answers).",
+      "criteria": [
+        {
+          "criterion_id": "q6_1",
+          "points": 5,
+          "description": "Correctly identifies transition-function input domain size: |Q| x |Gamma| = 3 x 4 = 12."
+        },
+        {
+          "criterion_id": "q6_2",
+          "points": 5,
+          "description": "Correctly identifies output choice count per transition entry: |Q| x |Gamma| x |{L, R}| = 3 x 4 x 2 = 24."
+        },
+        {
+          "criterion_id": "q6_3",
+          "points": 10,
+          "description": "Correctly combines counts into total number of transition functions: 24^12 (or equivalent function-count expression). If student includes extra factors for start/accept/reject choices, award only when clearly justified and logically consistent with the stated machine-definition convention."
+        }
+      ]
+    },
+    {
+      "question_id": "q7",
+      "benchmark_type": "tm_variants_and_power",
+      "total_points": 25,
+      "grading_note": "Targeted calibration for multipart consistency. Score bands: 25 only when #a, #b, #c are all present and mutually consistent. Around 15 for partially complete answers that correctly identify weaker power and provide a reasonable no-left-memory explanation. Around 5 for fragmentary/incomplete/contradictory responses. If #b says stronger/equivalent without correction, cap at 15 even if #a is detailed.",
+      "criteria": [
+        {
+          "criterion_id": "q7_1",
+          "points": 10,
+          "description": "#a. Formal definition includes k-tape transition shape with restricted moves, e.g. delta: Q x Gamma^k -> Q x Gamma^k x {R,S}^k (or equivalent), with key machine components identified coherently."
+        },
+        {
+          "criterion_id": "q7_2",
+          "points": 5,
+          "description": "#b. Correct verdict: M is weaker (strictly less powerful / not Turing-complete) than standard TM."
+        },
+        {
+          "criterion_id": "q7_3",
+          "points": 10,
+          "description": "#c. Explanation ties restriction to inability to revisit prior cells (no left move), causing strong memory/access limitation; reasoning should support weaker computational power claim rather than merely saying 'different'."
+        }
+      ]
+    },
+    {
+      "question_id": "q8",
+      "benchmark_type": "decidability",
+      "total_points": 20,
+      "grading_note": "Targeted calibration with contradiction control. Give 20 only when #a definition, #b verdict, and #c justification are complete and consistent. Use 10-15 for partial understanding. If #b verdict conflicts with #c reasoning, cap at 10 unless contradiction is explicitly self-corrected. Mostly blank or unsupported responses should be 0.",
+      "criteria": [
+        {
+          "criterion_id": "q8_1",
+          "points": 5,
+          "description": "#a. Defines an undecidable problem as a decision problem for which no algorithm (or Turing machine) can be constructed that always halts and yields the correct yes/no answer"
+        },
+        {
+          "criterion_id": "q8_2",
+          "points": 5,
+          "description": "#b. Preferred canonical verdict: checking CFG equivalence is undecidable. If verdict statement is unclear or contradictory with later explanation, reduce sharply."
+        },
+        {
+          "criterion_id": "q8_3",
+          "points": 10,
+          "description": "#c. Justification references why no always-halting decider exists (infinite-language equivalence search alone is not sufficient unless connected to undecidability argument, e.g. known reductions or impossibility of universal deciding algorithm)."
+        }
+      ]
+    },
+    {
+      "question_id": "q9",
+      "benchmark_type": "practical_application_of_models",
+      "total_points": 10,
+      "grading_note": "Targeted calibration: near-binary scoring. Give 10 when model choice and reasoning are both coherent for syntax parsing with nested structure. If model choice is right but explanation is weak, cap around 5. If explanation contradicts model capabilities (e.g., claims DFA handles arbitrary nesting), score near 0.",
+      "criteria": [
+        {
+          "criterion_id": "q9_1",
+          "points": 5,
+          "description": "Identifies Pushdown Automaton (PDA) as the simplest correct model among taught models for parsing nested syntax in programming languages."
+        },
+        {
+          "criterion_id": "q9_2",
+          "points": 5,
+          "description": "Provides coherent reason tied to nested/recursive structure and stack memory (context-free parsing intuition). Penalize unsupported one-word answers or reasoning that confuses DFA/NFA capabilities with PDA capabilities."
+        }
+      ]
+    }
+  ]
+}
