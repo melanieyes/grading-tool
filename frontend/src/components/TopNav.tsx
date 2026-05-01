@@ -5,7 +5,7 @@ export default function TopNav() {
     <header className="top-nav">
       <div className="shell nav-shell">
         <NavLink to="/" className="brand">
-          <span className="brand-dot" />
+          <span className="brand-mark" />
           <div className="brand-copy">
             <strong>Fulbright Grade Master</strong>
             <small>AI-assisted grading platform</small>
