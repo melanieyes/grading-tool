@@ -41,27 +41,39 @@ function splitCsvLine(line: string) {
   return result
 }
 
+function normalizeSubmissionRows(rows: any[]) {
+  return rows
+    .map((row) => ({
+      student_id: row.student_id || row.id || '',
+      question_id: row.question_id || row.qid || '',
+      answer:
+        row.answer ||
+        row.answer_text ||
+        row.student_answer ||
+        row.response ||
+        '',
+    }))
+    .filter((row) => row.student_id && row.answer)
+}
+
 function parseCsvSubmissions(text: string) {
   const lines = text.trim().split(/\r?\n/).filter(Boolean)
   if (lines.length < 2) return []
 
   const headers = splitCsvLine(lines[0]).map((h) => h.trim())
 
-  return lines.slice(1)
-    .map((line) => {
-      const values = splitCsvLine(line)
-      const row: Record<string, string> = {}
+  const rows = lines.slice(1).map((line) => {
+    const values = splitCsvLine(line)
+    const row: Record<string, string> = {}
 
-      headers.forEach((header, index) => {
-        row[header] = values[index] || ''
-      })
-
-      return {
-        student_id: row.student_id || row.id || '',
-        answer: row.answer || row.student_answer || row.response || '',
-      }
+    headers.forEach((header, index) => {
+      row[header] = values[index] || ''
     })
-    .filter((s) => s.student_id && s.answer)
+
+    return row
+  })
+
+  return normalizeSubmissionRows(rows)
 }
 
 function parseJsonSubmissions(text: string) {
@@ -70,12 +82,29 @@ function parseJsonSubmissions(text: string) {
 
     if (!Array.isArray(parsed)) return []
 
-    return parsed
-      .map((item: any) => ({
-        student_id: item.student_id || item.id || '',
-        answer: item.answer || item.student_answer || item.response || '',
-      }))
-      .filter((s) => s.student_id && s.answer)
+    // Format 1: flat JSON
+    if (parsed[0]?.answer || parsed[0]?.student_answer || parsed[0]?.answer_text) {
+      return normalizeSubmissionRows(parsed)
+    }
+
+    // Format 2: nested student -> answers[]
+    if (parsed[0]?.answers && Array.isArray(parsed[0].answers)) {
+      const flattened = parsed.flatMap((student: any) =>
+        student.answers.map((answerRow: any) => ({
+          student_id: student.student_id,
+          question_id: answerRow.question_id,
+          answer:
+            answerRow.answer ||
+            answerRow.answer_text ||
+            answerRow.student_answer ||
+            '',
+        }))
+      )
+
+      return normalizeSubmissionRows(flattened)
+    }
+
+    return []
   } catch {
     return []
   }
@@ -100,6 +129,7 @@ export default function SubmissionGradingPage() {
   const [fileName, setFileName] = useState('')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [runLimit, setRunLimit] = useState(5)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>({})
@@ -182,7 +212,9 @@ export default function SubmissionGradingPage() {
         return
       }
 
-      const result = await gradeBatch(submissions)
+      const limitedSubmissions = submissions.slice(0, runLimit)
+
+      const result = await gradeBatch(limitedSubmissions)
 
       setData(result)
       setDecisions({})
@@ -193,18 +225,22 @@ export default function SubmissionGradingPage() {
     }
   }
 
-  function setDecision(studentId: string, decision: Decision, currentReasoning?: string, currentScore?: number) {
-    setDecisions((prev) => ({ ...prev, [studentId]: decision }))
+  function getRowKey(item: any, index: number) {
+    return `${item.student_id}-${item.question_id || index}`
+  }
+
+  function setDecision(rowKey: string, decision: Decision, currentReasoning?: string, currentScore?: number) {
+    setDecisions((prev) => ({ ...prev, [rowKey]: decision }))
 
     if (decision === 'rejected') {
-      setExpandedId(studentId)
+      setExpandedId(rowKey)
       setEditedReasoning((prev) => ({
         ...prev,
-        [studentId]: prev[studentId] || currentReasoning || '',
+        [rowKey]: prev[rowKey] || currentReasoning || '',
       }))
       setEditedScores((prev) => ({
         ...prev,
-        [studentId]: prev[studentId] ?? currentScore ?? 0,
+        [rowKey]: prev[rowKey] ?? currentScore ?? 0,
       }))
     }
   }
@@ -212,13 +248,16 @@ export default function SubmissionGradingPage() {
   function exportCsv() {
     const rows = [
       ['student_id', 'score', 'status', 'decision', 'reasoning'],
-      ...results.map((r: any) => [
-        r.student_id,
-        r.score,
-        r.review_required ? 'Needs Review' : 'Ready',
-        decisions[r.student_id] || 'pending',
-        `"${String(r.reasoning || '').replaceAll('"', '""')}"`,
-      ]),
+      ...results.map((r: any, index: number) => {
+        const rowKey = getRowKey(r, index)
+        return [
+          r.student_id,
+          r.score,
+          r.review_required ? 'Needs Review' : 'Ready',
+          decisions[rowKey] || 'pending',
+          `"${String(r.reasoning || '').replaceAll('"', '""')}"`,
+        ]
+      }),
     ]
 
     downloadFile('grading_report.csv', rows.map((r) => r.join(',')).join('\n'), 'text/csv')
@@ -249,12 +288,12 @@ export default function SubmissionGradingPage() {
               <th>Decision</th>
               <th>Reasoning</th>
             </tr>
-            ${results.map((r: any) => `
+            ${results.map((r: any, index: number) => `
               <tr>
                 <td>${r.student_id}</td>
                 <td>${r.score}/10</td>
                 <td>${r.review_required ? 'Needs Review' : 'Ready'}</td>
-                <td>${decisions[r.student_id] || 'pending'}</td>
+                <td>${decisions[getRowKey(r, index)] || 'pending'}</td>
                 <td>${r.reasoning || ''}</td>
               </tr>
             `).join('')}
@@ -283,7 +322,7 @@ export default function SubmissionGradingPage() {
         </div>
 
         <button className="primary-btn" onClick={handleRun} disabled={loading}>
-          {loading ? 'Grading...' : 'Run Batch Grading'}
+          {loading ? 'Grading...' : `Run ${Math.min(runLimit, submissions.length || runLimit)} Submissions`}
         </button>
       </section>
 
@@ -331,7 +370,7 @@ export default function SubmissionGradingPage() {
 
         <div className="template-card">
           <strong>Required fields</strong>
-          <span>student_id, answer</span>
+          <span>student_id, question_id, answer / answer_text / student_answer</span>
         </div>
 
         <textarea
@@ -350,6 +389,19 @@ export default function SubmissionGradingPage() {
               ? `${submissions.length} submissions detected`
               : 'No valid submissions detected'}
           </span>
+        </div>
+
+        <div className="run-control">
+          <label htmlFor="run-limit">Run limit</label>
+          <input
+            id="run-limit"
+            type="number"
+            min={1}
+            max={submissions.length || 1}
+            value={runLimit}
+            onChange={(e) => setRunLimit(Number(e.target.value))}
+          />
+          <span>of {submissions.length} detected</span>
         </div>
       </section>
 
@@ -427,11 +479,12 @@ export default function SubmissionGradingPage() {
 
                 <tbody>
                   {results.map((item: any, index: number) => {
-                    const decision = decisions[item.student_id] || 'pending'
-                    const isExpanded = expandedId === item.student_id
+                    const rowKey = getRowKey(item, index)
+                    const decision = decisions[rowKey] || 'pending'
+                    const isExpanded = expandedId === rowKey
 
                     return (
-                      <tr key={item.student_id} className={item.review_required ? 'warn-row' : ''}>
+                      <tr key={rowKey} className={item.review_required ? 'warn-row' : ''}>
                         <td className="center-col">{index + 1}</td>
                         <td className="mono-cell">{item.student_id}</td>
                         <td>
@@ -442,18 +495,18 @@ export default function SubmissionGradingPage() {
                                 min={0}
                                 max={10}
                                 step={0.5}
-                                value={editedScores[item.student_id] ?? item.score}
+                                value={editedScores[rowKey] ?? item.score}
                                 onChange={(e) =>
                                   setEditedScores((prev) => ({
                                     ...prev,
-                                    [item.student_id]: Number(e.target.value),
+                                    [rowKey]: Number(e.target.value),
                                   }))
                                 }
                               />
                               <span>/10</span>
                             </div>
                           ) : (
-                            <strong>{editedScores[item.student_id] ?? item.score}/10</strong>
+                            <strong>{editedScores[rowKey] ?? item.score}/10</strong>
                           )}
                         </td>
                         <td>
@@ -465,7 +518,7 @@ export default function SubmissionGradingPage() {
                           <button
                             type="button"
                             className="reasoning-toggle"
-                            onClick={() => setExpandedId(isExpanded ? null : item.student_id)}
+                            onClick={() => setExpandedId(isExpanded ? null : rowKey)}
                           >
                             {isExpanded ? 'Hide reasoning' : 'View reasoning'}
                           </button>
@@ -473,11 +526,11 @@ export default function SubmissionGradingPage() {
                           {isExpanded && decision === 'rejected' && (
                             <textarea
                               className="inline-reasoning-editor"
-                              value={editedReasoning[item.student_id] || item.reasoning || ''}
+                              value={editedReasoning[rowKey] || item.reasoning || ''}
                               onChange={(e) =>
                                 setEditedReasoning((prev) => ({
                                   ...prev,
-                                  [item.student_id]: e.target.value,
+                                  [rowKey]: e.target.value,
                                 }))
                               }
                               placeholder="Edit the reasoning or write instructor feedback..."
@@ -497,14 +550,14 @@ export default function SubmissionGradingPage() {
                           <button
                             type="button"
                             className="row-action-btn"
-                            onClick={() => setDecision(item.student_id, 'approved')}
+                            onClick={() => setDecision(rowKey, 'approved')}
                           >
                             Approve
                           </button>
                           <button
                             type="button"
                             className="row-action-btn danger"
-                            onClick={() => setDecision(item.student_id, 'rejected', item.reasoning, item.score)}
+                            onClick={() => setDecision(rowKey, 'rejected', item.reasoning, item.score)}
                           >
                             Reject
                           </button>
