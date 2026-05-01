@@ -22,6 +22,9 @@ export default function TopNav() {
           <NavLink to="/grading" className="nav-link">
             Submission Grading
           </NavLink>
+          <NavLink to="/evaluation" className="nav-link">
+            Evaluation
+          </NavLink>
         </nav>
 
         <NavLink to="/grading" className="cta-btn">
