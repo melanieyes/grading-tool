@@ -17,31 +17,76 @@ const revisionOptions = [
   'Expected key points are missing',
 ]
 
-function improveRubric(baseRubric: string, feedback: string, selectedReason: string) {
-  const trimmedFeedback = feedback.trim()
-  const extraNotes: string[] = []
+function improveRubric(questionText: string, feedback: string, selectedReason: string) {
+  const questions = questionText
+    .split(/\n\s*\n/)
+    .map((q) => q.trim())
+    .filter(Boolean)
 
-  if (selectedReason) {
-    extraNotes.push(`Reviewer concern: ${selectedReason}`)
-  }
-
-  if (trimmedFeedback) {
-    extraNotes.push(`Reviewer note: ${trimmedFeedback}`)
-  }
+  const revisionFocus =
+    selectedReason || feedback.trim() || 'Improve reasoning depth and partial-credit clarity'
 
   return [
-    baseRubric,
+    'Revised Rubric',
+    'Scale: 0–10 per question',
     '',
-    'Revision Notes',
-    ...extraNotes.map((note) => `- ${note}`),
-    '- Add clearer partial-credit guidance.',
-    '- Make expected reasoning steps more explicit.',
-    '- Clarify what earns full credit versus partial credit.',
-  ].join('\n')
+    `Revision focus: ${revisionFocus}`,
+    '',
+    ...questions.map((question, index) => {
+      const cleanQuestion = question.replace(/^Q\d+\.\s*/i, '').trim()
+
+      return [
+        `Q${index + 1}. ${cleanQuestion}`,
+        '- Conceptual accuracy and use of correct definitions (0–3)',
+        '- Step-by-step reasoning and logical justification (0–3)',
+        '- Application to the specific question, not generic explanation (0–2)',
+        '- Completeness, precision, and clarity of final answer (0–2)',
+        '- Full credit: answer directly addresses the prompt, uses correct theory, and explains why the conclusion follows.',
+        '- Partial credit: answer identifies relevant concepts but has incomplete reasoning, missing proof steps, or weak explanation.',
+        '- Low credit: answer is mostly generic, unsupported, or only states a conclusion.',
+        '- Manual review trigger: contradiction, hallucinated theorem, vague reasoning, or unusually short response.',
+      ].join('\n')
+    }),
+  ].join('\n\n')
+}
+
+function loadSavedQuestionsForRubric() {
+  try {
+    const saved = localStorage.getItem('grading_questions')
+    if (!saved) return null
+
+    const parsed = JSON.parse(saved)
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function cleanQuestionText(text: string) {
+  return text.replace(/^Q\d+\.\s*/i, '').trim()
+}
+
+function formatSavedQuestionsForRubric(questions: any[]) {
+  return questions
+    .map((q, index) => {
+      const id = q.question_id || q.id || `q${index + 1}`
+      const text = cleanQuestionText(q.question || q.question_text || '')
+      const score = q.max_score || q.points || 10
+
+      return `Q${index + 1}. [${id}, ${score} pts] ${text}`
+    })
+    .join('\n\n')
 }
 
 export default function RubricReviewPage() {
-  const [questionText, setQuestionText] = useState(sampleQuestionText)
+  const [questionText, setQuestionText] = useState(() => {
+    const savedQuestions = loadSavedQuestionsForRubric()
+    return savedQuestions
+      ? formatSavedQuestionsForRubric(savedQuestions)
+      : sampleQuestionText
+  })
   const [rubricText, setRubricText] = useState(sampleRubric)
   const [previousRubric, setPreviousRubric] = useState('')
   const [status, setStatus] = useState<RubricStatus>('draft')
@@ -68,7 +113,9 @@ export default function RubricReviewPage() {
 
   function handleRegenerateRubric() {
     setPreviousRubric(rubricText)
-    const revised = improveRubric(rubricText, reviewerComment, selectedReason)
+
+    const revised = improveRubric(questionText, reviewerComment, selectedReason)
+
     setRubricText(revised)
     setStatus('revised_draft')
     setShowRevisionPanel(false)
@@ -98,10 +145,9 @@ export default function RubricReviewPage() {
       <section className="panel rubric-hero">
         <div className="rubric-hero-copy">
           <p className="eyebrow">Rubric Review</p>
-          <h1 className="rubric-title">Generate and refine the scoring guide</h1>
+          <h1 className="rubric-title rubric-title--compact">Refine Rubric</h1>
           <p className="rubric-copy">
-            Review the rubric, request revisions with specific feedback, then
-            approve the final draft before moving into grading.
+            Review and approve your final grading criteria.
           </p>
         </div>
 
