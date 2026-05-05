@@ -1,144 +1,193 @@
-import { useMemo, useState } from 'react'
+import React, { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { sampleQuestionText, sampleRubric } from '../lib/demoData'
-import { buildRubric, parseQuestionsFromText } from '../lib/gradingUtils'
 
-type RubricStatus =
-  | 'draft'
-  | 'revision_requested'
-  | 'revised_draft'
-  | 'approved'
+type RowStatus = 'draft' | 'approved' | 'manual_override' | 'revised'
 
-const revisionOptions = [
-  'Criteria are too generic',
-  'Scoring weights are unclear',
-  'Rubric does not match reasoning depth',
-  'Need more partial-credit guidance',
-  'Expected key points are missing',
-]
-
-function improveRubric(questionText: string, feedback: string, selectedReason: string) {
-  const questions = questionText
-    .split(/\n\s*\n/)
-    .map((q) => q.trim())
-    .filter(Boolean)
-
-  const revisionFocus =
-    selectedReason || feedback.trim() || 'Improve reasoning depth and partial-credit clarity'
-
-  return [
-    'Revised Rubric',
-    'Scale: 0–10 per question',
-    '',
-    `Revision focus: ${revisionFocus}`,
-    '',
-    ...questions.map((question, index) => {
-      const cleanQuestion = question.replace(/^Q\d+\.\s*/i, '').trim()
-
-      return [
-        `Q${index + 1}. ${cleanQuestion}`,
-        '- Conceptual accuracy and use of correct definitions (0–3)',
-        '- Step-by-step reasoning and logical justification (0–3)',
-        '- Application to the specific question, not generic explanation (0–2)',
-        '- Completeness, precision, and clarity of final answer (0–2)',
-        '- Full credit: answer directly addresses the prompt, uses correct theory, and explains why the conclusion follows.',
-        '- Partial credit: answer identifies relevant concepts but has incomplete reasoning, missing proof steps, or weak explanation.',
-        '- Low credit: answer is mostly generic, unsupported, or only states a conclusion.',
-        '- Manual review trigger: contradiction, hallucinated theorem, vague reasoning, or unusually short response.',
-      ].join('\n')
-    }),
-  ].join('\n\n')
-}
-
-function loadSavedQuestionsForRubric() {
+function loadSavedQuestions() {
   try {
     const saved = localStorage.getItem('grading_questions')
-    if (!saved) return null
-
+    if (!saved) return []
     const parsed = JSON.parse(saved)
-    if (!Array.isArray(parsed) || parsed.length === 0) return null
-
-    return parsed
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return null
+    return []
   }
-}
-
-function cleanQuestionText(text: string) {
-  return text.replace(/^Q\d+\.\s*/i, '').trim()
-}
-
-function formatSavedQuestionsForRubric(questions: any[]) {
-  return questions
-    .map((q, index) => {
-      const id = q.question_id || q.id || `q${index + 1}`
-      const text = cleanQuestionText(q.question || q.question_text || '')
-      const score = q.max_score || q.points || 10
-
-      return `Q${index + 1}. [${id}, ${score} pts] ${text}`
-    })
-    .join('\n\n')
 }
 
 export default function RubricReviewPage() {
-  const [questionText, setQuestionText] = useState(() => {
-    const savedQuestions = loadSavedQuestionsForRubric()
-    return savedQuestions
-      ? formatSavedQuestionsForRubric(savedQuestions)
-      : sampleQuestionText
-  })
-  const [rubricText, setRubricText] = useState(sampleRubric)
-  const [previousRubric, setPreviousRubric] = useState('')
-  const [status, setStatus] = useState<RubricStatus>('draft')
+  const [questions, setQuestions] = useState<any[]>([])
+  
+  // State for Rubrics and UI tracking
+  const [rubrics, setRubrics] = useState<Record<string, string>>({})
+  const [rowStatuses, setRowStatuses] = useState<Record<string, RowStatus>>({})
+  const [globalStatus, setGlobalStatus] = useState<'draft' | 'generated' | 'approved'>('draft')
 
-  const [showRevisionPanel, setShowRevisionPanel] = useState(false)
-  const [selectedReason, setSelectedReason] = useState(revisionOptions[0])
-  const [reviewerComment, setReviewerComment] = useState('')
+  // Inline Revision State
+  const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null)
+  const [revisionPrompt, setRevisionPrompt] = useState<string>('')
 
-  const questions = useMemo(() => parseQuestionsFromText(questionText), [questionText])
+  useEffect(() => {
+    setQuestions(loadSavedQuestions())
+  }, [])
 
-  function handleGenerateRubric() {
-    const nextRubric = buildRubric(questions)
-    setPreviousRubric('')
-    setRubricText(nextRubric)
-    setStatus('draft')
-    setShowRevisionPanel(false)
-    setReviewerComment('')
+  function handleGenerateAllRubrics() {
+    const newRubrics: Record<string, string> = {}
+    const newStatuses: Record<string, RowStatus> = {}
+    
+    questions.forEach((q) => {
+      if (q.subparts && q.subparts.length > 0) {
+        q.subparts.forEach((sub: any) => {
+          newRubrics[sub.part_id] = `- Correct concept (0-${Math.floor(sub.max_score / 2)})\n- Clear reasoning (0-${Math.ceil(sub.max_score / 2)})`
+          newStatuses[sub.part_id] = 'draft'
+        })
+      } else {
+        newRubrics[q.question_id] = `- Correct concept (0-${Math.floor(q.max_score / 2)})\n- Clear reasoning (0-${Math.ceil(q.max_score / 2)})`
+        newStatuses[q.question_id] = 'draft'
+      }
+    })
+
+    setRubrics(newRubrics)
+    setRowStatuses(newStatuses)
+    setGlobalStatus('generated')
   }
 
-  function handleRequestRevision() {
-    setStatus('revision_requested')
-    setShowRevisionPanel(true)
+  function handleRubricChange(id: string, newText: string) {
+    setRubrics((prev) => ({ ...prev, [id]: newText }))
   }
 
-  function handleRegenerateRubric() {
-    setPreviousRubric(rubricText)
-
-    const revised = improveRubric(questionText, reviewerComment, selectedReason)
-
-    setRubricText(revised)
-    setStatus('revised_draft')
-    setShowRevisionPanel(false)
+  // --- Row Action Handlers ---
+  
+  function handleApproveRow(id: string) {
+    setRowStatuses(prev => ({ ...prev, [id]: 'approved' }))
+    setActiveRevisionId(null)
   }
 
-  function handleApproveRubric() {
-    setStatus('approved')
-    setShowRevisionPanel(false)
+  function handleUndoApprove(id: string) {
+    setRowStatuses(prev => ({ ...prev, [id]: 'draft' }))
   }
 
-  const statusLabel = {
-    draft: 'Draft Ready',
-    revision_requested: 'Revision Requested',
-    revised_draft: 'Revised Draft',
-    approved: 'Approved',
-  }[status]
+  function handleToggleManual(id: string) {
+    setRowStatuses(prev => ({ 
+      ...prev, 
+      [id]: prev[id] === 'manual_override' ? 'draft' : 'manual_override' 
+    }))
+    setActiveRevisionId(null)
+  }
 
-  const statusClass = {
-    draft: 'status-pill status-pill--neutral',
-    revision_requested: 'status-pill status-pill--warning',
-    revised_draft: 'status-pill status-pill--info',
-    approved: 'status-pill status-pill--success',
-  }[status]
+  function handleOpenRevision(id: string) {
+    setActiveRevisionId(id)
+    setRevisionPrompt('')
+  }
+
+  function submitRevision(id: string) {
+    if (!revisionPrompt.trim()) return;
+
+    // Mocking the targeted LLM response
+    setRubrics(prev => ({
+      ...prev,
+      [id]: prev[id] + `\n\n[AI Applied Revision: "${revisionPrompt}"]`
+    }))
+    
+    setRowStatuses(prev => ({ ...prev, [id]: 'revised' }))
+    setActiveRevisionId(null)
+    setRevisionPrompt('')
+  }
+
+  // --- Render Helpers for Cell Layouts ---
+
+  const renderRubricCell = (id: string) => {
+    const status = rowStatuses[id] || 'draft'
+    const isManual = status === 'manual_override'
+    const isApproved = status === 'approved'
+
+    // If global draft, show empty disabled box
+    if (globalStatus === 'draft') {
+       return <td><textarea className="editor-textarea preview-textarea" style={{ minHeight: '120px' }} readOnly placeholder="Waiting for generation..." /></td>
+    }
+
+    return (
+      <td>
+        <textarea 
+          className={`editor-textarea ${!isManual ? 'preview-textarea' : ''}`}
+          style={{ minHeight: '120px', padding: '12px' }}
+          value={rubrics[id] || ''}
+          onChange={(e) => handleRubricChange(id, e.target.value)}
+          readOnly={!isManual}
+          placeholder={isManual ? "Type manual override here..." : ""}
+        />
+        
+        {/* Inline Revision Dropdown */}
+        {activeRevisionId === id && (
+          <div style={{ marginTop: '12px', padding: '12px', background: 'var(--info-bg)', borderRadius: '12px', border: '1px solid var(--brand-200)' }}>
+            <p className="tiny-label" style={{ marginBottom: '8px', color: 'var(--brand-700)' }}>Targeted AI Revision Prompt</p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input 
+                type="text"
+                className="text-input"
+                style={{ flex: 1, minHeight: '36px', padding: '0 12px', fontSize: '0.9rem' }}
+                placeholder="E.g., 'Make it 5 points total, add a 2pt penalty if they forget context switching'..."
+                value={revisionPrompt}
+                onChange={(e) => setRevisionPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitRevision(id)}
+                autoFocus
+              />
+              <button className="primary-btn" style={{ minHeight: '36px', padding: '0 12px', fontSize: '0.85rem' }} onClick={() => submitRevision(id)}>
+                Regenerate
+              </button>
+              <button className="ghost-btn" style={{ minHeight: '36px', padding: '0 12px', fontSize: '0.85rem' }} onClick={() => setActiveRevisionId(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </td>
+    )
+  }
+
+  const renderActionCell = (id: string) => {
+    if (globalStatus === 'draft') {
+      return (
+        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+          <span className="status-pill status-pill--neutral" style={{ opacity: 0.5 }}>Pending</span>
+        </td>
+      )
+    }
+
+    const status = rowStatuses[id] || 'draft'
+    const isApproved = status === 'approved'
+    const isManual = status === 'manual_override'
+    const isRevised = status === 'revised'
+
+    return (
+      <td style={{ textAlign: 'center', verticalAlign: 'top' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          {isApproved ? (
+            <span className="status-pill status-pill--success" style={{ width: '100%' }}>Approved</span>
+          ) : isManual ? (
+            <span className="status-pill status-pill--warning" style={{ width: '100%' }}>Manual Edit</span>
+          ) : isRevised ? (
+            <span className="status-pill status-pill--info" style={{ width: '100%' }}>Revised</span>
+          ) : (
+            <span className="status-pill status-pill--neutral" style={{ width: '100%' }}>Draft</span>
+          )}
+
+          {!isApproved && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+              <button className="row-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => handleApproveRow(id)}>Approve</button>
+              <button className="row-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => handleOpenRevision(id)}>Revise</button>
+              <button className="row-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => handleToggleManual(id)}>
+                {isManual ? 'Lock' : 'Manual'}
+              </button>
+            </div>
+          )}
+
+          {isApproved && (
+            <button className="row-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => handleUndoApprove(id)}>Undo</button>
+          )}
+        </div>
+      </td>
+    )
+  }
 
   return (
     <main className="shell rubric-page">
@@ -147,213 +196,119 @@ export default function RubricReviewPage() {
           <p className="eyebrow">Rubric Review</p>
           <h1 className="rubric-title rubric-title--compact">Refine Rubric</h1>
           <p className="rubric-copy">
-            Review and approve your final grading criteria.
+            Review the generated grading criteria against the original prompts. Adjust weights and reasoning expectations before approving.
           </p>
         </div>
 
         <div className="rubric-hero-meta">
           <div className="hero-stat">
             <span>Questions</span>
-            <strong>{questions.length} detected</strong>
+            <strong>{questions.length} main topics</strong>
           </div>
           <div className="hero-stat">
-            <span>Status</span>
-            <strong>{statusLabel}</strong>
+            <span>System Status</span>
+            <strong>{globalStatus === 'draft' ? 'Waiting for Generation' : 'Drafts Ready'}</strong>
           </div>
         </div>
       </section>
 
       <section className="panel rubric-builder">
-        <div className="rubric-grid">
-          <section className="editor-card">
-            <div className="editor-card-head">
-              <div>
-                <p className="tiny-label">Source</p>
-                <h2>Question Source</h2>
-              </div>
-            </div>
+        <div className="panel-head">
+          <div>
+            <h3>Grading Criteria</h3>
+            <span className="tiny-label">Line-by-line review</span>
+          </div>
 
-            <div className="editor-stack">
-              <label htmlFor="rubric-questions" className="field-label">
-                Review question set
-              </label>
-              <textarea
-                id="rubric-questions"
-                className="editor-textarea editor-textarea--lg"
-                value={questionText}
-                onChange={(event) => setQuestionText(event.target.value)}
-              />
-            </div>
-
-            <div className="editor-actions">
-              <button type="button" className="primary-btn" onClick={handleGenerateRubric}>
-                Generate Rubric
+          <div className="action-stack">
+            {globalStatus === 'draft' ? (
+              <button type="button" className="primary-btn" onClick={handleGenerateAllRubrics}>
+                Generate All Rubrics
               </button>
-            </div>
-          </section>
-
-          <section className="editor-card">
-            <div className="editor-card-head">
-              <div>
-                <p className="tiny-label">Draft</p>
-                <h2>Current Rubric Draft</h2>
-              </div>
-
-              <div className={statusClass}>{statusLabel}</div>
-            </div>
-
-            <div className="editor-stack">
-              <label htmlFor="rubric-draft" className="field-label">
-                Edit rubric text
-              </label>
-              <textarea
-                id="rubric-draft"
-                className="editor-textarea editor-textarea--lg"
-                value={rubricText}
-                onChange={(event) => setRubricText(event.target.value)}
-              />
-            </div>
-
-            <div className="editor-actions">
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={handleApproveRubric}
-              >
-                Approve Rubric
-              </button>
-
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={handleRequestRevision}
-              >
-                Request Revision
-              </button>
-            </div>
-          </section>
+            ) : (
+              <Link to="/grading" className="primary-btn">
+                Approve All & Continue
+              </Link>
+            )}
+          </div>
         </div>
 
-        {showRevisionPanel && (
-          <section className="editor-card revision-card">
-            <div className="editor-card-head">
-              <div>
-                <p className="tiny-label">Feedback</p>
-                <h2>Revision Request</h2>
-              </div>
-            </div>
+        <div className="table-wrap">
+          <table className="clean-table">
+            <thead>
+              <tr>
+                <th className="center-col" style={{ width: '60px' }}>Index</th>
+                <th colSpan={2} style={{ width: '120px' }}>Q. ID</th>
+                <th style={{ width: '30%' }}>Question</th>
+                <th style={{ width: '45%' }}>Scoring Rubric</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>Status / Action</th>
+              </tr>
+            </thead>
 
-            <p className="section-note">
-              Tell the system what should be improved before regenerating the rubric.
-            </p>
+            <tbody>
+              {questions.length > 0 ? (
+                questions.map((q, index) => {
+                  const hasSubparts = q.subparts && q.subparts.length > 0
 
-            <div className="revision-grid">
-              <div className="editor-stack">
-                <label htmlFor="revision-reason" className="field-label">
-                  Revision reason
-                </label>
-                <select
-                  id="revision-reason"
-                  className="select-input"
-                  value={selectedReason}
-                  onChange={(event) => setSelectedReason(event.target.value)}
-                >
-                  {revisionOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  if (hasSubparts) {
+                    // Check if all subparts are approved to highlight the parent row
+                    const allApproved = q.subparts.every((sub: any) => rowStatuses[sub.part_id] === 'approved')
+                    const parentBg = allApproved ? 'rgba(31, 153, 91, 0.05)' : ''
 
-              <div className="editor-stack">
-                <label htmlFor="reviewer-comment" className="field-label">
-                  Reviewer comment
-                </label>
-                <textarea
-                  id="reviewer-comment"
-                  className="editor-textarea editor-textarea--md"
-                  value={reviewerComment}
-                  onChange={(event) => setReviewerComment(event.target.value)}
-                  placeholder="Example: Add stronger reasoning criteria, differentiate full credit from partial credit, and include expected OS concepts such as context switching, responsiveness, and fairness."
-                />
-              </div>
-            </div>
+                    return (
+                      <Fragment key={q.question_id}>
+                        {/* Parent Context Row */}
+                        <tr style={{ backgroundColor: parentBg, transition: 'background-color 0.3s ease' }}>
+                          <td className="center-col" rowSpan={q.subparts.length + 1}>{index + 1}</td>
+                          <td 
+                            className="mono-cell" 
+                            rowSpan={q.subparts.length + 1} 
+                            style={{ verticalAlign: 'top', borderRight: '1px solid var(--line)' }}
+                          >
+                            {q.question_id}
+                          </td>
+                          <td className="mono-cell" style={{ color: 'var(--ink-500)', fontSize: '0.8rem' }}>—</td>
+                          <td colSpan={3}>
+                            <strong style={{ color: 'var(--ink-900)' }}>{q.question}</strong>
+                          </td>
+                        </tr>
+                        {/* Subpart Rows */}
+                        {q.subparts.map((sub: any) => {
+                          const isApproved = rowStatuses[sub.part_id] === 'approved'
+                          return (
+                            <tr key={sub.part_id} style={{ backgroundColor: isApproved ? 'rgba(31, 153, 91, 0.05)' : '', transition: 'background-color 0.3s ease' }}>
+                              <td className="mono-cell">{sub.part_id}</td>
+                              <td>{sub.question}</td>
+                              {renderRubricCell(sub.part_id)}
+                              {renderActionCell(sub.part_id)}
+                            </tr>
+                          )
+                        })}
+                      </Fragment>
+                    )
+                  }
 
-            <div className="editor-actions">
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={handleRegenerateRubric}
-              >
-                Regenerate from Feedback
-              </button>
-
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => setShowRevisionPanel(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </section>
-        )}
-
-        {previousRubric && (
-          <section className="editor-card compare-card">
-            <div className="editor-card-head">
-              <div>
-                <p className="tiny-label">Comparison</p>
-                <h2>Revision Comparison</h2>
-              </div>
-            </div>
-
-            <p className="section-note">
-              Compare the previous draft with the revised rubric.
-            </p>
-
-            <div className="rubric-grid">
-              <div className="editor-stack">
-                <label htmlFor="previous-rubric" className="field-label">
-                  Previous draft
-                </label>
-                <textarea
-                  id="previous-rubric"
-                  className="editor-textarea editor-textarea--lg preview-textarea"
-                  value={previousRubric}
-                  readOnly
-                />
-              </div>
-
-              <div className="editor-stack">
-                <label htmlFor="revised-rubric" className="field-label">
-                  Revised draft
-                </label>
-                <textarea
-                  id="revised-rubric"
-                  className="editor-textarea editor-textarea--lg preview-textarea"
-                  value={rubricText}
-                  readOnly
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {status === 'approved' && (
-          <section className="approval-banner">
-            <div>
-              <p className="tiny-label">Ready</p>
-              <h2>Rubric approved</h2>
-              <p>The scoring guide is ready for submission grading.</p>
-            </div>
-
-            <Link to="/grading" className="primary-btn">
-              Continue to Grading
-            </Link>
-          </section>
-        )}
+                  {/* Flat Row (No Subparts) */}
+                  const isApproved = rowStatuses[q.question_id] === 'approved'
+                  return (
+                    <tr key={q.question_id} style={{ backgroundColor: isApproved ? 'rgba(31, 153, 91, 0.05)' : '', transition: 'background-color 0.3s ease' }}>
+                      <td className="center-col">{index + 1}</td>
+                      <td className="mono-cell" colSpan={2}>{q.question_id}</td>
+                      <td>{q.question}</td>
+                      {renderRubricCell(q.question_id)}
+                      {renderActionCell(q.question_id)}
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td className="center-col" colSpan={6}>
+                    No questions available. Please go back to Intake.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   )

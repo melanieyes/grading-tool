@@ -7,7 +7,7 @@ export default function HomePage() {
         <div className="hero-left">
           <p className="eyebrow">Fulbright University Vietnam</p>
 
-          <h1 className="hero-title">
+          <h1 className="hero-title" style={{ maxWidth: '100%', whiteSpace: 'nowrap' }}>
             Grading tool for reasoning work.
           </h1>
 
@@ -16,8 +16,8 @@ export default function HomePage() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/grading" className="primary-btn">
-              Start grading
+            <Link to="/intake" className="primary-btn">
+              Upload Questions
             </Link>
             <Link to="/rubric" className="ghost-btn hero-secondary-btn">
               Preview rubric flow

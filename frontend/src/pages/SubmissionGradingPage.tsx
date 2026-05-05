@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
-import { gradeBatch } from '../lib/api'
+import React, { useMemo, useRef, useState } from 'react'
+// Note: We've temporarily removed the real API import for UI testing
+// import { gradeBatch } from '../lib/api'
 
 type SubmissionMode = 'json' | 'csv'
 type Decision = 'pending' | 'approved' | 'rejected'
@@ -12,12 +13,56 @@ const sampleJsonInput = `[
   {
     "student_id": "S10492811",
     "answer": "Deadlock means programs wait forever."
+  },
+  {
+    "student_id": "S10501122",
+    "answer": "A deadlock is a state where a set of processes are blocked because each process is holding a resource and waiting for another resource acquired by some other process."
+  },
+  {
+    "student_id": "S10519988",
+    "answer": "I don't know."
   }
 ]`
 
 const sampleCsvInput = `student_id,answer
 S10485739,"Deadlock happens when processes wait in a circular chain. Resource ordering can prevent circular wait."
 S10492811,"Deadlock means programs wait forever."`
+
+// --- MOCK API FUNCTION ---
+// This simulates your NLP backend evaluating the batch
+const mockGradeBatch = async (submissions: any[]) => {
+  // Simulate a 1.5 second network/processing delay
+  await new Promise((resolve) => setTimeout(resolve, 1500))
+
+  return {
+    results: submissions.map((sub) => {
+      // Generate a pseudo-random score between 0 and 10
+      const score = Math.floor(Math.random() * 11) 
+      
+      // Randomly flag items for manual review, heavily weighting low scores
+      const review_required = score < 5 || Math.random() > 0.8
+
+      let reasoning = ""
+      if (score >= 9) {
+        reasoning = "Excellent understanding of the core concepts. The reasoning is clear, uses correct terminology, and directly addresses the rubric requirements."
+      } else if (score >= 6) {
+        reasoning = "Good answer but missing some nuances. Partial credit awarded for mentioning the key terms, but lacks deeper justification or step-by-step logic."
+      } else if (score >= 3) {
+        reasoning = "The answer is mostly incomplete or generic. It hints at the right direction but fails to explicitly connect the theory to the prompt."
+      } else {
+        reasoning = "The answer is incorrect, hallucinated, or fails to address the prompt entirely. Key concepts are missing."
+      }
+
+      return {
+        student_id: sub.student_id,
+        question_id: sub.question_id || 'q-unknown',
+        score,
+        review_required,
+        reasoning
+      }
+    })
+  }
+}
 
 function splitCsvLine(line: string) {
   const result: string[] = []
@@ -214,7 +259,8 @@ export default function SubmissionGradingPage() {
 
       const limitedSubmissions = submissions.slice(0, runLimit)
 
-      const result = await gradeBatch(limitedSubmissions)
+      // Using the MOCK function here instead of the real API
+      const result = await mockGradeBatch(limitedSubmissions)
 
       setData(result)
       setDecisions({})
@@ -383,7 +429,7 @@ export default function SubmissionGradingPage() {
           }
         />
 
-        <div className="input-preview-row">
+        <div className="input-preview-row" style={{ marginTop: '16px' }}>
           <span className={submissions.length > 0 ? 'status-pill status-pill--success' : 'status-pill status-pill--warning'}>
             {submissions.length > 0
               ? `${submissions.length} submissions detected`
@@ -391,7 +437,7 @@ export default function SubmissionGradingPage() {
           </span>
         </div>
 
-        <div className="run-control">
+        <div className="run-control" style={{ marginTop: '16px' }}>
           <label htmlFor="run-limit">Run limit</label>
           <input
             id="run-limit"

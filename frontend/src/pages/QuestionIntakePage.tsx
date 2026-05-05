@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 type IntakeMode = 'csv' | 'json'
@@ -14,9 +14,19 @@ const jsonTemplate = `[
     "max_score": 10
   },
   {
-    "question_id": "q2",
-    "question": "Compare paging and segmentation in memory management.",
-    "max_score": 10
+    "question_id": "q4",
+    "question_text": "Enumerate all algorithms we have learned to find the shortest path between two nodes in a weighted graph. For each algorithm, you need",
+    "points": 40,
+    "subparts": [
+      {
+        "part_id": "q4i",
+        "question_text": "(i) Briefly explain how it finds the shortest path"
+      },
+      {
+        "part_id": "q4ii",
+        "question_text": "(ii) What is the advantage of this algorithm?"
+      }
+    ]
   }
 ]`
 
@@ -68,34 +78,33 @@ function parseCsv(text: string) {
     .filter((q) => q.question_id && q.question)
 }
 
-function flattenJsonQuestions(data: any): any[] {
-  if (Array.isArray(data)) return data
+// Preserves the hierarchical structure instead of flattening it
+function parseJsonStructure(data: any): any[] {
+  const arr = Array.isArray(data) ? data : (data?.questions || [])
 
-  if (!data?.questions || !Array.isArray(data.questions)) return []
-
-  return data.questions.flatMap((q: any) => {
-    if (q.subparts && Array.isArray(q.subparts)) {
-      return q.subparts.map((part: any) => ({
-        question_id: part.part_id || part.question_id,
-        question: part.question_text || part.question || '',
-        max_score: part.points || q.points || 10,
-        benchmark_type: q.benchmark_type || '',
-      }))
-    }
+  return arr.map((q: any) => {
+    const subparts = Array.isArray(q.subparts) && q.subparts.length > 0
+      ? q.subparts.map((part: any) => ({
+          part_id: part.part_id || part.question_id || '',
+          question: part.question_text || part.question || '',
+          max_score: Number(part.points || part.max_score || 0)
+        }))
+      : null
 
     return {
-      question_id: q.question_id || q.id,
+      question_id: q.question_id || q.id || '',
       question: q.question_text || q.question || '',
-      max_score: q.points || q.max_score || 10,
+      max_score: Number(q.points || q.max_score || 10),
       benchmark_type: q.benchmark_type || '',
+      subparts
     }
-  })
+  }).filter((q: any) => q.question_id && q.question)
 }
 
 function parseJson(text: string) {
   try {
     const parsed = JSON.parse(text)
-    return flattenJsonQuestions(parsed).filter((q) => q.question_id && q.question)
+    return parseJsonStructure(parsed)
   } catch {
     return []
   }
@@ -167,7 +176,7 @@ export default function QuestionIntakePage() {
               : 'status-pill status-pill--warning'
           }
         >
-          {isValid ? `${questions.length} questions detected` : 'Template required'}
+          {isValid ? `${questions.length} main questions detected` : 'Template required'}
         </span>
       </section>
 
@@ -239,29 +248,63 @@ export default function QuestionIntakePage() {
         </div>
 
         <div className="table-wrap">
-          <table className="clean-table clean-table--compact">
+          <table className="clean-table clean-table--compact intake-table">
             <thead>
               <tr>
-                <th className="center-col">Index</th>
-                <th>Question ID</th>
+                <th className="center-col" style={{ width: '72px' }}>Index</th>
+                <th colSpan={2} style={{ width: '180px' }}>Question ID</th>
                 <th>Question</th>
-                <th>Max Score</th>
+                <th style={{ width: '100px' }}>Max Score</th>
               </tr>
             </thead>
 
             <tbody>
               {questions.length > 0 ? (
-                questions.map((q, index) => (
-                  <tr key={q.question_id}>
-                    <td className="center-col">{index + 1}</td>
-                    <td className="mono-cell">{q.question_id}</td>
-                    <td>{q.question}</td>
-                    <td>{q.max_score}</td>
-                  </tr>
-                ))
+                questions.map((q, index) => {
+                  const hasSubparts = q.subparts && q.subparts.length > 0
+
+                  if (hasSubparts) {
+                    return (
+                      <Fragment key={q.question_id}>
+                        {/* Parent Context Row */}
+                        <tr>
+                          <td className="center-col" rowSpan={q.subparts.length + 1}>{index + 1}</td>
+                          <td 
+                            className="mono-cell" 
+                            rowSpan={q.subparts.length + 1} 
+                            style={{ verticalAlign: 'top', borderRight: '1px solid var(--line)' }}
+                          >
+                            {q.question_id}
+                          </td>
+                          <td className="mono-cell" style={{ color: 'var(--ink-500)', fontSize: '0.8rem' }}>—</td>
+                          <td><strong style={{ color: 'var(--ink-900)' }}>{q.question}</strong></td>
+                          <td>{q.max_score}</td>
+                        </tr>
+                        {/* Subpart Rows */}
+                        {q.subparts.map((sub: any) => (
+                          <tr key={sub.part_id}>
+                            <td className="mono-cell">{sub.part_id}</td>
+                            <td>{sub.question}</td>
+                            <td>{sub.max_score > 0 ? sub.max_score : '-'}</td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    )
+                  }
+
+                  {/* Flat Row (No Subparts) */}
+                  return (
+                    <tr key={q.question_id}>
+                      <td className="center-col">{index + 1}</td>
+                      <td className="mono-cell" colSpan={2}>{q.question_id}</td>
+                      <td>{q.question}</td>
+                      <td>{q.max_score}</td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
-                  <td className="center-col" colSpan={4}>
+                  <td className="center-col" colSpan={5}>
                     No valid questions detected yet.
                   </td>
                 </tr>
