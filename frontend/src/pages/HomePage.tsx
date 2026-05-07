@@ -8,21 +8,19 @@ export default function HomePage() {
           <p className="eyebrow">Fulbright University Vietnam</p>
 
           <h1 className="hero-title">
-            Clearer grading for reasoning work.
+            Grading tool for reasoning work.
           </h1>
 
           <p className="hero-copy">
-            Intake questions, refine the rubric, and review flagged submissions
-            in one calm workflow.
+            Upload submissions, apply rubric-aligned grading, and review uncertain cases before releasing feedback.
           </p>
 
           <div className="hero-actions">
-            <Link to="/intake" className="primary-btn">
+            <Link to="/grading" className="primary-btn">
               Start grading
             </Link>
-
-            <Link to="/rubric" className="ghost-btn">
-              Review rubric
+            <Link to="/rubric" className="ghost-btn hero-secondary-btn">
+              Preview rubric flow
             </Link>
           </div>
         </div>
@@ -30,16 +28,16 @@ export default function HomePage() {
         <div className="hero-right">
           <div className="hero-stat">
             <span>Workflow</span>
-            <strong>3 clear steps</strong>
+            <strong>Question → Rubric → Grade</strong>
           </div>
 
           <div className="hero-stat">
             <span>Review</span>
-            <strong>Flag uncertain cases</strong>
+            <strong>Flag uncertain answers</strong>
           </div>
 
           <div className="hero-stat">
-            <span>Output</span>
+            <span>Feedback</span>
             <strong>Score + explanation</strong>
           </div>
         </div>
@@ -48,7 +46,7 @@ export default function HomePage() {
       <section className="workflow-section">
         <div className="section-intro">
           <p className="eyebrow">Workflow</p>
-          <h2>Three focused steps</h2>
+          <h2>A cleaner path from intake to feedback</h2>
         </div>
 
         <div className="workflow-grid">
@@ -58,7 +56,7 @@ export default function HomePage() {
               <span className="step-line" />
             </div>
             <h3>Question Intake</h3>
-            <p>Upload or paste exam questions and preview the structure clearly.</p>
+            <p>Add questions and confirm the structure before rubric generation.</p>
           </Link>
 
           <Link to="/rubric" className="workflow-step-card">
@@ -67,7 +65,7 @@ export default function HomePage() {
               <span className="step-line" />
             </div>
             <h3>Rubric Review</h3>
-            <p>Generate scoring criteria, revise wording, and approve the final rubric.</p>
+            <p>Refine scoring criteria and approve the grading standard.</p>
           </Link>
 
           <Link to="/grading" className="workflow-step-card">
@@ -76,7 +74,7 @@ export default function HomePage() {
               <span className="step-line" />
             </div>
             <h3>Submission Grading</h3>
-            <p>Grade in batch, inspect flagged cases, and keep instructors in the loop.</p>
+            <p>Run batch grading and inspect answers that need human review.</p>
           </Link>
         </div>
       </section>

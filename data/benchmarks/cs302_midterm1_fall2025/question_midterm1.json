@@ -6,9 +6,8 @@
     "total_points": 175,
     "benchmark_notes": {
       "selected_for": "Algorithm design and analysis benchmark",
-      "total_selected_questions": 7,
+      "total_selected_questions": 5,
       "question_ids": [
-        "q2",
         "q3",
         "q4",
         "q5",

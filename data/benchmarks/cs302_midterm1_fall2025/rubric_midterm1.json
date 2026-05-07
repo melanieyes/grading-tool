@@ -139,22 +139,37 @@
         "question_id": "q6",
         "benchmark_type": "algorithm_design",
         "total_points": 40,
-        "grading_note": "A highly inefficient brute-force or purely greedy attempt with factorial/exponential complexity receives heavy deductions. Must use DP/memoization for full credit.",
+        "grading_note": "Evaluate the student's solution against ONLY ONE of the two valid algorithmic approaches below: Track A (DFS + Memoization) OR Track B (Sorting + Bottom-Up DP). Choose the track that best matches the student's logic. Do not combine points from both tracks. A highly inefficient brute-force attempt receives maximum 5 points.",
         "criteria": [
           {
-            "criterion_id": "q6_1",
+            "criterion_id": "q6_trackA_1",
             "points": 10,
-            "description": "Establishes standard DFS logic exploring valid 4-directional moves strictly greater than current cell"
+            "description": "Track A (DFS+Memo) - State Exploration: Establishes standard Depth-First Search logic exploring valid 4-directional moves that are strictly strictly greater/smaller than the current cell."
           },
           {
-            "criterion_id": "q6_2",
+            "criterion_id": "q6_trackA_2",
             "points": 20,
-            "description": "Implements Memoization (DP table) correctly to cache results and prevent exponential or factorial re-evaluations"
+            "description": "Track A (DFS+Memo) - Memoization: Implements a DP table/memo dictionary to cache results, returning the cached value immediately if a cell has already been visited to prevent exponential re-evaluations."
           },
           {
-            "criterion_id": "q6_3",
+            "criterion_id": "q6_trackA_3",
             "points": 10,
-            "description": "Achieves efficient time complexity O(mn)"
+            "description": "Track A (DFS+Memo) - Complexity: Achieves or explicitly states an optimal time complexity of O(m*n)."
+          },
+          {
+            "criterion_id": "q6_trackB_1",
+            "points": 10,
+            "description": "Track B (Sorting) - Initialization & Sorting: Correctly extracts all cells into a list (storing value, row, col) and sorts them by value."
+          },
+          {
+            "criterion_id": "q6_trackB_2",
+            "points": 20,
+            "description": "Track B (Sorting) - DP State Updates: Iterates through the sorted list and checks valid 4-directional neighbors, updating a DP table by adding 1 to the path length of the valid neighboring cells."
+          },
+          {
+            "criterion_id": "q6_trackB_3",
+            "points": 10,
+            "description": "Track B (Sorting) - Complexity: Recognizes that the time complexity is bottlenecked by the sorting step, stating it as O(mn log(mn))."
           }
         ]
       },
