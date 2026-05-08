@@ -1,0 +1,580 @@
+[
+  {
+    "student_id": "001",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Idea: greedy. \nComplexity: O(mnlog(mn)). \nInput: matrix. \nOutput: result. \nFunction: longest-increasing-path(matrix):\nm = len (matrix) \nif m==0: return 0 \nn = len(matrix[0]) \nif n==0: return 0 \nresult = 0 \na=new_array(m,n) \nc=new_array(m,n) \nfor i=1 to m: \nfor j=1 to n: \n a.append(tuple(matrix[i][j],i,j)) \na.sort(key: lambda t:t[0]) \nfor i=1 to mxn: \nhelper(a[i]) \nreturn result \nfunction helper (tuple) \nv = tuple[0] \nx = tuple[1]\ny = tuple[2] \nres=1 \nif matrix[x-1][y] valid and larger than  v \nres=max(res, c[x-1][y]) \nif matrix[x+1][y] valid and larger than v  \nres=max(res,c[x+1][y]) \nif matrix[x][y-1] valid and larger than v \nres=max(res,c[x][y-1] \nif matrix[x][y+1] valid and larger than v \nres=max(res,c[x][y+1] \nc[x][y]=res \nresult=max(result,res)",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "002",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "def longest_path(): \n//If we consider each cell to be a node, and we add a directed edge between u, v if value in cell u smaller than cell v. We then have a DAG. Let's call it G(V, E). \nd[ ]=int[V] //d[i] keeps the value of shortest path that end at node i. initially d[i]=0 \nSort V in topological order (using dfs) \nfor u in V: \nfor v in adj(u): \nd[v] = max(d[v], d[u]+1)\nres = maximum value among all d[v], for all v belongs to V \nreturn res \nTime complexity: O(|V|+|E|)",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "003",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "[No answer provided]",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "004",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Input: matrix (m x m) \nOutput: int \nComplexity: O(m^2n^3) \nfunction path(Matrix M) \ndp_up = m x n matrix of 1s \ndp_down = m x n matrix of 1s \nfor i in range(m): \n  for j in range(n): \n    if M[m][n] < M[m+1][n]: \n      dp_up[m+1][n] = dp_up[m][n] + 1\n    else if M[m][n] > M[m+1][n]:\n      dp_down[m+1][n] = dp_down[m][n] + 1 \ndp_left = m * n matrix of 1s \ndp_right = m * n matrix of 1s \nfor i in range(m):\n  for j in range(n-1, 0, -1):\n    if M[m][n] < M[m][n-1]:\n      dp_left[m][n-1] = dp_left[m][n] + 1\n    else if M[m][n] > M[m+1][n]:\n      dp_left[m][n-1] = dp_right[m][n] + 1\n  return max-entry(dp_up, dp_down, dp_left, dp_right)",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "005",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "We apply DFS approach (smallest possible and stack first) \n1/ Sorted the tiles in matrix.\nStart with the smallest tiles.\n2/ Consider the neighbor of it. if the weight is bigger, choose the direction go to the smallest possible tiles.\n3/ If there is no possible tiles to go to, break.\nTry to start with another tiles (from the sorted list) that is unvisited yet, then loop through 2 to 3, until all node tiles is visited. \nCan stop early when the remaining unvisited tiles is smaller than the temporary longest. (2: add a count that each time move, count += 1) and store a list of count of iterations. \nKey idea: explore all possible path by DFS and store it for comparison.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "006",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "\nFunction longest Increaming Path (matrix):\nDEFINE rows = number of rows in matrix\nDEFINE cols = member of columns in matrix\nCREATE memo = empty dictionary\n\nFUNCTION dfs(row, col):\n  if (row, col) exist in memo\n    return memo [(row,col)]\n  max_length = 0\n  directions =[(-1,0),(0,1),(1,0),(0,-1)] //direction: up, right, down, left.\n  FOR each (dr,dc) in directions:\n    new_row = row + dr\n    new_col = col + dc\n    if new_row and new_col are within matrix AND matrix[new_row][new_col] > matrix[row][col]:\n      path_length = dfs(new_row, new_col)\n      max_length = MAX(max_length, path_length)\nmemo [(row, col )]=max_length +1\nRETURN memo [(row,col)]\n\nmax_path = 0\nFOR i in range(0,rows):\n  FOR j in range(0,cols):\n    max_path = MAX(max_path, dfs)\nRETURN max_path",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "007",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "function LIP (matrix).\nlet m = number of row\nlet c = number of column.\nlet dic = an empty dictionary.\nNow use the logic of DFS to add the (row, c) (if they are exist in the matrix) into the emty dic.\nlet: max_length = 0, and direction = [ (-1,0), (0,1), (1,0), (0,-1) ]\nfor each (rd, cd) in directions:\n  new_r = r + rd.\n  new_c = c + cd.\n  if (new_r, new_c) in the matrix and matrix [new_r, new_c] > matrix [r, c].\n    path_length = dfs(new_r, new_c).\n    max_length = max(max_length, path_length).\n    dic[r, c] = max_length + 1.\n    retun dic[r, c].\n\nCreate: path = -\\infty\nfor i in range (0,r)\n  for j in range (0,c):\n    path = max(path, dfs(i,j))\nretum path.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "008",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "r = row, c = column, dict = empty dict\n1) DFS: return dict(r,c).\n2) max_length=0, direction = [(-1,0),(0,1),(1,0),(0,-1)].\n3) For each (r_d, c_d) belongs to direction: r_1 = r_d + r, c_1 = c_d + c.\n4) If (r, c) in matrix and matrix(r_1, c_1) > matrix(r, c). \npath = dfs(c_1, r_1). length = max(length, path). dict[r, c] = length + 1. return dict[r, c]. \n5) path = 0. for i in (0, r):\n for j in (0, c):\n path = max(path, dfs(i,j)).\nreturn path.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "009",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "if matrix is empty:\n return 0\nrows = number rows in matrix\ncols = number of columns in matrix\ndp[row][cols] = all 0\ndiretion = [(-1,0), (1,0), (0,1), (0,-1)]\nDefine function DFS(r,c)\n if dp[r][c] is not 0:\n  return dp[r][c]\n max len = 1\n for each (dr, dc) in directions:\n  nr <- r + dr\n  nc <- c + dc\n if nr, nc are within bounds AND matrix[nr][nc] > matrix[r][c]:\n  length <- 1 + DFS(nr, nc)\n  max_len = max(max_len, length)\n  dp[r][c] <- max_len\n  return dp[r][c]\n longest = 0\n for r=0 to rows-1:\n  for c=0 to cols-1:\n   longest = max(longest, DFS(r,c))\n return longest",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "010",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Create a matrix dp[m][n] initialize with 0 -> dp(i)(j) = longest increasing path start from (i)(j).\n- For each cell, perform a Depth-first Search:\n+ Explore 4 direction\n+ If the neighbors value is larger, recursively call DFS for that neighbor\n+ Store result in dp(i)(j)\n- Return maximum value in dp",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "011",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Create graph from the matrix each cell will be each node, and has its associating adjacency node list.\nStart from the smallest node.\ngo throng iteratively go through the nodes in its adjacency list\nif the node in adjacency list > current node.\nappend that node to candidate list.\nafter iterate all adjacency nodes of that the current node. chose the node with largest value in that list to process hext.\nRepeative the process, if cannot find back track.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "012",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "function longestPath(matrix):\n increasing path = []\n for arr in matrix:\n  for i in arr:\n    check neighbor in 4 direction left, right, up, down\n    if direction exists\n    If the element in the neighbor exists and greater than arr[i], move the pointer to that neighbor and repeat the process until no more increase is introduced\n   append that path into increasing-path.\nreturn the path with longest length in the increasing-path",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "013",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "def longest_path:\n  if not matrix:\n    return 0\n  m, n = len(matrix), len(matrix[0])\n  dp = [[0] * n for _ in range(m)]\n  def depth_first_search(i, j):\n    if dp[i][j]:\n      return dp[i][j]\n    val = matrix[i][j]\n    best = 1\n    for x, y in [(-1,0), (1,0), (0,1), (0,-1)]:\n      nx, ny = i+x, j+y\n      if 0 <= nx < m and 0 <= ny < n and matrix[nx][ny] > val:\n        best = max(best, 1 + depth_first_search(nx, ny))\n    dp[i][j] = best\n    return best\nreturn max(depth_first_search(i, j) for i in range(m) for j in range(n))",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "014",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Input: an (m x n) integer matrix.\nOutput: the length of the longest increasing path (length of a list).\nFirst, we will initialize a graph G=(V,E,w) where V is the set of vertices, reprensenting each matrix cells such that the cell's value is not repeated. E is the set of edges where the path between each vertices with the weigh w = |u-v| where u, v are the values of each matrix cells connecting on the graph. (only connecting in four direction mentioned). For example, in example 1, we will have 9-4-8-6-2-1-8",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "015",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "We will create an array of the same size called longest[n][m] that holds the longest increasing path ending at that position.\nInitialize all elements in longest[n][m] to have 1 by default.\nThen, we loop through the matrix, checking all the adjacent cells of a cell. If that adjacent cell has a smaller value than our current cell, set the longest to be min of current or the other cell + 1.\nfor each (cell in matrix):\n  for each (adjacentcell in cell.adjacent):\n    if (adjacentcell.value < cell.value):\n      longest[cell.n][cell.m] = min(longest[cell.n][cell.m], longest[adjacentcell.n][adjacentcell.m] + 1)\nWe repeat this for n*m times and returns the highest value in longest[][]. We can stop early if there is no change in longest[][] after an iteration",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "016",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Funtion LongestIncreasingPath(matrix):\n if matrix is empty:\n  return 0\n m_rows=number of rows in matrix\n m_cols=number of column in matrix\n max=0\n for i=0 to m_rows:\n  for j=0 to n_cols:\n   max=MAX(max, dfs(matrix,i,j,memo))\n return max\n\nFunction dfs(matrix,row,col,memo):\n if memo[row][col]!=0:\n  return memo[row][col]\n direction = [(-1,0),(1,0),(0,-1),(0,1)]\n maxPath=1\n For each (dr,dc) in directions:\n  new_row=row+dr\n  new_col=col+dc\n//out of the matrix\n  if new_row<0 OR new_row>m_rows OR new_col<0 OR new_col>n_cols:\n   CONTINUE\n  if matrix[new_row][new_col]>matrix[row][col]:\n   currentPath=1+dfs(matrix,new_rol,new_col,memo)\n   maxPath=Max(maxPath,currentPath)\n{{{Supplement}}",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "017",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Algorithms: longest_increasing_pat.\nInput: an (m x n) integers matrix.\nMy idea is to use the DFS approach to solve this prob.\nA[m][n]\ndef dfs(l,r,w,d):\n step=tempindex\n //Start from the left edge of the matrix.\n If right < left:\n  step = left or step = up or step = down.\n //Start from the right edge of the matrix.\n if left\n //Start from the middle of column\n //Start from the middle row",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "018",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Time complexity: O(m x n).\nInput: matrix\nOutput: array that is longest in increasing path\n LIP: check every element in the matrix one by one:\n For each element, look 4 directions to see if there is a bigger number\n if there is, move to that direction and keep track of the path\n return the longest path in array format.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "019",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Longest matrix size: n x m. \nCreate an array with same length. \nAssign longest [n][m] to have 1 by default. \nLoop through the matrix, check all the adjacent cells at a cell. \nIf that cell has a smaller value than our current cell, set the longest to be min of current or the cell + 1. \nfor each (cell in matrix): \n for each (adjacent cell in cell adjacent):\n  if (adj cell < cell value):\n   longest[cell n][cell m] = min(longest[cell n][cell m], longest [adj cell n][adj cell m] + 1) \n-> Repeat this for (nm) times and return highest value.",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "020",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "def main():\n let A = matrix\n for i in range (row):\n  for j in range (col):\n   current = A[i][j]\n   update array.append(curr);\n   if i=0 and j=0:\n    left = A[i][j+1]\n    down = \n    if curr < left:\n     length += 1;\n     update-arr.append(left)\n     curr=left;\n     recursion the compare;\n    if curr < down:\n     length += 1\n     update_arr.app...\n   if i=0 and j!=0:\n    curr<left\n    curr<right\n    curr<down\n   if i=0 and j=n-1:\n    curr<right\n    curr<down\n   else:\n    right, down, left, up",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "021",
+    "source_exam": "Mid-term exam 1",
+    "answers": [
+      {
+        "question_id": "midterm1_q6",
+        "student_answer": "Def longestIncreasingPath(matrix[m][n]):\n #Approach: For each row, find smallest element, then go 4 directions and add larger elements to a max heap, then DFS to find longest.\nmax = 0\nFor row in range m:\n s = min(row) //smallest index\n heap = {(row,S):[]} //Ex: (0,0):[(1,2),(3,4)]\n traverse(matrix, heap)\n max=max(max,DFS(heap)]\nreturn max\nDef traverse(matrix, heap):\n //get starting nodes from heap\n d=[-1, 0, 1]\nfor i in d:\n if matrix[x+i][y+i] > matrix[x][y]:\n   heap[(x,y)].add(matrix[x+i][y+i]\n   traverse(matrix, heap) //recursively add nodes until no increasing\nDef DFS(S, heap):\n count = 0",
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
+    "student_id": "001",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "L \\rightarrow abL | bL | \\lambda",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "L \\rightarrow aLb | M ; M \\rightarrow aaMb | \\lambda",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "002",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow SS \\perp T\nT \\rightarrow ab T | b T | a | \\lambda",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "ambiguous: S \\rightarrow ST | T\nunambiguous: S \\rightarrow ST / T \n T \\rightarrow aVTb | aVb | lambda \n V \\rightarrow a | \\lambda",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "003",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow ST | bS\nT \\rightarrow abS | \\epsilon",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "S \\rightarrow aaSb | T\n  T \\rightarrow aTb | \\epsilon",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "004",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S -> XY \n X -> bX | b | lambda \n Y -> aYb | aY | ab | a",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "S \\rightarrow aSb | lamda | aab | ab",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "005",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow AB | \\epsilon\nA \\rightarrow bA | \\epsilon",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "L_1 \\rightarrow aL_1b | \\epsilon\nL_2 \\rightarrow aL_2bb | \\epsilon",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "006",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow B | BAB | \\epsilon\nB \\rightarrow bB | b | \\epsilon\nA \\rightarrow abA | ab | bA | \\epsilon",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "S \\rightarrow aSb | epsilon \n A -> a | aa | aA | epsilon",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "007",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow AB\nA \\rightarrow \\lambda | bA\nB \\rightarrow \\lambda | abA | bB",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "S \\rightarrow AB\nA \\rightarrow aF\nB \\rightarrow bF | bbF\nF \\rightarrow aF | bF | \\lambda",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "008",
+    "source_exam": "Mid-term exam 2",
+    "answers": [
+      {
+        "question_id": "midterm2_q3",
+        "student_answer": "S \\rightarrow bS | abbT | \\epsilon",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "midterm2_q4",
+        "student_answer": "S \\rightarrow aSbb | aSb | \\epsilon",
+        "original_question_id": "q4"
+      }
+    ]
+  },
+  {
+    "student_id": "001",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "To verify knapsack problem, we need to check that solution to (1) the items of solution is valid (they belong to the original set, no duplicate or invalid value) O(n), and (2) sum of weights of items is smaller than the limit O(n), (3) sum of value of chosen items is greater than k O(n). K = {(set of item with w, value, and limit weight) | (1), (2), (3) conditions} ∈ NP as (1), (2), (3) can be checked in polynomial time O([UNCERTAIN]).",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "Construct a graph G' so that if G' has a Tonian path, by adding dummy vertices to G'(add m dummy nodes], we can always construct a graph G' from G and the TONIAN problem in G' is solved with the solution a -> b -> c -> d [4 out of 8 nodes]. Then Hamiltonian reduced to tonian, a -> b -> ... -> d is also the solution of Hamiltonian problem. Graph construction cost O(|V| + |E|). Check if that is valid tonian. => Hamiltonian ≤p tonian.",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "002",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "We have 2 types of knapsack: Fractional Knapsack (pick a portion), Normal Knapsack (pick a specific object). Knapsack picks the biggest-weight object and doesn't re-visit previous [UNCERTAIN: connected/considered] options, so the number of options at everytime choosing will be smaller than the total available objects. -> This can be solved in polynomial time. 1. Certificate: the weight of closest options. 2. Verifier. Step 1: Consider all closest possible options, then compare the weights. If we can choose the biggest value, continue to move to other connected options. Step 2: move till there is no option left. Return the sum.",
+        "original_question_id": "q3"
+      }
+    ]
+  },
+  {
+    "student_id": "003",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "We define a verifier that takes the total set of items as w and the subset of the original set and a number k as c [and the limit L]. The verifier checks if the items in the subset combined has weight ≤ L and value ≥ k. This can be done with a simple traversal to add all of them together, only at most n times (n is the number of items in the original set). This verifier is in P, so the language is in NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "Given graph G=(V,E), construct G'=(V',E'). For all v_i ∈ V, add v_i1 and v_i2 to V'. Therefore |V'|=2|V|. [UNCERTAIN: crossed-out edge-construction line]. Now, visually G' looks like G duplicated. It basically has 2 of G's as 2 forests in G'. If there exists a Tonian path in G', it must be limited to 1 forest in G'. But because it contains 1/2 |V'| = |V|, the path must be connecting every node in that forest. That is the Hamiltonian path on G (half of G'). The reduction process is only building G'. It is in polynomial time O(|V|+|E|) ∈ O(n^2). Because there exists a polynomial time reduction, we have HAMILTONIAN ≤p TONIAN.",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "004",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "If has running time of dynamic programming (O(logn)) -> polynomial class. It runs linearly like that so it is in P. P ⊆ NP so the problem is in NP as well.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "For the Tonian path, it may mean that that path visits at least half of the vertices in the graph, but not mention the vertex can be visited more than once. So changing the path existing in Hamiltonian is short path in Tonian and the path not existing in Hamiltonian is long path in Tonian. If it covers the shortest, meaning it covers the Hamiltonian. [UNCERTAIN: final incomplete phrase about Tonian].",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "005",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "To know whether the knapsack problem is in NP or not, we need to build a verifier on inputs of a number of items and the weight's bound. To check that in the constraint of number of items and weight bound, the maximum value from the input is the most maximized outcomes, we can use an algorithm with the time complexity O(n). Since verifying this in polynomial time, we can conclude that knapsack problem is in NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "To polynomial reducing the Hamiltonian problem to Tonian problem, we need to show 2 things: (1) If there is a Hamiltonian path, there is a Tonian path. Since the Hamiltonian path is the path that visits all vertices in the graph (each vertex visited once), it also means that this path has visited at least half of the vertices in the graph. Therefore, if it has the Hamiltonian path, it has the Tonian path. (2) If there is a Tonian path, there is a Tonian Hamiltonian path. Given that the Tonian path is the path that visits at least half of the vertices, [incomplete].",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "006",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "Verifier Algorithm V (use dynamic programming): Initialize a table to store values of different set of items. Compute values of smaller set of items first then store them in the table. Use the updated values in the table to compute values for bigger set of items by adding values of new items to existing sets. Choose the highest value by scanning through the table. Running time: all steps can be done in polynomial time. => Knapsack problem can be verified in polynomial time => it is in NP. (cont): check if the highest value just chosen corresponds to the same set of items as the input A. If yes -> accept, If no -> reject. Language: L = {A | A is the most optimized available set of items given the knapsack capacity k}.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "007",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "In Knapsack problem, the searching space is exponential. For every possible solution (a 2D list of selected items) we can always verify the solution whether the solution is optimal by replacing pair of item with a better pair of allowed unchosen item [order constrains w-w(item1)+w(item2) ≤ ...] under polynomial time O(n). => Knapsack problem is in NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "008",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "Given a witness (a proposed solution to the knapsack problem), we can easily verify it in polynomial time. 1. Ensure the chosen items are in the original set O(n). 2. Calculate sum of the chosen items weight O(n). 3. Check if the sum is less than a budget B O(1).",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "We can reduce any instance of HAMILTONIAN problem to TONIAN in polynomial time. As Hamiltonian results in a path P_H that contains exactly one of each vertex, P_H = {v1, v2, ..., vn}. We can create a Tonian path P_T from this path by picking a random vertex v_i (i ≤ n/2) in the first half of the path and follow the path P_H for at least n/2 more vertices. This reduction is in polynomial time O(n) (n is number of vertices |V|).",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "009",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "For each item you can either pick it, or not pick it. This will create branches, which we can then use non-deterministic Turing Machine to enumerate all branches at once. Since each branch can only have up to [items] nodes, it can be solve in polynomial time using nondeterministic Turing Machine.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "Let G be the graph of Hamiltonian, we can construct the graph G' of Tonian as below. For all nodes in G, add 1 leaf to it. Pick a node, any node in G, add another leaf to it. Now G' will have 2|V|+1 vertices, so the path have to cover at least |V|+1 vertices. This path will have the form of starting from a leaf we just add, another leaf, go through all of the original graph. The solution of Hamiltonian will then be just G' removing all the leaves we added.",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "010",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "We can verify if a given solution (a set of items) is valid: total weight is at most w and total value is less or equal in k, in O(n), which is polynomial => Knapsack is in NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "If we can solve TONIAN => There is a path with at least half of the nodes. Let it be P -> then let P' be the corresponding in tance in Hamilton. Since at least half of new graph G' is visited, every original node in G is also visited at least once (as they are duplicated). Also, due to the cycle nature due to duplication, we can always shorten P' so that every node is visited exactly once.",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "011",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "Certificate: the optimal solution from the knapsack. Verifier: define k is the max (optimal value), iterate through the solution and do the calculation. If the calculation result = k then we accept, reject otherwise. This iteration costs O(n), so Knapsack is in NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "We can reduce Hamiltonian to Tonian by removing half of the nodes in H. The new graph has |V|/2 nodes. If we can solve H problem, then we can solve T problem in the new graph. If we can solve T problem, we can solve H problem in the original graph (run the algorithm with twice number of nodes).",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "012",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "Certificate: a set of items and its weight. Verifiers: check if the total sum of each row is max. We would use for-loop to try the sum with different cases, so the time is polynomial. Therefore knapsack ∈ NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "013",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "Certificate: a set of items and its weight. Verifiers: check if the total sum of each row is max. We would use for-loop to try the sum with different cases, so the time is just polynomial. Therefore knapsack ∈ NP.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "Hamiltonian: visit each node at least once. Tonian: visit at least half of the nodes. We can reduce Hamiltonian to Tonian by removing half of the nodes in H. The new graph has |V|/2 nodes. If we can solve H problem, then we can solve T problem in the new graph. If we can solve T problem, we can solve H problem in the original graph (run the algorithm with twice number of nodes).",
+        "original_question_id": "q7"
+      }
+    ]
+  },
+  {
+    "student_id": "014",
+    "source_exam": "Final exam",
+    "answers": [
+      {
+        "question_id": "final_q3",
+        "student_answer": "The language for this problem is: Is there another choice of items that has the value >= k and within weight allowed? Verifier: given a set of chosen items, (1) calculate total [value/cost] and compare to k, (2) calculate total weight of item set then compare to the allowed weight given. Each step takes linear time, which is polynomial.",
+        "original_question_id": "q3"
+      },
+      {
+        "question_id": "final_q7",
+        "student_answer": "Let G be a graph that has 1 Hamiltonian path. Define new problem: a path that visits n-1 vertices (only 1 cannot be visited) -> remove the 2 edges connecting it to the path so it's isolated. Similarly for n-2, n-3, ..., n/2: just isolate the corresponding number of vertices, and for each number of vertices in the O(2n) for removing 2 edges. So HAMILTONIAN ≤p TONIAN.",
+        "original_question_id": "q7"
+      }
+    ]
+  }
+]

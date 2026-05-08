@@ -1,0 +1,166 @@
+{
+  "course": "CS302",
+  "term": "Fall 2025",
+  "exam": "Synthesis benchmark",
+  "rubric_version": "synthesis_extracted",
+  "source_exams": [
+    "Mid-term exam 1",
+    "Mid-term exam 2",
+    "Final exam"
+  ],
+  "rubric_notes": "Synthesis rubric extracted from existing rubric files. Original rubric content is preserved; question IDs are prefixed to avoid collisions across exams.",
+  "questions": [
+    {
+      "question_id": "midterm1_q6",
+      "benchmark_type": "algorithm_design",
+      "total_points": 40,
+      "grading_note": "Evaluate the student's solution against ONLY ONE of the two valid algorithmic approaches below: Track A (DFS + Memoization) OR Track B (Sorting + Bottom-Up DP). Choose the track that best matches the student's logic. Do not combine points from both tracks. A highly inefficient brute-force attempt receives maximum 5 points.",
+      "criteria": [
+        {
+          "criterion_id": "q6_trackA_1",
+          "points": 10,
+          "description": "Track A (DFS+Memo) - State Exploration: Establishes standard Depth-First Search logic exploring valid 4-directional moves that are strictly strictly greater/smaller than the current cell."
+        },
+        {
+          "criterion_id": "q6_trackA_2",
+          "points": 20,
+          "description": "Track A (DFS+Memo) - Memoization: Implements a DP table/memo dictionary to cache results, returning the cached value immediately if a cell has already been visited to prevent exponential re-evaluations."
+        },
+        {
+          "criterion_id": "q6_trackA_3",
+          "points": 10,
+          "description": "Track A (DFS+Memo) - Complexity: Achieves or explicitly states an optimal time complexity of O(m*n)."
+        },
+        {
+          "criterion_id": "q6_trackB_1",
+          "points": 10,
+          "description": "Track B (Sorting) - Initialization & Sorting: Correctly extracts all cells into a list (storing value, row, col) and sorts them by value."
+        },
+        {
+          "criterion_id": "q6_trackB_2",
+          "points": 20,
+          "description": "Track B (Sorting) - DP State Updates: Iterates through the sorted list and checks valid 4-directional neighbors, updating a DP table by adding 1 to the path length of the valid neighboring cells."
+        },
+        {
+          "criterion_id": "q6_trackB_3",
+          "points": 10,
+          "description": "Track B (Sorting) - Complexity: Recognizes that the time complexity is bottlenecked by the sorting step, stating it as O(mn log(mn))."
+        }
+      ],
+      "source_exam": "Mid-term exam 1",
+      "source_question_id": "q6"
+    },
+    {
+      "question_id": "midterm2_q3",
+      "benchmark_type": "cfg_design",
+      "total_points": 20,
+      "grading_note": "Targeted calibration. Score bands: 20 only if grammar captures exactly b*(abb*)* (allows all valid strings and excludes clear invalid ones such as isolated a without required following b). About 10 when one major idea is correct but grammar is incomplete/overgenerating. Around 5 only for fragmentary attempts with at least one relevant production idea. Prioritize language behavior over variable names.",
+      "criteria": [
+        {
+          "criterion_id": "q3_1",
+          "points": 10,
+          "description": "Core correctness: grammar enforces that every generated a must be followed by at least one b (the essential abb* constraint), avoiding obvious invalid strings with unconstrained lone a."
+        },
+        {
+          "criterion_id": "q3_2",
+          "points": 10,
+          "description": "Completeness: grammar also supports the leading b* portion and repeated block behavior (abb*)* with workable recursion/termination so valid strings across the language family are generable."
+        }
+      ],
+      "source_exam": "Mid-term exam 2",
+      "source_question_id": "q3"
+    },
+    {
+      "question_id": "midterm2_q4",
+      "benchmark_type": "unambiguous_cfg_design",
+      "total_points": 20,
+      "grading_note": "Professor pattern is coarse-banded: 20 only for both correct language and clear unambiguity; 10 for language-correct but ambiguous; around 4-5 for partly aligned structure; 0 for clearly wrong language.",
+      "criteria": [
+        {
+          "criterion_id": "q4_1",
+          "points": 10,
+          "description": "CFG correctly generates the language L={a^i b^j | j <= i <= 2j}. If ambiguous but language-correct, cap near 10 total before unambiguity criterion."
+        },
+        {
+          "criterion_id": "q4_2",
+          "points": 10,
+          "description": "CFG is strictly unambiguous (every string in the language has exactly one leftmost derivation or parse tree)"
+        }
+      ],
+      "source_exam": "Mid-term exam 2",
+      "source_question_id": "q4"
+    },
+    {
+      "question_id": "final_q3",
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "grading_note": "Full credit requires all three components: certificate definition, verifier description, and polynomial-time argument. Partial credit is awarded for each correct component independently.",
+      "criteria": [
+        {
+          "criterion_id": "q3_1",
+          "points": 3,
+          "description": "Correctly defines the certificate: a subset of items (i.e., which items are selected for the knapsack)"
+        },
+        {
+          "criterion_id": "q3_2",
+          "points": 4,
+          "description": "Correctly describes the verifier: checks that the total weight of the selected items does not exceed the weight limit L, and that the total value meets or exceeds the target K"
+        },
+        {
+          "criterion_id": "q3_3",
+          "points": 4,
+          "description": "Correctly argues polynomial time: summing weights and values over the selected subset takes O(n) time where n is the number of items"
+        },
+        {
+          "criterion_id": "q3_4",
+          "points": 3,
+          "description": "Clearly states the conclusion: since a polynomial-time verifier exists, Knapsack is in NP"
+        },
+        {
+          "criterion_id": "q3_5",
+          "points": 2,
+          "description": "Bonus: correctly notes the certificate size is polynomial (a subset of n items is representable in O(n) bits)"
+        }
+      ],
+      "max_points_without_bonus": 14,
+      "bonus_note": "q3_5 is a bonus criterion worth up to 2 points; total is capped at 16.",
+      "source_exam": "Final exam",
+      "source_question_id": "q3"
+    },
+    {
+      "question_id": "final_q7",
+      "benchmark_type": "polynomial_reduction",
+      "total_points": 28,
+      "grading_note": "A complete reduction proof requires four components: the construction, the forward direction, the backward direction, and the polynomial-time argument. Missing any direction of correctness loses significant points. Award partial credit if construction is correct but one direction of proof is missing or flawed.",
+      "criteria": [
+        {
+          "criterion_id": "q7_1",
+          "points": 6,
+          "description": "Correct construction: given G = (V, E) with |V| = n, construct G' as two disjoint copies of G with no edges between them, giving |V'| = 2n"
+        },
+        {
+          "criterion_id": "q7_2",
+          "points": 7,
+          "description": "Forward direction (HAMILTONIAN → TONIAN): if G has a Hamiltonian path, then one copy of G in G' has a path visiting all n vertices, which is exactly n = |V'|/2 vertices, satisfying the Tonian condition"
+        },
+        {
+          "criterion_id": "q7_3",
+          "points": 7,
+          "description": "Backward direction (TONIAN → HAMILTONIAN): if G' has a Tonian path visiting >= n vertices, and the two copies are disconnected, the path must lie entirely within one copy of G (which has exactly n vertices), so the path visits all n vertices — a Hamiltonian path in G"
+        },
+        {
+          "criterion_id": "q7_4",
+          "points": 4,
+          "description": "Polynomial-time argument: the construction (copying V and E twice) runs in O(|V| + |E|) time"
+        },
+        {
+          "criterion_id": "q7_5",
+          "points": 4,
+          "description": "Clear conclusion: since the construction is polynomial and the two instances are equivalent (G has a Hamiltonian path iff G' has a Tonian path), HAMILTONIAN ≤p TONIAN"
+        }
+      ],
+      "source_exam": "Final exam",
+      "source_question_id": "q7"
+    }
+  ]
+}

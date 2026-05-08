@@ -1,0 +1,48 @@
+{
+  "course": "CS302",
+  "term": "Fall 2025",
+  "exam": "Synthesis benchmark",
+  "solution_notes": "Extracted from original exam solution files without rewriting solution content. Question IDs are remapped only to avoid collisions across exams.",
+  "questions": [
+    {
+      "question_id": "midterm1_q6",
+      "benchmark_type": "algorithm_design",
+      "total_points": 40,
+      "solution": "To find the longest increasing path efficiently, we must use Depth First Search (DFS) combined with Memoization (Dynamic Programming). From each cell, we explore its valid neighbors strictly greater in value. We store the longest path starting from cell (i, j) in a memoization table `memo[i][j]` to avoid redundant calculations. The time complexity of this approach is O(m * n) since each cell is computed exactly once. Brute force or greedy recursive approaches without memoization are too slow (exponential or factorial).",
+      "source_exam": "Mid-term exam 1",
+      "source_question_id": "q6"
+    },
+    {
+      "question_id": "midterm2_q3",
+      "benchmark_type": "cfg_design",
+      "total_points": 20,
+      "solution": "The regular expression b*(abb*)* allows any number of 'b's and enforces that every 'a' is followed by at least one 'b'. A context-free grammar generating this language is: \nS → bS | abS | ε. \nHere, 'bS' handles the leading 'b's and the 'b*' portion of 'abb*', while 'abS' handles the 'ab' required whenever an 'a' is generated. The base case ε ends the string.",
+      "source_exam": "Mid-term exam 2",
+      "source_question_id": "q3"
+    },
+    {
+      "question_id": "midterm2_q4",
+      "benchmark_type": "unambiguous_cfg_design",
+      "total_points": 20,
+      "solution": "The language L = {a^i b^j | j ≤ i ≤ 2j} means that for every 'b', there must be either one 'a' or two 'a's. A simple CFG like S → aSb | aaSb | ε generates the language but is ambiguous (e.g., 'a^3 b^2' can be formed as a+aa or aa+a). To make it unambiguous, we strictly separate the 1:1 matches from the 2:1 matches. \nUnambiguous CFG:\nS → aSb | A\nA → aaAb | ε\nThis forces all 'a...b' pairings to occur outside all 'aa...b' pairings, providing exactly one unique derivation tree for any valid string.",
+      "source_exam": "Mid-term exam 2",
+      "source_question_id": "q4"
+    },
+    {
+      "question_id": "final_q3",
+      "benchmark_type": "np_membership_proof",
+      "total_points": 16,
+      "solution": "We prove that the Knapsack problem is in NP by constructing a polynomial-time verifier. Recall the decision version of Knapsack: given a set of n items where item i has weight w_i and value v_i, a weight capacity L, and a target value K, decide whether there exists a subset of items whose total weight is at most L and whose total value is at least K.\n\nCertificate: A subset T ⊆ {1, ..., n} indicating which items are selected. This certificate has size O(n) and is therefore polynomial in the input size.\n\nVerifier: On input (instance, T), the verifier computes two sums: the total weight Σ_{i ∈ T} w_i and the total value Σ_{i ∈ T} v_i. It then checks whether the total weight is at most L and whether the total value is at least K. If both conditions hold, it accepts; otherwise it rejects.\n\nPolynomial time: Both summations require a single pass over T, taking O(n) time. The two comparisons take O(1). The total running time of the verifier is O(n), which is polynomial in the input size.\n\nCompleteness and soundness: If a valid subset T exists (i.e., the Knapsack instance is a yes-instance), then providing T as the certificate causes the verifier to accept. Conversely, if no valid subset exists, no certificate can cause the verifier to accept.\n\nSince a polynomial-time verifier exists, the Knapsack problem is in NP.",
+      "source_exam": "Final exam",
+      "source_question_id": "q3"
+    },
+    {
+      "question_id": "final_q7",
+      "benchmark_type": "polynomial_reduction",
+      "total_points": 28,
+      "solution": "We describe a polynomial-time reduction from HAMILTONIAN to TONIAN, i.e., we show HAMILTONIAN ≤p TONIAN.\n\nConstruction: Given an instance G = (V, E) of HAMILTONIAN with |V| = n, construct a new graph G' = (V', E') as follows. Take two disjoint copies of G: let G1 = (V1, E1) and G2 = (V2, E2) where V1 and V2 are disjoint copies of V, and E1 and E2 are the corresponding copies of E. Set V' = V1 ∪ V2 and E' = E1 ∪ E2 with no edges between V1 and V2. Then |V'| = 2n.\n\nForward direction (G has a Hamiltonian path ⟹ G' has a Tonian path): Suppose G has a Hamiltonian path P that visits all n vertices of G exactly once. The copy of P within G1 is a path in G' that visits exactly n vertices. Since |V'| = 2n, this path visits n = |V'| / 2 vertices, which satisfies the Tonian condition of visiting at least half the vertices. Therefore G' has a Tonian path.\n\nBackward direction (G' has a Tonian path ⟹ G has a Hamiltonian path): Suppose G' has a Tonian path P' visiting at least |V'| / 2 = n vertices. Since there are no edges between V1 and V2, any path in G' must lie entirely within G1 or entirely within G2. Each of G1 and G2 has exactly n vertices. Therefore P' visits at least n vertices within a single copy, say G1. But G1 has only n vertices in total, so P' visits all n vertices of G1 exactly once (since a path cannot revisit vertices). This corresponds to a Hamiltonian path in G.\n\nPolynomial time: Constructing G' requires duplicating V and E, which takes O(|V| + |E|) time. This is polynomial in the size of G.\n\nConclusion: Since G has a Hamiltonian path if and only if G' has a Tonian path, and the construction runs in polynomial time, we have HAMILTONIAN ≤p TONIAN.",
+      "source_exam": "Final exam",
+      "source_question_id": "q7"
+    }
+  ]
+}
