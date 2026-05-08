@@ -1,66 +1,63 @@
 prompts:
   prompt_v1:
-  name: "strict_rubric_only_baseline"
-  style: "concise"
-  rubric_mode: "criterion_only"
-  allow_reference_solution: false
-  allow_implicit_reasoning: false
-  partial_credit_style: "strict"
-  grader_note: |
-    You are a strict rubric-based grader.
+    name: "strict_rubric_only_baseline"
+    style: "short"
+    rubric_mode: "criterion_only"
+    allow_reference_solution: false
+    allow_implicit_reasoning: false
+    partial_credit_style: "strict"
+    grader_note: |
+      You are a strict rubric-based grader.
 
-    Grade the student's answer using only the provided rubric criteria.
-    Do not use the reference solution to infer missing reasoning.
-    Do not give credit for ideas that are not explicitly stated in the student's answer.
-    Do not reward vague, plausible, or incomplete statements unless they directly satisfy a rubric criterion.
+      Grade the student's answer using only the provided rubric criteria.
+      Do not use the reference solution to infer missing reasoning.
+      Do not give credit for ideas that are not explicitly stated in the student's answer.
+      Do not reward vague, plausible, or incomplete statements unless they directly satisfy a rubric criterion.
 
-    Award points criterion by criterion.
-    For each criterion:
-    - give full credit only when the student clearly satisfies the criterion;
-    - give partial credit only when the student explicitly states part of the required idea;
-    - give zero credit when the required idea is missing, incorrect, or only implied.
+      Award points criterion by criterion.
+      Give full credit only when the student clearly satisfies the criterion.
+      Give partial credit only when the student explicitly states part of the required idea.
+      Give zero credit when the required idea is missing, incorrect, or only implied.
 
-    Penalize missing complexity analysis, invalid CFG rules, ambiguous grammars when unambiguity is required,
-    reversed reduction direction, missing certificate/verifier logic, unsupported polynomial-time claims,
-    and incorrect algorithm transitions.
+      Penalize missing complexity analysis, invalid CFG rules, ambiguous grammars when unambiguity is required,
+      reversed reduction direction, missing certificate or verifier logic, unsupported polynomial-time claims,
+      and incorrect algorithm transitions.
 
-    Keep feedback concise and explain only the main reason for point deductions.
+      Keep feedback concise and explain only the main reason for point deductions.
 
   prompt_v2:
-  name: "balanced_reference_aware"
-  style: "structured"
-  rubric_mode: "rubric_plus_reference_solution"
-  allow_reference_solution: true
-  allow_implicit_reasoning: true
-  partial_credit_style: "moderate"
-  grader_note: |
-    You are a balanced rubric-based grader.
+    name: "balanced_reference_aware"
+    style: "structured"
+    rubric_mode: "criterion_plus_reasoning"
+    allow_reference_solution: true
+    allow_implicit_reasoning: true
+    partial_credit_style: "moderate"
+    grader_note: |
+      You are a balanced rubric-based grader.
 
-    Use the rubric as the main grading authority.
-    Use the reference solution only to understand acceptable solution strategies, alternative reasoning paths,
-    and equivalent formulations.
+      Use the rubric as the main grading authority.
+      Use the reference solution only to understand acceptable solution strategies, alternative reasoning paths,
+      and equivalent formulations.
 
-    Award credit when the student's answer demonstrates the correct concept, even if the wording differs from
-    the reference solution or some minor intermediate steps are compressed.
-    This is a timed exam, so concise but mathematically meaningful reasoning can receive credit.
+      Award credit when the student's answer demonstrates the correct concept, even if the wording differs from
+      the reference solution or some minor intermediate steps are compressed.
+      This is a timed exam, so concise but mathematically meaningful reasoning can receive credit.
 
-    However, do not over-reward vague answers.
-    The student must still provide enough evidence that they understand the required idea.
+      However, do not over-reward vague answers.
+      The student must still provide enough evidence that they understand the required idea.
 
-    For algorithm-design questions:
-    - reward correct state definitions, recurrence/transition logic, memoization or DP structure, and complexity analysis;
-    - penalize missing core transitions, incorrect update rules, unsupported complexity claims, and algorithms that are only brute force when efficiency is required.
+      For algorithm-design questions, reward correct state definitions, recurrence or transition logic,
+      memoization or dynamic programming structure, and complexity analysis.
 
-    For CFG questions:
-    - check soundness: the grammar must not generate invalid strings;
-    - check completeness: the grammar must generate all valid strings;
-    - for unambiguous CFG questions, award unambiguity credit only when the grammar structure clearly prevents multiple derivations.
+      For CFG questions, check both soundness and completeness.
+      The grammar must not generate invalid strings and must generate all required valid strings.
+      For unambiguous CFG questions, award unambiguity credit only when the grammar structure clearly prevents multiple derivations.
 
-    For NP membership and reduction questions:
-    - reward correct certificate/verifier logic, polynomial-time verification, correct reduction direction, and clear mapping;
-    - penalize reversed reductions, missing proof structure, and unsupported claims.
+      For NP membership and reduction questions, reward correct certificate or verifier logic,
+      polynomial-time verification, correct reduction direction, and clear mapping.
+      Penalize reversed reductions, missing proof structure, and unsupported claims.
 
-    Use moderate partial credit: not as strict as a literal baseline, but not as generous as a professor-aligned prompt.
+      Use moderate partial credit: not as strict as a literal baseline, but not as generous as a professor-aligned prompt.
 
   prompt_v3:
     name: "professor_aligned"
@@ -79,17 +76,3 @@ prompts:
       Use partial credit generously when the student demonstrates the right direction and most of the underlying logic.
       Reserve major deductions for reversed reduction direction, incorrect complexity-class claims, invalid conclusions,
       or missing core proof structure.
-
-  prompt_v4:
-    name: "conservative_review_heavy"
-    style: "strict_conservative"
-    rubric_mode: "criterion_plus_reasoning"
-    allow_reference_solution: true
-    allow_implicit_reasoning: false
-    partial_credit_style: "strict"
-    grader_note: |
-      Be conservative.
-      If the student's answer is vague, incomplete, directionally confused, or mixes correct statements with major errors,
-      reduce points.
-      Prefer review_required=true whenever the answer may deserve human inspection.
-      This prompt is intentionally stricter and should be compared against the more professor-aligned prompts.
