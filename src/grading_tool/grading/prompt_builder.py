@@ -125,7 +125,39 @@ def build_payload(
     config_path: str = "configs/prompts.yaml",
 ) -> tuple[str, dict]:
     prompts = load_prompt_config(config_path)
+
+    if prompt_name not in prompts:
+        available = ", ".join(prompts.keys())
+        raise KeyError(
+            f"Prompt '{prompt_name}' was not found in {config_path}. "
+            f"Available prompts: {available}"
+        )
+
     prompt_cfg = prompts[prompt_name]
+
+    if prompt_cfg is None:
+        raise ValueError(
+            f"Prompt '{prompt_name}' exists in {config_path}, but it is empty/null. "
+            f"Check YAML indentation under '{prompt_name}:'."
+        )
+
+    required_fields = ["style", "rubric_mode"]
+    missing_fields = [field for field in required_fields if field not in prompt_cfg]
+
+    if missing_fields:
+        raise ValueError(
+            f"Prompt '{prompt_name}' is missing required fields: {missing_fields}"
+        )
+
+    style = prompt_cfg.get("style")
+    valid_styles = {"short", "structured", "detailed", "strict_conservative"}
+    if style not in valid_styles:
+        valid = ", ".join(sorted(valid_styles))
+        raise ValueError(
+            f"Prompt '{prompt_name}' uses unsupported style '{style}'. "
+            f"Allowed style values: {valid}"
+        )
+
     system_prompt = build_system_prompt(prompt_name, prompt_cfg)
 
     payload = {
