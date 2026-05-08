@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from src.grading_tool.models.gemini_client import GeminiClient
+from typing import Any
+
 from src.grading_tool.grading.prompt_builder import build_payload
 from src.grading_tool.grading.response_parser import parse_grade_response
+from src.grading_tool.models.gemini_client import GeminiClient
 
 
 class RubricGrader:
@@ -16,7 +18,7 @@ class RubricGrader:
         question_id: str,
         benchmark_type: str,
         question_text: str,
-        rubric: dict,
+        rubric: dict[str, Any],
         student_answer: str,
         score_max: float,
         reference_solution: str | None = None,
