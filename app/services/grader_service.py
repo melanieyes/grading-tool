@@ -1,12 +1,11 @@
 from collections import Counter, defaultdict
-from statistics import mean, variance
+from statistics import mean
 from typing import Dict, List, Tuple
 
 from app.schemas.api_models import (
     BatchGradeResponse,
     CalibrationRequest,
     CalibrationResponse,
-    CalibrationRoundResult,
     EvaluationMetrics,
     EvaluationRequest,
     EvaluationResponse,
@@ -25,14 +24,23 @@ from app.schemas.api_models import (
     SurveyBatchResponse,
     SurveyCommentResult,
 )
+from src.grading_tool.evaluation.calibration import run_calibration
+from src.grading_tool.evaluation.metrics import (
+    error_variance,
+    mean_absolute_error,
+    mean_squared_error,
+    score_variance,
+    within_threshold_rate,
+)
+from src.grading_tool.grading.rubric_reviser import revise_rubric as revise_rubric_core
 
 
 def score_answer(student_id: str, answer: str, question_id: str = "Q1") -> GradeResult:
     """
     Temporary rule-based scorer.
 
-    Later, this function should call:
-    src/grading_tool/grading/orchestrator.py
+    Later, this should call the real LLM grading pipeline.
+    For now, it keeps the old frontend working.
     """
     text = answer.lower()
 
@@ -144,12 +152,6 @@ def _infer_mistake_tags(answer: str) -> List[str]:
 
 
 def survey_submissions(payload: SurveyBatchRequest) -> SurveyBatchResponse:
-    """
-    First-round review.
-
-    Important: this does NOT return exact grades.
-    It only gives comments and mistake tags.
-    """
     results: List[SurveyCommentResult] = []
 
     for submission in payload.submissions:
@@ -172,8 +174,6 @@ def survey_submissions(payload: SurveyBatchRequest) -> SurveyBatchResponse:
         if "missing_solution_strategy" in tags:
             weaknesses.append("The answer does not provide a clear solution or prevention strategy.")
 
-        comment = " ".join(strengths + weaknesses)
-
         results.append(
             SurveyCommentResult(
                 student_id=submission.student_id,
@@ -181,7 +181,7 @@ def survey_submissions(payload: SurveyBatchRequest) -> SurveyBatchResponse:
                 strengths=strengths,
                 weaknesses=weaknesses,
                 mistake_tags=tags,
-                comment=comment,
+                comment=" ".join(strengths + weaknesses),
                 review_required="mostly_correct" not in tags,
             )
         )
@@ -244,58 +244,26 @@ def _describe_mistake_tag(tag: str) -> str:
 
 
 def revise_rubric(payload: RubricRevisionRequest) -> RubricRevisionResponse:
-    """
-    Temporary deterministic rubric revision.
-
-    Later, this should call:
-    src/grading_tool/grading/rubric_reviser.py
-    """
-    mistake_stats = payload.mistake_stats
-    revision_needed = bool(mistake_stats and mistake_stats.common_mistakes)
-
-    if not revision_needed:
-        return RubricRevisionResponse(
-            question_id=payload.question_id,
-            revision_needed=False,
-            revised_rubric=payload.original_rubric,
-            change_log=[],
-            justification="No major recurring mistake pattern was detected, so the rubric is kept unchanged.",
-        )
-
-    top_mistakes = mistake_stats.common_mistakes[:3]
-    change_log = [
-        RubricChangeLogItem(
-            old=None,
-            new=f"Add explicit partial-credit guidance for: {mistake.tag}",
-            justification=(
-                f"{mistake.count} submissions show this pattern "
-                f"({round(mistake.percentage * 100, 2)}%)."
-            ),
-        )
-        for mistake in top_mistakes
-    ]
-
-    revised_rubric = {
-        "original_rubric": payload.original_rubric,
-        "revision_notes": [
-            {
-                "mistake_tag": mistake.tag,
-                "suggestion": f"Clarify how to award partial credit when the answer has: {mistake.description}",
-                "affected_students": mistake.affected_students,
-            }
-            for mistake in top_mistakes
-        ],
-    }
+    core_result = revise_rubric_core(
+        original_rubric=payload.original_rubric,
+        mistake_stats=payload.mistake_stats.model_dump() if payload.mistake_stats else None,
+        flagged_cases=None,
+        instructor_note=payload.instructor_note,
+    )
 
     return RubricRevisionResponse(
         question_id=payload.question_id,
-        revision_needed=True,
-        revised_rubric=revised_rubric,
-        change_log=change_log,
-        justification=(
-            "The rubric should be revised because multiple submissions share recurring mistakes "
-            "that may require explicit partial-credit rules."
-        ),
+        revision_needed=core_result["revision_needed"],
+        revised_rubric=core_result["revised_rubric"],
+        change_log=[
+            RubricChangeLogItem(
+                old=item.get("old"),
+                new=item.get("new"),
+                justification=item.get("justification", ""),
+            )
+            for item in core_result.get("change_log", [])
+        ],
+        justification=core_result.get("justification", ""),
     )
 
 
@@ -362,23 +330,15 @@ def _compute_evaluation_metrics(
             bert_similarity_mean=None,
         )
 
-    errors = [item.difference for item in comparisons]
-    abs_errors = [item.abs_difference for item in comparisons]
-    ai_scores = [item.ai_score for item in comparisons]
-    within_threshold = [item.abs_difference <= threshold for item in comparisons]
-
-    mse = mean([error**2 for error in errors])
-    mae = mean(abs_errors)
-
-    score_var = variance(ai_scores) if len(ai_scores) > 1 else 0.0
-    error_var = variance(errors) if len(errors) > 1 else 0.0
+    y_true = [item.professor_score for item in comparisons]
+    y_pred = [item.ai_score for item in comparisons]
 
     return EvaluationMetrics(
-        mse=round(mse, 4),
-        mae=round(mae, 4),
-        score_variance=round(score_var, 4),
-        error_variance=round(error_var, 4),
-        within_threshold_rate=round(sum(within_threshold) / len(within_threshold), 4),
+        mse=round(mean_squared_error(y_true, y_pred), 4),
+        mae=round(mean_absolute_error(y_true, y_pred), 4),
+        score_variance=round(score_variance(y_pred), 4),
+        error_variance=round(error_variance(y_true, y_pred), 4),
+        within_threshold_rate=round(within_threshold_rate(y_true, y_pred, threshold), 4),
         cosine_similarity_mean=None,
         bert_similarity_mean=None,
     )
@@ -390,110 +350,59 @@ def _compute_evaluation_metrics(
 
 
 def calibrate_rubric_rounds(payload: CalibrationRequest) -> CalibrationResponse:
-    """
-    Temporary 5-round calibration skeleton.
-
-    Later, this should call:
-    src/grading_tool/evaluation/calibration.py
-    """
-    rounds: List[CalibrationRoundResult] = []
-    current_rubric = payload.original_rubric
-    best_mse = float("inf")
-    best_round_index = 1
-    best_rubric = current_rubric
-    previous_mse: float | None = None
-    stopping_reason = "Reached max rounds."
-
-    for round_index in range(1, payload.max_rounds + 1):
-        grade_results = [
-            score_answer(
-                student_id=submission.student_id,
-                answer=submission.answer,
-                question_id=payload.question_id or submission.question_id,
-            )
-            for submission in payload.submissions
-        ]
-
-        evaluation = evaluate_with_ground_truth(
-            EvaluationRequest(
-                ai_results=grade_results,
-                professor_grades=payload.professor_grades,
-                difference_threshold=payload.difference_threshold,
-                include_semantic_metrics=payload.include_semantic_metrics,
-            )
-        )
-
-        current_mse = evaluation.metrics.mse
-
-        if current_mse < best_mse:
-            best_mse = current_mse
-            best_round_index = round_index
-            best_rubric = current_rubric
-
-        revision_note = None
-
-        if payload.target_mse is not None and current_mse <= payload.target_mse:
-            stopping_reason = f"Stopped because target MSE {payload.target_mse} was reached."
-            rounds.append(
-                CalibrationRoundResult(
-                    round_index=round_index,
-                    rubric=current_rubric,
-                    grade_results=grade_results,
-                    evaluation=evaluation,
-                    revision_note=revision_note,
-                )
-            )
-            break
-
-        if previous_mse is not None:
-            improvement = previous_mse - current_mse
-            if improvement >= 0 and improvement < payload.min_improvement:
-                stopping_reason = (
-                    f"Stopped because MSE improvement {round(improvement, 4)} "
-                    f"was below min_improvement {payload.min_improvement}."
-                )
-                rounds.append(
-                    CalibrationRoundResult(
-                        round_index=round_index,
-                        rubric=current_rubric,
-                        grade_results=grade_results,
-                        evaluation=evaluation,
-                        revision_note=revision_note,
-                    )
-                )
-                break
-
-        flagged_count = evaluation.flagged_count
-        revision_note = (
-            f"Round {round_index}: {flagged_count} cases exceeded the difference threshold. "
-            "Rubric should clarify partial-credit rules for those disagreement cases."
-        )
-
-        current_rubric = {
-            "previous_rubric": current_rubric,
-            "calibration_round": round_index,
-            "revision_note": revision_note,
-        }
-
-        rounds.append(
-            CalibrationRoundResult(
-                round_index=round_index,
-                rubric=current_rubric,
-                grade_results=grade_results,
-                evaluation=evaluation,
-                revision_note=revision_note,
-            )
-        )
-
-        previous_mse = current_mse
-
-    return CalibrationResponse(
+    result = run_calibration(
         question_id=payload.question_id,
+        original_rubric=payload.original_rubric,
+        submissions=[submission.model_dump() for submission in payload.submissions],
+        professor_grades=[grade.model_dump() for grade in payload.professor_grades],
+        grade_fn=_calibration_grade_fn,
+        evaluate_fn=_calibration_evaluate_fn,
         max_rounds=payload.max_rounds,
-        completed_rounds=len(rounds),
-        best_round_index=best_round_index,
-        best_mse=round(best_mse, 4) if best_mse != float("inf") else 0.0,
-        best_rubric=best_rubric,
-        rounds=rounds,
-        stopping_reason=stopping_reason,
+        difference_threshold=payload.difference_threshold,
+        target_mse=payload.target_mse,
+        min_improvement=payload.min_improvement,
+        include_semantic_metrics=payload.include_semantic_metrics,
     )
+
+    return CalibrationResponse.model_validate(result)
+
+
+def _calibration_grade_fn(submissions: list[dict], rubric: dict) -> list[dict]:
+    """
+    Adapter for calibration.py.
+
+    For now, this uses score_answer().
+    Later, replace this with the real Gemini rubric grader.
+    """
+    results = []
+
+    for submission in submissions:
+        result = score_answer(
+            student_id=submission["student_id"],
+            answer=submission["answer"],
+            question_id=submission.get("question_id", "Q1"),
+        )
+        results.append(result.model_dump())
+
+    return results
+
+
+def _calibration_evaluate_fn(
+    grade_results: list[dict],
+    professor_grades: list[dict],
+    difference_threshold: float,
+    include_semantic_metrics: bool,
+) -> dict:
+    ai_results = [GradeResult.model_validate(item) for item in grade_results]
+    prof_results = [ProfessorGradeInput.model_validate(item) for item in professor_grades]
+
+    response = evaluate_with_ground_truth(
+        EvaluationRequest(
+            ai_results=ai_results,
+            professor_grades=prof_results,
+            difference_threshold=difference_threshold,
+            include_semantic_metrics=include_semantic_metrics,
+        )
+    )
+
+    return response.model_dump()
