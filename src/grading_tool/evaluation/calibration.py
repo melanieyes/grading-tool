@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from src.grading_tool.grading.mistake_analyzer import analyze_flagged_cases
 from src.grading_tool.grading.rubric_reviser import revise_rubric
 
 GradeFn = Callable[[list[dict], Any], list[dict]]
@@ -62,9 +63,11 @@ def run_calibration(
 
         flagged_cases = evaluation.get("flagged_cases", [])
 
+        mistake_stats = analyze_flagged_cases(flagged_cases)
+
         revision = revise_rubric(
             original_rubric=current_rubric,
-            mistake_stats=None,
+            mistake_stats=mistake_stats,
             flagged_cases=flagged_cases,
             instructor_note=instructor_note,
             round_index=round_index,

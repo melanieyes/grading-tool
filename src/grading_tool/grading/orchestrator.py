@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 import sys
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 
 from src.grading_tool.utils.io import load_json, save_json
 from src.grading_tool.grading.rubric_grader import RubricGrader
+from src.grading_tool.utils.retry import retry_async
 
 class BenchmarkManifest(BaseModel):
     course_id: str
@@ -473,6 +475,254 @@ def run_grading(
 
     if show_progress:
         _finish_progress(total_gradeable_answers)
+
+    payload: dict[str, Any] = {
+        "run_name": run_name,
+        "prompt_name": prompt_name,
+        "model_name": resolved_model_name,
+        "requested_model_name": model_name,
+        "benchmark_dir": str(benchmark_dir_path),
+        "question_path": str(question_file_path),
+        "rubric_path": str(rubric_file_path),
+        "solutions_path": str(solution_file_path),
+        "student_answers_paths": [str(p) for p in student_answer_file_paths],
+        "professor_grade_path": str(professor_grade_file_path)
+        if professor_grade_file_path
+        else None,
+        "benchmark_manifest_path": str(benchmark_manifest_file_path)
+        if benchmark_manifest_file_path
+        else None,
+        "n_results": len(results),
+        "n_skipped": len(skipped),
+        "results": results,
+        "skipped": skipped,
+    }
+
+    save_json(output_path, payload)
+    return payload
+
+
+def _build_grade_jobs(
+    *,
+    students: list[dict[str, Any]],
+    question_index: dict[str, dict[str, Any]],
+    rubric_index: dict[str, dict[str, Any]],
+    solution_index: dict[str, str],
+    limit_questions: int | None,
+    wanted_question_ids: set[str] | None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    jobs: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+
+    for student in students:
+        student_id = student["student_id"]
+        answers = [
+            ans
+            for ans in student.get("answers", [])
+            if ans["question_id"] in question_index and ans["question_id"] in rubric_index
+        ]
+
+        if wanted_question_ids is not None:
+            answers = [ans for ans in answers if ans["question_id"] in wanted_question_ids]
+        elif limit_questions is not None:
+            answers = answers[:limit_questions]
+
+        for ans in answers:
+            qid = ans["question_id"]
+            student_answer = ans.get("student_answer", "")
+
+            if qid not in question_index:
+                skipped.append(
+                    {
+                        "student_id": student_id,
+                        "question_id": qid,
+                        "reason": "question_not_found_in_question_index",
+                    }
+                )
+                continue
+
+            if qid not in rubric_index:
+                skipped.append(
+                    {
+                        "student_id": student_id,
+                        "question_id": qid,
+                        "reason": "question_not_found_in_rubric_index",
+                    }
+                )
+                continue
+
+            q_meta = question_index[qid]
+            r_meta = rubric_index[qid]
+            reference_solution = solution_index.get(qid, "")
+
+            rubric_payload = {
+                "criteria": r_meta["criteria"],
+                "grading_note": r_meta.get("grading_note"),
+            }
+
+            jobs.append(
+                {
+                    "student_id": student_id,
+                    "question_id": qid,
+                    "benchmark_type": q_meta["benchmark_type"],
+                    "question_text": q_meta["question_text"],
+                    "rubric": rubric_payload,
+                    "student_answer": student_answer,
+                    "score_max": float(r_meta["score_max"]),
+                    "reference_solution": reference_solution,
+                    "parent_question_id": q_meta["parent_question_id"],
+                }
+            )
+
+    return jobs, skipped
+
+
+async def run_grading_async(
+    benchmark_dir: str,
+    output_path: str,
+    run_name: str = "baseline_run",
+    prompt_name: str = "prompt_v1",
+    model_name: str | None = None,
+    limit_students: int | None = None,
+    limit_questions: int | None = None,
+    question_ids: list[str] | None = None,
+    question_path: str | None = None,
+    rubric_path: str | None = None,
+    solutions_path: str | None = None,
+    student_answers_paths: list[str] | None = None,
+    manifest_path: str | None = None,
+    show_progress: bool = True,
+    *,
+    max_concurrency: int = 5,
+    max_retries: int = 5,
+    retry_base_delay: float = 1.0,
+    retry_max_delay: float = 30.0,
+) -> dict[str, Any]:
+    if max_concurrency <= 0:
+        raise ValueError("max_concurrency must be greater than 0")
+
+    benchmark_dir_path = Path(benchmark_dir)
+    (
+        question_file_path,
+        rubric_file_path,
+        solution_file_path,
+        student_answer_file_paths,
+        professor_grade_file_path,
+        benchmark_manifest_file_path,
+    ) = _resolve_benchmark_inputs(
+        benchmark_dir=benchmark_dir_path,
+        question_path=question_path,
+        rubric_path=rubric_path,
+        solutions_path=solutions_path,
+        student_answers_paths=student_answers_paths,
+        manifest_path=manifest_path,
+    )
+
+    question_file = load_json(question_file_path)
+    rubric_file = load_json(rubric_file_path)
+    student_answers_file = _load_student_answers(student_answer_file_paths)
+    solution_file = load_json(solution_file_path)
+
+    question_index = _index_questions(question_file)
+    rubric_index = _index_rubric(rubric_file)
+    solution_index = _index_solutions(solution_file)
+
+    students = student_answers_file
+    if limit_students is not None:
+        students = students[:limit_students]
+
+    wanted_question_ids = set(question_ids) if question_ids else None
+    jobs, skipped = _build_grade_jobs(
+        students=students,
+        question_index=question_index,
+        rubric_index=rubric_index,
+        solution_index=solution_index,
+        limit_questions=limit_questions,
+        wanted_question_ids=wanted_question_ids,
+    )
+
+    # For metadata parity with sync path.
+    grader_for_metadata = RubricGrader(model_name=model_name, prompt_name=prompt_name)
+    resolved_model_name = grader_for_metadata.client.model_name
+
+    total_gradeable_answers = len(jobs)
+    if show_progress:
+        _print_progress(0, total_gradeable_answers)
+
+    queue: asyncio.Queue[tuple[int, dict[str, Any]] | None] = asyncio.Queue()
+    for idx, job in enumerate(jobs):
+        queue.put_nowait((idx, job))
+
+    results_by_index: list[dict[str, Any] | None] = [None] * len(jobs)
+
+    completed = 0
+    progress_lock = asyncio.Lock()
+
+    async def _worker() -> None:
+        nonlocal completed
+        grader = RubricGrader(model_name=model_name, prompt_name=prompt_name)
+
+        while True:
+            item = await queue.get()
+            if item is None:
+                queue.task_done()
+                return
+
+            job_index, job = item
+
+            async def _do_once():
+                return await asyncio.to_thread(
+                    grader.grade_question,
+                    student_id=job["student_id"],
+                    question_id=job["question_id"],
+                    benchmark_type=job["benchmark_type"],
+                    question_text=job["question_text"],
+                    rubric=job["rubric"],
+                    student_answer=job["student_answer"],
+                    score_max=job["score_max"],
+                    reference_solution=job["reference_solution"],
+                )
+
+            try:
+                grade_result = await retry_async(
+                    _do_once,
+                    max_retries=max_retries,
+                    base_delay=retry_base_delay,
+                    max_delay=retry_max_delay,
+                )
+                result_dict = grade_result.model_dump()
+                result_dict["parent_question_id"] = job["parent_question_id"]
+                results_by_index[job_index] = result_dict
+            except Exception as e:
+                skipped.append(
+                    {
+                        "student_id": job.get("student_id"),
+                        "question_id": job.get("question_id"),
+                        "benchmark_type": job.get("benchmark_type"),
+                        "reason": "grading_failed",
+                        "error": str(e),
+                    }
+                )
+            finally:
+                async with progress_lock:
+                    completed += 1
+                    if show_progress:
+                        _print_progress(completed, total_gradeable_answers)
+                queue.task_done()
+
+    workers = [asyncio.create_task(_worker()) for _ in range(min(max_concurrency, max(1, len(jobs))))]
+
+    # Tell workers to stop when all jobs are processed.
+    for _ in range(len(workers)):
+        queue.put_nowait(None)
+
+    await queue.join()
+    await asyncio.gather(*workers)
+
+    if show_progress:
+        _finish_progress(total_gradeable_answers)
+
+    results = [r for r in results_by_index if r is not None]
 
     payload: dict[str, Any] = {
         "run_name": run_name,

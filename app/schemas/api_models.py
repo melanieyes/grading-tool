@@ -177,6 +177,7 @@ class EvaluationResponse(BaseModel):
 class CalibrationRequest(BaseModel):
     question_id: str = "Q1"
     question_text: Optional[str] = None
+    benchmark_type: str = "unknown"
     original_rubric: Any
     solution: Optional[str] = None
     submissions: List[GradeRequest]

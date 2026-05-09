@@ -36,10 +36,21 @@ def revise_rubric(
         percentage = mistake.get("percentage", 0.0)
         description = mistake.get("description", "")
 
-        suggestion = (
-            "Clarify how to award partial credit when students show this pattern: "
-            f"{description or tag}."
-        )
+        if tag == "ai_overscoring":
+            suggestion = (
+                "Tighten scoring: only award points when the criterion is explicitly and "
+                "clearly addressed. Reduce or withhold partial credit for vague or incomplete answers."
+            )
+        elif tag == "ai_underscoring":
+            suggestion = (
+                "Relax scoring: award partial credit when the student demonstrates the "
+                "underlying concept, even if the exact terminology or full derivation is missing."
+            )
+        else:
+            suggestion = (
+                "Clarify how to award partial credit when students show this pattern: "
+                f"{description or tag}."
+            )
 
         note = {
             "type": "common_mistake",
@@ -97,6 +108,19 @@ def revise_rubric(
 
     if round_index is not None:
         revised_rubric["calibration_round"] = round_index
+
+    calibration_guidance = _build_calibration_guidance(common_mistakes, flagged_cases)
+    if calibration_guidance:
+        existing_note = str(revised_rubric.get("grading_note") or "").strip()
+        # Strip any CALIBRATION NOTE prepended in a previous round so they don't stack
+        clean_note = "\n\n".join(
+            part for part in existing_note.split("\n\n")
+            if not part.startswith("CALIBRATION NOTE")
+        ).strip()
+        revised_rubric["grading_note"] = (
+            f"{calibration_guidance}\n\n{clean_note}" if clean_note else calibration_guidance
+        )
+        revised_rubric["calibration_guidance"] = calibration_guidance
 
     return {
         "revision_needed": True,
@@ -178,6 +202,52 @@ def _build_disagreement_note(flagged_cases: list[dict]) -> dict:
             ],
         },
     }
+
+
+def _build_calibration_guidance(
+    common_mistakes: list[dict],
+    flagged_cases: list[dict],
+) -> str | None:
+    """Build directive grading guidance for the LLM based on the direction of score error.
+
+    Prepended to grading_note so the LLM sees it as a primary rubric instruction,
+    not a buried annotation.
+    """
+    parts: list[str] = []
+
+    for mistake in common_mistakes:
+        tag = mistake.get("tag")
+        count = mistake.get("count", 0)
+        avg_diff = float(mistake.get("avg_diff", 0.0))
+
+        if tag == "ai_overscoring":
+            parts.append(
+                f"CALIBRATION NOTE ({count} flagged submission(s), avg excess +{avg_diff:.2f} pts): "
+                "Apply criteria STRICTLY. Only award points when the criterion is explicitly and "
+                "clearly addressed in the answer. Err toward deducting rather than awarding on "
+                "borderline answers. Do not infer unstated reasoning."
+            )
+        elif tag == "ai_underscoring":
+            parts.append(
+                f"CALIBRATION NOTE ({count} flagged submission(s), avg deficit {abs(avg_diff):.2f} pts): "
+                "Apply criteria GENEROUSLY. Award partial credit when the student demonstrates "
+                "the underlying concept or correct reasoning direction, even if the exact "
+                "terminology or complete derivation is missing."
+            )
+
+    if not parts and flagged_cases:
+        n_high = sum(1 for c in flagged_cases if float(c.get("difference", 0)) > 0)
+        n_low = sum(1 for c in flagged_cases if float(c.get("difference", 0)) < 0)
+        if n_high > n_low:
+            parts.append(
+                "CALIBRATION NOTE: Recent AI scores exceeded professor scores. Apply criteria more strictly."
+            )
+        elif n_low > n_high:
+            parts.append(
+                "CALIBRATION NOTE: Recent AI scores fell below professor scores. Apply criteria more generously."
+            )
+
+    return " ".join(parts) if parts else None
 
 
 def _build_revision_justification(

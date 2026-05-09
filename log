@@ -1,0 +1,24 @@
+/Users/nami-macos/Documents/GitHub/grading-tool/src/grading_tool/models/gemini_client.py:7: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+usage: grade.py [-h] [--benchmark_dir BENCHMARK_DIR]
+                [--manifest_path MANIFEST_PATH]
+                [--question_path QUESTION_PATH] [--rubric_path RUBRIC_PATH]
+                [--solutions_path SOLUTIONS_PATH]
+                [--student_answers_paths STUDENT_ANSWERS_PATHS [STUDENT_ANSWERS_PATHS ...]]
+                [--output_path OUTPUT_PATH] [--run_name RUN_NAME]
+                [--prompt_name PROMPT_NAME] [--model_name MODEL_NAME]
+                [--limit_students LIMIT_STUDENTS]
+                [--limit_questions LIMIT_QUESTIONS]
+                [--question_ids QUESTION_IDS [QUESTION_IDS ...]]
+                [--max_concurrency MAX_CONCURRENCY]
+                [--max_retries MAX_RETRIES]
+                [--retry_base_delay RETRY_BASE_DELAY]
+                [--retry_max_delay RETRY_MAX_DELAY]
+grade.py: error: unrecognized arguments: ...

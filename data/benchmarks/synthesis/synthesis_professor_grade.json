@@ -216,6 +216,18 @@
     ]
   },
   {
+    "student_id": "019",
+    "source_exam": "Mid-term exam 1",
+    "grades": [
+      {
+        "question_id": "midterm1_q6",
+        "score": 20,
+        "score_max": 40,
+        "original_question_id": "q6"
+      }
+    ]
+  },
+  {
     "student_id": "001",
     "source_exam": "Mid-term exam 1",
     "grades": [

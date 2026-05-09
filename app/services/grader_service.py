@@ -32,6 +32,7 @@ from src.grading_tool.evaluation.metrics import (
     score_variance,
     within_threshold_rate,
 )
+from src.grading_tool.grading.rubric_grader import RubricGrader
 from src.grading_tool.grading.rubric_reviser import revise_rubric as revise_rubric_core
 
 
@@ -350,12 +351,55 @@ def _compute_evaluation_metrics(
 
 
 def calibrate_rubric_rounds(payload: CalibrationRequest) -> CalibrationResponse:
+    grader = RubricGrader(prompt_name="prompt_v1")
+
+    def _grade_fn(submissions: list[dict], rubric: dict) -> list[dict]:
+        criteria = rubric.get("criteria") or []
+        score_max = float(sum(c.get("points", 0) for c in criteria)) if criteria else 10.0
+        if score_max <= 0:
+            score_max = 10.0
+
+        results = []
+        for submission in submissions:
+            try:
+                qgr = grader.grade_question(
+                    student_id=submission["student_id"],
+                    question_id=submission.get("question_id", payload.question_id),
+                    benchmark_type=payload.benchmark_type,
+                    question_text=payload.question_text or "",
+                    rubric=rubric,
+                    student_answer=submission["answer"],
+                    score_max=score_max,
+                    reference_solution=payload.solution,
+                )
+                results.append(
+                    {
+                        "student_id": qgr.student_id,
+                        "question_id": qgr.question_id,
+                        "score": qgr.score_awarded,
+                        "max_score": qgr.score_max,
+                        "confidence": qgr.confidence,
+                        "review_required": qgr.review_required,
+                        "review_reason": "",
+                        "reasoning": qgr.feedback,
+                    }
+                )
+            except Exception:
+                fallback = score_answer(
+                    student_id=submission["student_id"],
+                    answer=submission["answer"],
+                    question_id=submission.get("question_id", payload.question_id),
+                )
+                results.append(fallback.model_dump())
+
+        return results
+
     result = run_calibration(
         question_id=payload.question_id,
         original_rubric=payload.original_rubric,
         submissions=[submission.model_dump() for submission in payload.submissions],
         professor_grades=[grade.model_dump() for grade in payload.professor_grades],
-        grade_fn=_calibration_grade_fn,
+        grade_fn=_grade_fn,
         evaluate_fn=_calibration_evaluate_fn,
         max_rounds=payload.max_rounds,
         difference_threshold=payload.difference_threshold,
@@ -365,26 +409,6 @@ def calibrate_rubric_rounds(payload: CalibrationRequest) -> CalibrationResponse:
     )
 
     return CalibrationResponse.model_validate(result)
-
-
-def _calibration_grade_fn(submissions: list[dict], rubric: dict) -> list[dict]:
-    """
-    Adapter for calibration.py.
-
-    For now, this uses score_answer().
-    Later, replace this with the real Gemini rubric grader.
-    """
-    results = []
-
-    for submission in submissions:
-        result = score_answer(
-            student_id=submission["student_id"],
-            answer=submission["answer"],
-            question_id=submission.get("question_id", "Q1"),
-        )
-        results.append(result.model_dump())
-
-    return results
 
 
 def _calibration_evaluate_fn(

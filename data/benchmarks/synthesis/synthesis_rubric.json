@@ -24,7 +24,7 @@
         {
           "criterion_id": "q6_trackA_2",
           "points": 20,
-          "description": "Track A (DFS+Memo) - Memoization: Implements a DP table/memo dictionary to cache results, returning the cached value immediately if a cell has already been visited to prevent exponential re-evaluations."
+          "description": "Track A (DFS+Memo) - Memorization: Implements a DP table/memo dictionary to cache results, returning the cached value immediately if a cell has already been visited to prevent exponential re-evaluations."
         },
         {
           "criterion_id": "q6_trackA_3",

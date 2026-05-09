@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from datetime import datetime
 
 from src.grading_tool.utils.io import load_json, save_json
 from src.grading_tool.evaluation.agreement import evaluate_run
@@ -62,13 +63,35 @@ def main() -> None:
     )
     parser.add_argument(
         "--output_path",
-        default="data/outputs/reports/baseline_eval.json",
-        help="Where to save the evaluation report JSON",
+        default=None,
+        help=(
+            "Where to save the evaluation report JSON. "
+            "If omitted, defaults to data/outputs/reports/<run_stem>_eval.json"
+        ),
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite output_path if it already exists.",
     )
 
     args = parser.parse_args()
 
-    run_payload = load_json(args.run_path)
+    run_path = Path(args.run_path)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_path = (
+        Path(args.output_path)
+        if args.output_path
+        else Path("data/outputs/reports") / f"{run_path.stem}_eval_{timestamp}.json"
+    )
+
+    if output_path.exists() and not args.overwrite:
+        raise FileExistsError(
+            f"Evaluation report already exists: {output_path}. "
+            "Choose a different --output_path or pass --overwrite."
+        )
+
+    run_payload = load_json(run_path)
     professor_grade_path = _resolve_professor_grade_path(
         run_payload=run_payload,
         explicit_path=args.professor_grade_path,
@@ -76,9 +99,9 @@ def main() -> None:
     professor_grade_file = load_json(professor_grade_path)
 
     report = evaluate_run(run_payload, professor_grade_file)
-    save_json(args.output_path, report)
+    save_json(output_path, report)
 
-    print(f"Saved evaluation report to: {args.output_path}")
+    print(f"Saved evaluation report to: {output_path}")
     print(f"Run name: {report['run_name']}")
     print(f"Professor grade path: {professor_grade_path}")
     print(f"N graded: {report['n_graded']}")
