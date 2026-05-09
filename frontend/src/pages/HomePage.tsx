@@ -19,8 +19,8 @@ export default function HomePage() {
             <Link to="/grading" className="primary-btn">
               Start grading
             </Link>
-            <Link to="/rubric" className="ghost-btn hero-secondary-btn">
-              Preview rubric flow
+            <Link to="/intake" className="ghost-btn hero-secondary-btn">
+              Question upload & rubric
             </Link>
           </div>
         </div>
@@ -55,26 +55,26 @@ export default function HomePage() {
               <span className="step-index">01</span>
               <span className="step-line" />
             </div>
-            <h3>Question Intake</h3>
-            <p>Add questions and confirm the structure before rubric generation.</p>
-          </Link>
-
-          <Link to="/rubric" className="workflow-step-card">
-            <div className="step-top">
-              <span className="step-index">02</span>
-              <span className="step-line" />
-            </div>
-            <h3>Rubric Review</h3>
-            <p>Refine scoring criteria and approve the grading standard.</p>
+            <h3>Question Upload</h3>
+            <p>Upload questions and generate a rubric in one page.</p>
           </Link>
 
           <Link to="/grading" className="workflow-step-card">
             <div className="step-top">
-              <span className="step-index">03</span>
+              <span className="step-index">02</span>
               <span className="step-line" />
             </div>
             <h3>Submission Grading</h3>
             <p>Run batch grading and inspect answers that need human review.</p>
+          </Link>
+
+          <Link to="/evaluation" className="workflow-step-card">
+            <div className="step-top">
+              <span className="step-index">03</span>
+              <span className="step-line" />
+            </div>
+            <h3>Evaluation</h3>
+            <p>Compare AI vs professor grades and calibrate to reduce MSE.</p>
           </Link>
         </div>
       </section>

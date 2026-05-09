@@ -129,7 +129,6 @@ export default function SubmissionGradingPage() {
   const [fileName, setFileName] = useState('')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [runLimit, setRunLimit] = useState(5)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>({})
@@ -212,9 +211,12 @@ export default function SubmissionGradingPage() {
         return
       }
 
-      const limitedSubmissions = submissions.slice(0, runLimit)
+      const normalizedSubmissions = submissions.map((row: any) => ({
+        ...row,
+        question_id: row.question_id || 'Q1',
+      }))
 
-      const result = await gradeBatch(limitedSubmissions)
+      const result = await gradeBatch(normalizedSubmissions)
 
       setData(result)
       setDecisions({})
@@ -322,7 +324,7 @@ export default function SubmissionGradingPage() {
         </div>
 
         <button className="primary-btn" onClick={handleRun} disabled={loading}>
-          {loading ? 'Grading...' : `Run ${Math.min(runLimit, submissions.length || runLimit)} Submissions`}
+          {loading ? 'Grading...' : 'Start grading'}
         </button>
       </section>
 
@@ -382,27 +384,6 @@ export default function SubmissionGradingPage() {
               : setCsvInput(e.target.value)
           }
         />
-
-        <div className="input-preview-row">
-          <span className={submissions.length > 0 ? 'status-pill status-pill--success' : 'status-pill status-pill--warning'}>
-            {submissions.length > 0
-              ? `${submissions.length} submissions detected`
-              : 'No valid submissions detected'}
-          </span>
-        </div>
-
-        <div className="run-control">
-          <label htmlFor="run-limit">Run limit</label>
-          <input
-            id="run-limit"
-            type="number"
-            min={1}
-            max={submissions.length || 1}
-            value={runLimit}
-            onChange={(e) => setRunLimit(Number(e.target.value))}
-          />
-          <span>of {submissions.length} detected</span>
-        </div>
       </section>
 
       {results.length > 0 && (
