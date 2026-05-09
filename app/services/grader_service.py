@@ -403,6 +403,7 @@ def calibrate_rubric_rounds(payload: CalibrationRequest) -> CalibrationResponse:
         evaluate_fn=_calibration_evaluate_fn,
         max_rounds=payload.max_rounds,
         difference_threshold=payload.difference_threshold,
+        normalized_difference_threshold=payload.normalized_difference_threshold,
         target_mse=payload.target_mse,
         min_improvement=payload.min_improvement,
         include_semantic_metrics=payload.include_semantic_metrics,
@@ -415,10 +416,12 @@ def _calibration_evaluate_fn(
     grade_results: list[dict],
     professor_grades: list[dict],
     difference_threshold: float,
+    normalized_difference_threshold: float,
     include_semantic_metrics: bool,
 ) -> dict:
     ai_results = [GradeResult.model_validate(item) for item in grade_results]
     prof_results = [ProfessorGradeInput.model_validate(item) for item in professor_grades]
+    prof_lookup = {(p.student_id, p.question_id): p for p in prof_results}
 
     response = evaluate_with_ground_truth(
         EvaluationRequest(
@@ -429,4 +432,14 @@ def _calibration_evaluate_fn(
         )
     )
 
-    return response.model_dump()
+    result = response.model_dump()
+
+    normalized_flagged = []
+    for comp in response.comparisons:
+        prof = prof_lookup.get((comp.student_id, comp.question_id))
+        max_score = float(prof.max_score) if prof and prof.max_score else 1.0
+        if max_score > 0 and (comp.abs_difference / max_score) > normalized_difference_threshold:
+            normalized_flagged.append(comp.model_dump())
+
+    result["normalized_flagged_cases"] = normalized_flagged
+    return result

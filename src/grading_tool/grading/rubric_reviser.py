@@ -204,6 +204,43 @@ def _build_disagreement_note(flagged_cases: list[dict]) -> dict:
     }
 
 
+def _score_severity(avg_diff: float) -> dict:
+    """Return severity-scaled wording based on the magnitude of the average score gap."""
+    magnitude = abs(avg_diff)
+    if magnitude >= 20:
+        return {
+            "strict_word": "VERY STRICTLY",
+            "strict_detail": (
+                "Only award points for criteria that are explicitly, completely, and correctly addressed. "
+                "Do not award partial credit unless the student demonstrates clear understanding."
+            ),
+            "generous_word": "VERY GENEROUSLY",
+            "generous_detail": (
+                "Award most available points when the student demonstrates the correct approach or concept, "
+                "even if the implementation is incomplete or terminology imprecise."
+            ),
+        }
+    if magnitude >= 8:
+        return {
+            "strict_word": "STRICTLY",
+            "strict_detail": (
+                "Only award points when the criterion is explicitly and clearly addressed. "
+                "Err toward deducting rather than awarding on borderline answers."
+            ),
+            "generous_word": "GENEROUSLY",
+            "generous_detail": (
+                "Award partial credit when the student demonstrates the underlying concept or correct "
+                "reasoning direction, even if exact terminology or full derivation is missing."
+            ),
+        }
+    return {
+        "strict_word": "SLIGHTLY MORE STRICTLY",
+        "strict_detail": "Reduce partial credit for answers that are vague or only partially correct.",
+        "generous_word": "SLIGHTLY MORE GENEROUSLY",
+        "generous_detail": "Award partial credit when the student shows the right direction, even if incomplete.",
+    }
+
+
 def _build_calibration_guidance(
     common_mistakes: list[dict],
     flagged_cases: list[dict],
@@ -221,18 +258,18 @@ def _build_calibration_guidance(
         avg_diff = float(mistake.get("avg_diff", 0.0))
 
         if tag == "ai_overscoring":
+            severity = _score_severity(avg_diff)
             parts.append(
                 f"CALIBRATION NOTE ({count} flagged submission(s), avg excess +{avg_diff:.2f} pts): "
-                "Apply criteria STRICTLY. Only award points when the criterion is explicitly and "
-                "clearly addressed in the answer. Err toward deducting rather than awarding on "
-                "borderline answers. Do not infer unstated reasoning."
+                f"Apply criteria {severity['strict_word']}. "
+                f"{severity['strict_detail']}"
             )
         elif tag == "ai_underscoring":
+            severity = _score_severity(avg_diff)
             parts.append(
                 f"CALIBRATION NOTE ({count} flagged submission(s), avg deficit {abs(avg_diff):.2f} pts): "
-                "Apply criteria GENEROUSLY. Award partial credit when the student demonstrates "
-                "the underlying concept or correct reasoning direction, even if the exact "
-                "terminology or complete derivation is missing."
+                f"Apply criteria {severity['generous_word']}. "
+                f"{severity['generous_detail']}"
             )
 
     if not parts and flagged_cases:

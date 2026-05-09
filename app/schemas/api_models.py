@@ -184,6 +184,7 @@ class CalibrationRequest(BaseModel):
     professor_grades: List[ProfessorGradeInput]
     max_rounds: int = 5
     difference_threshold: float = 0.5
+    normalized_difference_threshold: float = 0.10
     target_mse: Optional[float] = None
     min_improvement: float = 0.01
     include_semantic_metrics: bool = True

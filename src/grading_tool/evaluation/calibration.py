@@ -6,7 +6,7 @@ from src.grading_tool.grading.mistake_analyzer import analyze_flagged_cases
 from src.grading_tool.grading.rubric_reviser import revise_rubric
 
 GradeFn = Callable[[list[dict], Any], list[dict]]
-EvaluateFn = Callable[[list[dict], list[dict], float, bool], dict]
+EvaluateFn = Callable[[list[dict], list[dict], float, float, bool], dict]
 
 
 def run_calibration(
@@ -19,6 +19,7 @@ def run_calibration(
     evaluate_fn: EvaluateFn,
     max_rounds: int = 5,
     difference_threshold: float = 0.5,
+    normalized_difference_threshold: float = 0.10,
     target_mse: float | None = None,
     min_improvement: float = 0.01,
     include_semantic_metrics: bool = True,
@@ -33,6 +34,17 @@ def run_calibration(
     if max_rounds <= 0:
         raise ValueError("max_rounds must be greater than 0.")
 
+    # Drop submissions with no matching professor grade so grade_fn never
+    # wastes LLM calls on students that evaluation would silently skip.
+    prof_keys = {
+        (g.get("student_id"), g.get("question_id", question_id))
+        for g in professor_grades
+    }
+    submissions = [
+        s for s in submissions
+        if (s.get("student_id"), s.get("question_id", question_id)) in prof_keys
+    ]
+
     current_rubric = original_rubric
     rounds: list[dict] = []
 
@@ -44,17 +56,21 @@ def run_calibration(
     stopping_reason = "Reached max rounds."
 
     for round_index in range(1, max_rounds + 1):
+        print(f"[calibration] round {round_index}/{max_rounds} — grading {len(submissions)} submission(s)...", flush=True)
         grade_results = grade_fn(submissions, current_rubric)
+        print(f"[calibration] round {round_index}/{max_rounds} — evaluating...", flush=True)
 
         evaluation = evaluate_fn(
             grade_results,
             professor_grades,
             difference_threshold,
+            normalized_difference_threshold,
             include_semantic_metrics,
         )
 
         metrics = evaluation.get("metrics", {})
         current_mse = float(metrics.get("mse", 0.0))
+        print(f"[calibration] round {round_index}/{max_rounds} — MSE={current_mse:.4f}", flush=True)
 
         if current_mse < best_mse:
             best_mse = current_mse
@@ -62,13 +78,14 @@ def run_calibration(
             best_rubric = current_rubric
 
         flagged_cases = evaluation.get("flagged_cases", [])
+        normalized_flagged_cases = evaluation.get("normalized_flagged_cases") or flagged_cases
 
-        mistake_stats = analyze_flagged_cases(flagged_cases)
+        mistake_stats = analyze_flagged_cases(normalized_flagged_cases)
 
         revision = revise_rubric(
             original_rubric=current_rubric,
             mistake_stats=mistake_stats,
-            flagged_cases=flagged_cases,
+            flagged_cases=normalized_flagged_cases,
             instructor_note=instructor_note,
             round_index=round_index,
         )
