@@ -1,122 +1,202 @@
-const sampleReport = {
-  run_name: 'prompt_v4_student_batch',
-  prompt_name: 'prompt_v4',
-  model_name: 'gemini-1.5-flash',
-  n_graded: 40,
-  mae: 1.15,
-  mse: 2.04,
-  exact_match_rate: 0.38,
-  pearson_correlation: 0.82,
-  spearman_correlation: 0.79,
-  bertscore_f1: 0.86,
-  average_cosine_similarity: 0.84,
-  per_question: [
-    { question_id: 'q_tm_01', mae: 1.1, mse: 1.9, exact_match_rate: 0.4, n: 8 },
-    { question_id: 'q_tm_02', mae: 1.3, mse: 2.4, exact_match_rate: 0.3, n: 8 },
-    { question_id: 'q_tm_03', mae: 0.9, mse: 1.6, exact_match_rate: 0.5, n: 8 },
-    { question_id: 'q_tm_04', mae: 1.5, mse: 2.8, exact_match_rate: 0.25, n: 8 },
-    { question_id: 'q_tm_05', mae: 1.0, mse: 1.5, exact_match_rate: 0.45, n: 8 },
-  ],
-}
-
-function percent(value: number) {
-  return `${Math.round(value * 100)}%`
-}
-
-function downloadFile(filename: string, content: string, type: string) {
-  const blob = new Blob([content], { type })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-
-  a.href = url
-  a.download = filename
-  a.click()
-
-  URL.revokeObjectURL(url)
-}
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  gradeBatch,
+  loadApiSettings,
+  runCalibration,
+  runEvaluation,
+  saveApiSettings,
+} from '../lib/api'
 
 export default function EvaluationPage() {
-  const report = sampleReport
+  // Backend-connected evaluation + calibration page.
+  // This aligns to: training data -> rubric -> grading results vs ground truth -> MSE -> calibrate to reduce MSE.
 
-  function handleExportCsv() {
-    const rows = [
-      ['metric', 'value'],
-      ['mae', report.mae.toFixed(2)],
-      ['exact_match_rate', report.exact_match_rate.toFixed(2)],
-      ['bertscore_f1', report.bertscore_f1.toFixed(2)],
-      ['average_cosine_similarity', report.average_cosine_similarity.toFixed(2)],
-      ['pearson_correlation', report.pearson_correlation.toFixed(2)],
-      ['spearman_correlation', report.spearman_correlation.toFixed(2)],
-    ]
+  const submissionsTemplate = `[
+  { "student_id": "S001", "question_id": "q1", "answer": "..." },
+  { "student_id": "S002", "question_id": "q1", "answer": "..." }
+]`
 
-    downloadFile('evaluation_metrics.csv', rows.map((row) => row.join(',')).join('\n'), 'text/csv')
+  const professorGradesTemplate = `[
+  { "student_id": "S001", "question_id": "q1", "score": 8, "max_score": 10, "comment": "Good but missing detail." },
+  { "student_id": "S002", "question_id": "q1", "score": 4, "max_score": 10, "comment": "Too vague." }
+]`
+
+  const rubricTemplate = `- Correct concept (0-5)\n- Clear reasoning (0-5)`
+
+  const [backendUrl, setBackendUrl] = useState('')
+  const [geminiKey, setGeminiKey] = useState('')
+  const [questionId, setQuestionId] = useState('q1')
+  const [differenceThreshold, setDifferenceThreshold] = useState(0.5)
+  const [maxRounds, setMaxRounds] = useState(5)
+  const [minImprovement, setMinImprovement] = useState(0.01)
+  const [targetMse, setTargetMse] = useState<string>('')
+
+  const [submissionsJson, setSubmissionsJson] = useState(submissionsTemplate)
+  const [professorGradesJson, setProfessorGradesJson] = useState(professorGradesTemplate)
+  const [rubricText, setRubricText] = useState(rubricTemplate)
+
+  const [aiResults, setAiResults] = useState<any[] | null>(null)
+  const [evaluation, setEvaluation] = useState<any | null>(null)
+  const [calibration, setCalibration] = useState<any | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [showFlaggedOnly, setShowFlaggedOnly] = useState(true)
+
+  const submissionsFileInputRef = useRef<HTMLInputElement | null>(null)
+  const gradesFileInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    const settings = loadApiSettings()
+    setBackendUrl(settings.backend_api_base_url)
+  }, [])
+
+  function safeParseArray(text: string) {
+    try {
+      const parsed = JSON.parse(text)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
   }
 
-  function handleExportPdf() {
-    const html = `
-      <html>
-        <head>
-          <title>Evaluation Summary</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 32px; color: #102246; }
-            h1, h2 { margin: 0 0 8px; }
-            p { line-height: 1.5; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #d7def0; padding: 10px; text-align: left; vertical-align: top; }
-            th { background: #f3f6ff; }
-            .metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
-            .metric { border: 1px solid #d7def0; border-radius: 12px; padding: 12px 14px; }
-            .metric strong { display: block; margin-top: 6px; font-size: 1.2rem; }
-          </style>
-        </head>
-        <body>
-          <h1>Evaluation Summary</h1>
-          <p>Run: ${report.run_name} | Model: ${report.model_name} | Prompt: ${report.prompt_name} | Graded: ${report.n_graded}</p>
+  const submissions = useMemo(() => safeParseArray(submissionsJson), [submissionsJson])
+  const professorGrades = useMemo(() => safeParseArray(professorGradesJson), [professorGradesJson])
 
-          <h2>Core Metrics</h2>
-          <div class="metric-grid">
-            <div class="metric"><span>MAE</span><strong>${report.mae.toFixed(2)}</strong><p>Score distance</p></div>
-            <div class="metric"><span>Exact Match</span><strong>${percent(report.exact_match_rate)}</strong><p>Strict agreement</p></div>
-            <div class="metric"><span>BERTScore F1</span><strong>${report.bertscore_f1.toFixed(2)}</strong><p>Semantic feedback similarity</p></div>
-            <div class="metric"><span>Cosine Similarity</span><strong>${report.average_cosine_similarity.toFixed(2)}</strong><p>Embedding-based similarity</p></div>
-          </div>
+  const canRun = submissions.length > 0 && professorGrades.length > 0 && rubricText.trim().length > 0
 
-          <h2>Metric Interpretation</h2>
-          <p>MAE measures how far the AI score is from the professor score on average.</p>
-          <p>Exact Match measures how often the AI gives exactly the same score as the professor.</p>
-          <p>BERTScore uses contextual BERT embeddings to compare the meaning of generated feedback against reference feedback.</p>
-          <p>Cosine Similarity compares sentence embeddings with cosine distance to measure semantic closeness between feedback texts.</p>
-          <p>Pearson: ${report.pearson_correlation.toFixed(2)} | Spearman: ${report.spearman_correlation.toFixed(2)}</p>
+  function handleSaveSettings() {
+    saveApiSettings({ backend_api_base_url: backendUrl })
+    alert('Backend URL saved. (Gemini key is not stored.)')
+  }
 
-          <h2>Per-Question Evaluation</h2>
-          <table>
-            <tr>
-              <th>Question</th>
-              <th>MAE</th>
-              <th>MSE</th>
-              <th>Exact Match</th>
-              <th>N Graded</th>
-            </tr>
-            ${report.per_question.map((q) => `
-              <tr>
-                <td>${q.question_id}</td>
-                <td>${q.mae.toFixed(2)}</td>
-                <td>${q.mse.toFixed(2)}</td>
-                <td>${percent(q.exact_match_rate)}</td>
-                <td>${q.n}</td>
-              </tr>
-            `).join('')}
-          </table>
-        </body>
-      </html>
-    `
+  function handleUploadClick(which: 'submissions' | 'grades') {
+    if (which === 'submissions') submissionsFileInputRef.current?.click()
+    else gradesFileInputRef.current?.click()
+  }
 
-    const win = window.open('', '_blank')
-    if (!win) return
+  function handleFileUpload(which: 'submissions' | 'grades', event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-    win.document.write(html)
-    win.document.close()
-    win.print()
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : ''
+      if (which === 'submissions') setSubmissionsJson(text)
+      else setProfessorGradesJson(text)
+    }
+    reader.readAsText(file)
+  }
+
+  async function handleGradeSubmissions() {
+    try {
+      setLoading(true)
+      setEvaluation(null)
+      setCalibration(null)
+
+      if (!submissions.length) {
+        alert('No submissions detected (must be a JSON array).')
+        return
+      }
+
+      const normalized = submissions
+        .map((row: any) => ({
+          student_id: row.student_id || row.id || '',
+          answer: row.answer || row.student_answer || row.answer_text || '',
+          question_id: row.question_id || row.qid || questionId,
+        }))
+        .filter((row: any) => row.student_id && row.answer)
+
+      const result = await gradeBatch(normalized, { apiKey: geminiKey })
+      setAiResults(result?.results || [])
+    } catch (error: any) {
+      alert(error?.message || 'Backend error while grading submissions.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleRunEvaluation() {
+    try {
+      setLoading(true)
+      setCalibration(null)
+
+      if (!aiResults?.length) {
+        alert('Run AI grading first (Grade submissions).')
+        return
+      }
+
+      const prof = professorGrades
+        .map((row: any) => ({
+          student_id: row.student_id || row.id || '',
+          question_id: row.question_id || row.qid || questionId,
+          score: Number(row.score ?? row.professor_score ?? row.grade ?? 0),
+          max_score: row.max_score != null ? Number(row.max_score) : 10,
+          comment: row.comment || row.professor_comment || '',
+        }))
+        .filter((row: any) => row.student_id)
+
+      const payload = {
+        ai_results: aiResults,
+        professor_grades: prof,
+        difference_threshold: differenceThreshold,
+        include_semantic_metrics: false,
+      }
+
+      const result = await runEvaluation(payload as any, { apiKey: geminiKey })
+      setEvaluation(result)
+    } catch (error: any) {
+      alert(error?.message || 'Backend error while running evaluation.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleRunCalibration() {
+    try {
+      setLoading(true)
+      setEvaluation(null)
+
+      if (!canRun) {
+        alert('Need: submissions + professor grades + rubric')
+        return
+      }
+
+      const normalizedSubmissions = submissions
+        .map((row: any) => ({
+          student_id: row.student_id || row.id || '',
+          answer: row.answer || row.student_answer || row.answer_text || '',
+          question_id: row.question_id || row.qid || questionId,
+        }))
+        .filter((row: any) => row.student_id && row.answer)
+
+      const normalizedGrades = professorGrades
+        .map((row: any) => ({
+          student_id: row.student_id || row.id || '',
+          question_id: row.question_id || row.qid || questionId,
+          score: Number(row.score ?? row.professor_score ?? row.grade ?? 0),
+          max_score: row.max_score != null ? Number(row.max_score) : 10,
+          comment: row.comment || row.professor_comment || '',
+        }))
+        .filter((row: any) => row.student_id)
+
+      const payload = {
+        question_id: questionId,
+        original_rubric: rubricText,
+        submissions: normalizedSubmissions,
+        professor_grades: normalizedGrades,
+        max_rounds: maxRounds,
+        difference_threshold: differenceThreshold,
+        target_mse: targetMse.trim() ? Number(targetMse) : null,
+        min_improvement: minImprovement,
+        include_semantic_metrics: false,
+      }
+
+      const result = await runCalibration(payload as any, { apiKey: geminiKey })
+      setCalibration(result)
+    } catch (error: any) {
+      alert(error?.message || 'Backend error while running calibration.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -124,156 +204,282 @@ export default function EvaluationPage() {
       <section className="page-head compact-head">
         <div>
           <p className="eyebrow">Evaluation Metrics</p>
-          <h1>Measure grading alignment</h1>
+          <h1>Evaluate & calibrate against ground truth</h1>
           <p className="subtle">
-            Compare AI grading against professor scores using score alignment and semantic similarity.
-            BERTScore and cosine similarity are included as required NLP evaluation metrics.
+            Training data → rubric → AI grading vs ground truth → MSE/variance → revise rubric to reduce MSE.
           </p>
         </div>
 
-        <div className="export-actions">
-          <button type="button" className="ghost-btn" onClick={handleExportCsv}>
-            Export CSV
+        <div className="export-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button type="button" className="ghost-btn" onClick={handleGradeSubmissions} disabled={loading}>
+            {loading ? 'Working…' : 'Grade submissions'}
           </button>
-          <button type="button" className="primary-btn" onClick={handleExportPdf}>
-            Export PDF
+          <button type="button" className="ghost-btn" onClick={handleRunEvaluation} disabled={loading}>
+            Run evaluation
+          </button>
+          <button type="button" className="primary-btn" onClick={handleRunCalibration} disabled={loading}>
+            Run calibration
           </button>
         </div>
       </section>
 
-      <section className="panel result-overview">
-        <div className="metric-card">
-          <span>MAE</span>
-          <strong>{report.mae.toFixed(2)}</strong>
-          <p>Score distance</p>
-        </div>
-
-        <div className="metric-card">
-          <span>Exact Match</span>
-          <strong>{percent(report.exact_match_rate)}</strong>
-          <p>Strict agreement</p>
-        </div>
-
-        <div className="metric-card">
-          <span>BERTScore F1</span>
-          <strong>{report.bertscore_f1.toFixed(2)}</strong>
-          <p>Semantic feedback similarity</p>
-        </div>
-
-        <div className="metric-card">
-          <span>Cosine Similarity</span>
-          <strong>{report.average_cosine_similarity.toFixed(2)}</strong>
-          <p>Embedding-based similarity</p>
-        </div>
-      </section>
-
-      <section className="panel chart-panel">
+      <section className="panel" style={{ marginTop: '18px' }}>
         <div className="panel-head">
           <div>
-            <h3>Metric Interpretation</h3>
-            <span className="tiny-label">Professor alignment</span>
+            <h3>Settings</h3>
+            <span className="tiny-label">User-provided tokens</span>
+          </div>
+          <button type="button" className="ghost-btn" onClick={handleSaveSettings}>
+            Save settings
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+          <label className="field">
+            <span className="tiny-label">Backend base URL</span>
+            <input
+              className="text-input"
+              value={backendUrl}
+              onChange={(e) => setBackendUrl(e.target.value)}
+              placeholder="http://localhost:8000"
+            />
+          </label>
+          <label className="field">
+            <span className="tiny-label">Gemini API Key</span>
+            <input
+              className="text-input"
+              type="password"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="GEMINI_API_KEY"
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="panel" style={{ marginTop: '18px' }}>
+        <div className="panel-head">
+          <div>
+            <h3>Calibration inputs</h3>
+            <span className="tiny-label">Threshold + stopping rule</span>
           </div>
         </div>
 
-        <div className="evaluation-grid">
-          <article className="evaluation-card">
-            <h4>MAE</h4>
-            <p>
-              Measures how far the AI score is from the professor score on average.
-              Lower is better.
-            </p>
-          </article>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '12px' }}>
+          <label className="field">
+            <span className="tiny-label">Question ID</span>
+            <input className="text-input" value={questionId} onChange={(e) => setQuestionId(e.target.value)} />
+          </label>
+          <label className="field">
+            <span className="tiny-label">Diff threshold</span>
+            <input
+              className="text-input"
+              value={differenceThreshold}
+              onChange={(e) => setDifferenceThreshold(Number(e.target.value))}
+              type="number"
+              step="0.1"
+              min="0"
+            />
+          </label>
+          <label className="field">
+            <span className="tiny-label">Max rounds</span>
+            <input
+              className="text-input"
+              value={maxRounds}
+              onChange={(e) => setMaxRounds(Number(e.target.value))}
+              type="number"
+              step="1"
+              min="1"
+            />
+          </label>
+          <label className="field">
+            <span className="tiny-label">Min improvement</span>
+            <input
+              className="text-input"
+              value={minImprovement}
+              onChange={(e) => setMinImprovement(Number(e.target.value))}
+              type="number"
+              step="0.01"
+              min="0"
+            />
+          </label>
+        </div>
 
-          <article className="evaluation-card">
-            <h4>Exact Match</h4>
-            <p>
-              Measures how often the AI gives exactly the same score as the professor.
-              Higher is better.
-            </p>
-          </article>
-
-          <article className="evaluation-card">
-            <h4>BERTScore</h4>
-            <p>
-              Uses contextual BERT embeddings to compare the meaning of generated feedback
-              against reference feedback.
-            </p>
-          </article>
-
-          <article className="evaluation-card">
-            <h4>Cosine Similarity</h4>
-            <p>
-              Compares sentence embeddings with cosine distance to measure semantic closeness
-              between feedback texts.
-            </p>
-          </article>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', marginTop: '12px' }}>
+          <label className="field">
+            <span className="tiny-label">Target MSE (optional)</span>
+            <input
+              className="text-input"
+              value={targetMse}
+              onChange={(e) => setTargetMse(e.target.value)}
+              placeholder="e.g. 0.20"
+            />
+          </label>
+          <label className="field">
+            <span className="tiny-label">Rubric (text)</span>
+            <textarea className="editor-textarea" style={{ minHeight: '92px' }} value={rubricText} onChange={(e) => setRubricText(e.target.value)} />
+          </label>
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel" style={{ marginTop: '18px' }}>
         <div className="panel-head">
-          <h3>Secondary Trend Metrics</h3>
-          <span className="tiny-label">Ranking consistency</span>
+          <div>
+            <h3>Training data</h3>
+            <span className="tiny-label">Submissions + ground truth grades (JSON arrays)</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button type="button" className="ghost-btn" onClick={() => handleUploadClick('submissions')}>
+              Upload submissions JSON
+            </button>
+            <button type="button" className="ghost-btn" onClick={() => handleUploadClick('grades')}>
+              Upload grades JSON
+            </button>
+          </div>
         </div>
 
-        <div className="table-wrap">
-          <table className="clean-table clean-table--compact">
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-                <th>Interpretation</th>
-              </tr>
-            </thead>
+        <input
+          ref={submissionsFileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="sr-only"
+          onChange={(e) => handleFileUpload('submissions', e)}
+        />
+        <input
+          ref={gradesFileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="sr-only"
+          onChange={(e) => handleFileUpload('grades', e)}
+        />
 
-            <tbody>
-              <tr>
-                <td className="mono-cell">Pearson</td>
-                <td>{report.pearson_correlation.toFixed(2)}</td>
-                <td>Score trend alignment</td>
-              </tr>
-              <tr>
-                <td className="mono-cell">Spearman</td>
-                <td>{report.spearman_correlation.toFixed(2)}</td>
-                <td>Ranking consistency</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-head">
-          <h3>Per-Question Evaluation</h3>
-          <span className="tiny-label">Rubric-level diagnosis</span>
-        </div>
-
-        <div className="table-wrap">
-          <table className="clean-table clean-table--compact">
-            <thead>
-              <tr>
-                <th>Question</th>
-                <th>MAE</th>
-                <th>MSE</th>
-                <th>Exact Match</th>
-                <th>N Graded</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {report.per_question.map((q) => (
-                <tr key={q.question_id}>
-                  <td className="mono-cell">{q.question_id}</td>
-                  <td>{q.mae.toFixed(2)}</td>
-                  <td>{q.mse.toFixed(2)}</td>
-                  <td>{percent(q.exact_match_rate)}</td>
-                  <td>{q.n}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+          <div>
+            <p className="tiny-label">Submissions</p>
+            <textarea className="editor-textarea code-textarea" style={{ minHeight: '200px' }} value={submissionsJson} onChange={(e) => setSubmissionsJson(e.target.value)} />
+            <p className="section-note" style={{ marginTop: '8px' }}>
+              Parsed rows: <strong>{submissions.length}</strong>
+            </p>
+          </div>
+          <div>
+            <p className="tiny-label">Professor grades (ground truth)</p>
+            <textarea className="editor-textarea code-textarea" style={{ minHeight: '200px' }} value={professorGradesJson} onChange={(e) => setProfessorGradesJson(e.target.value)} />
+            <p className="section-note" style={{ marginTop: '8px' }}>
+              Parsed rows: <strong>{professorGrades.length}</strong>
+            </p>
+          </div>
         </div>
       </section>
+
+      {(evaluation || calibration) && (
+        <section className="panel" style={{ marginTop: '18px' }}>
+          <div className="panel-head">
+            <div>
+              <h3>Results</h3>
+              <span className="tiny-label">MSE + variance + flagged diffs</span>
+            </div>
+
+            <label style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={showFlaggedOnly}
+                onChange={(e) => setShowFlaggedOnly(e.target.checked)}
+              />
+              <span className="tiny-label" style={{ margin: 0 }}>
+                Show flagged only
+              </span>
+            </label>
+          </div>
+
+          {(() => {
+            const source = evaluation || (calibration?.rounds ? calibration.rounds[calibration.best_round_index - 1]?.evaluation : null)
+            const metrics = source?.metrics
+            const comparisons = source?.comparisons || []
+            const flaggedCases = source?.flagged_cases || []
+            const rows = showFlaggedOnly ? flaggedCases : comparisons
+
+            if (!source) {
+              return <p className="section-note">No evaluation result found.</p>
+            }
+
+            return (
+              <>
+                <div className="result-overview" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '12px' }}>
+                  <div className="metric-card">
+                    <span>MSE</span>
+                    <strong>{Number(metrics?.mse ?? 0).toFixed(4)}</strong>
+                    <p>Lower is better</p>
+                  </div>
+                  <div className="metric-card">
+                    <span>MAE</span>
+                    <strong>{Number(metrics?.mae ?? 0).toFixed(4)}</strong>
+                    <p>Lower is better</p>
+                  </div>
+                  <div className="metric-card">
+                    <span>Score variance</span>
+                    <strong>{Number(metrics?.score_variance ?? 0).toFixed(4)}</strong>
+                    <p>AI score spread</p>
+                  </div>
+                  <div className="metric-card">
+                    <span>Error variance</span>
+                    <strong>{Number(metrics?.error_variance ?? 0).toFixed(4)}</strong>
+                    <p>(AI - prof) spread</p>
+                  </div>
+                  <div className="metric-card">
+                    <span>Flagged</span>
+                    <strong>{Number(source?.flagged_count ?? 0)}</strong>
+                    <p>abs diff &gt; {differenceThreshold}</p>
+                  </div>
+                </div>
+
+                {calibration && (
+                  <p className="section-note" style={{ marginTop: '12px' }}>
+                    Best round: <strong>{calibration.best_round_index}</strong> | Completed: <strong>{calibration.completed_rounds}</strong> | Stop: <strong>{calibration.stopping_reason}</strong>
+                  </p>
+                )}
+
+                <div className="table-wrap" style={{ marginTop: '14px' }}>
+                  <table className="clean-table clean-table--compact">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>QID</th>
+                        <th>AI</th>
+                        <th>Professor</th>
+                        <th>Abs diff</th>
+                        <th>AI comment</th>
+                        <th>Professor comment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length ? (
+                        rows.map((row: any) => (
+                          <tr key={`${row.student_id}-${row.question_id}`}
+                            style={{ background: row.flagged ? 'var(--warning-bg)' : undefined }}
+                          >
+                            <td className="mono-cell">{row.student_id}</td>
+                            <td className="mono-cell">{row.question_id}</td>
+                            <td>{row.ai_score}</td>
+                            <td>{row.professor_score}</td>
+                            <td>{Number(row.abs_difference ?? 0).toFixed(2)}</td>
+                            <td>{row.ai_reasoning || ''}</td>
+                            <td>{row.professor_comment || ''}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="center-col">No rows to show.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )
+          })()}
+        </section>
+      )}
     </main>
   )
 }
