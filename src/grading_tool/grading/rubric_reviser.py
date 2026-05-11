@@ -35,16 +35,19 @@ def revise_rubric(
         count = mistake.get("count", 0)
         percentage = mistake.get("percentage", 0.0)
         description = mistake.get("description", "")
+        avg_diff = float(mistake.get("avg_diff", 0.0))
 
         if tag == "ai_overscoring":
+            severity = _score_severity(avg_diff)
             suggestion = (
-                "Tighten scoring: only award points when the criterion is explicitly and "
-                "clearly addressed. Reduce or withhold partial credit for vague or incomplete answers."
+                f"Tighten scoring ({severity['strict_word']}): "
+                f"{severity['strict_detail']}"
             )
         elif tag == "ai_underscoring":
+            severity = _score_severity(avg_diff)
             suggestion = (
-                "Relax scoring: award partial credit when the student demonstrates the "
-                "underlying concept, even if the exact terminology or full derivation is missing."
+                f"Relax scoring ({severity['generous_word']}): "
+                f"{severity['generous_detail']}"
             )
         else:
             suggestion = (
@@ -110,17 +113,21 @@ def revise_rubric(
         revised_rubric["calibration_round"] = round_index
 
     calibration_guidance = _build_calibration_guidance(common_mistakes, flagged_cases)
-    if calibration_guidance:
+    revision_notes_text = _build_revision_notes_text(change_log)
+
+    if calibration_guidance or revision_notes_text:
         existing_note = str(revised_rubric.get("grading_note") or "").strip()
-        # Strip any CALIBRATION NOTE prepended in a previous round so they don't stack
-        clean_note = "\n\n".join(
-            part for part in existing_note.split("\n\n")
-            if not part.startswith("CALIBRATION NOTE")
+        clean_note = _strip_prior_calibration_notes(existing_note)
+
+        merged = "\n\n".join(
+            part for part in (calibration_guidance, revision_notes_text, clean_note) if part
         ).strip()
-        revised_rubric["grading_note"] = (
-            f"{calibration_guidance}\n\n{clean_note}" if clean_note else calibration_guidance
-        )
-        revised_rubric["calibration_guidance"] = calibration_guidance
+        revised_rubric["grading_note"] = merged
+
+        if calibration_guidance:
+            revised_rubric["calibration_guidance"] = calibration_guidance
+        if revision_notes_text:
+            revised_rubric["calibration_revision_notes"] = revision_notes_text
 
     return {
         "revision_needed": True,
@@ -306,3 +313,39 @@ def _build_revision_justification(
         reasons.append("An instructor note requested additional rubric clarification.")
 
     return " ".join(reasons)
+
+
+def _strip_prior_calibration_notes(grading_note: str) -> str:
+    if not grading_note:
+        return ""
+
+    # Notes are joined with blank lines; remove any prior round injected blocks.
+    parts = []
+    for part in str(grading_note).split("\n\n"):
+        if part.startswith("CALIBRATION NOTE"):
+            continue
+        if part.startswith("RUBRIC REVISION NOTES"):
+            continue
+        parts.append(part)
+
+    return "\n\n".join(parts).strip()
+
+
+def _build_revision_notes_text(change_log: list[dict], max_items: int = 8) -> str | None:
+    if not change_log:
+        return None
+
+    suggestions = []
+    for item in change_log:
+        new_text = str(item.get("new") or "").strip()
+        if new_text:
+            suggestions.append(new_text)
+
+    if not suggestions:
+        return None
+
+    suggestions = suggestions[:max_items]
+
+    lines = ["RUBRIC REVISION NOTES (apply in this round):"]
+    lines.extend(f"- {s}" for s in suggestions)
+    return "\n".join(lines)

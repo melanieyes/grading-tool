@@ -4,7 +4,7 @@ synthesis benchmark, firing one API call per question with only that
 question's students.
 
 Usage:
-    python scripts/run_calibration_all_questions.py [--api_url URL] [--max_rounds N] [--output_dir DIR]
+    python scripts/run_calibration_all_questions.py [--api_url URL] [--max_rounds N] [--output_dir DIR] [--max_students_per_question N]
 """
 from __future__ import annotations
 
@@ -76,11 +76,42 @@ def build_professor_index(prof_grades: list[dict]) -> dict[str, list[dict]]:
                     "student_id": sid,
                     "question_id": qid,
                     "score": grade["score"],
-                    "max_score": grade.get("max_score") or grade.get("total_points", 0),
+                    # Benchmark professor-grade JSON uses score_max; API expects max_score.
+                    "max_score": grade.get("score_max")
+                    or grade.get("max_score")
+                    or grade.get("total_points")
+                    or 0,
                     "comment": grade.get("comment", ""),
                 }
             )
     return index
+
+
+def _align_and_cap(
+    submissions: list[dict],
+    professor_grades: list[dict],
+    *,
+    max_students: int | None,
+) -> tuple[list[dict], list[dict]]:
+    """Ensure we only send students that have both submission and professor grade.
+
+    Also optionally cap to the first N students (sorted by student_id for determinism).
+    """
+    if not submissions or not professor_grades:
+        return [], []
+
+    sub_by_student = {row.get("student_id"): row for row in submissions if row.get("student_id")}
+    prof_by_student = {row.get("student_id"): row for row in professor_grades if row.get("student_id")}
+
+    common_students = sorted(set(sub_by_student.keys()) & set(prof_by_student.keys()))
+
+    if max_students is not None and max_students > 0:
+        common_students = common_students[:max_students]
+
+    aligned_submissions = [sub_by_student[sid] for sid in common_students]
+    aligned_professor = [prof_by_student[sid] for sid in common_students]
+
+    return aligned_submissions, aligned_professor
 
 
 def calibrate_question(
@@ -127,6 +158,12 @@ def main() -> None:
     parser.add_argument("--max_rounds", type=int, default=3)
     parser.add_argument("--output_dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument(
+        "--max_students_per_question",
+        type=int,
+        default=None,
+        help="Optional cap on submissions/grades per question to control cost (default: no cap)",
+    )
+    parser.add_argument(
         "--normalized_threshold",
         type=float,
         default=0.10,
@@ -143,7 +180,8 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading benchmark files...", flush=True)
-    question_index = build_question_index(load_json(BENCHMARK_DIR / "synthesis_question.json"))
+    question_file = load_json(BENCHMARK_DIR / "synthesis_question.json")
+    question_index = build_question_index(question_file)
     rubric_index = build_rubric_index(load_json(BENCHMARK_DIR / "synthesis_rubric.json"))
     solution_index = build_solution_index(load_json(BENCHMARK_DIR / "synthesis_solution.json"))
     submissions_index = build_submissions_index(
@@ -153,7 +191,11 @@ def main() -> None:
         load_json(BENCHMARK_DIR / "synthesis_professor_grade.json")
     )
 
-    question_ids = args.question_ids or sorted(question_index.keys())
+    curated_ids = (
+        question_file.get("benchmark_notes", {})
+        .get("question_ids", [])
+    )
+    question_ids = args.question_ids or curated_ids or sorted(question_index.keys())
     summary = []
 
     for i, qid in enumerate(question_ids, 1):
@@ -165,6 +207,12 @@ def main() -> None:
 
         submissions = submissions_index.get(qid, [])
         professor_grades = professor_index.get(qid, [])
+
+        submissions, professor_grades = _align_and_cap(
+            submissions,
+            professor_grades,
+            max_students=args.max_students_per_question,
+        )
 
         if not submissions:
             print(f"  SKIP — no student submissions found for {qid}.", flush=True)
