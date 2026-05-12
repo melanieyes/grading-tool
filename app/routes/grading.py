@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.schemas.api_models import (
     BatchGradeRequest,
@@ -29,8 +29,14 @@ def grade_submission(payload: GradeRequest):
 
 
 @router.post("/api/grade-batch", response_model=BatchGradeResponse)
-def grade_batch_endpoint(payload: BatchGradeRequest):
-    return grade_batch(payload.submissions)
+def grade_batch_endpoint(payload: BatchGradeRequest, request: Request):
+    api_key = request.headers.get("x-api-key") or request.headers.get("X-API-Key")
+    if not api_key:
+        auth = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth and auth.lower().startswith("bearer "):
+            api_key = auth.split(" ", 1)[1].strip() or None
+
+    return grade_batch(payload.submissions, api_key=api_key)
 
 
 @router.post("/api/survey-submissions", response_model=SurveyBatchResponse)

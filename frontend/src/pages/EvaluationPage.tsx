@@ -7,21 +7,51 @@ import {
   saveApiSettings,
 } from '../lib/api'
 
+function loadSavedQuestions(): any[] {
+  try {
+    const raw = window.localStorage.getItem('grading_questions')
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 export default function EvaluationPage() {
   // Backend-connected evaluation + calibration page.
   // This aligns to: training data -> rubric -> grading results vs ground truth -> MSE -> calibrate to reduce MSE.
 
   const submissionsTemplate = `[
-  { "student_id": "S001", "question_id": "q1", "answer": "..." },
-  { "student_id": "S002", "question_id": "q1", "answer": "..." }
+  {
+    "student_id": "S001",
+    "question_id": "q1",
+    "answer": "Deadlock happens when processes wait in a circular chain. Resource ordering prevents circular wait."
+  },
+  {
+    "student_id": "S002",
+    "question_id": "q1",
+    "answer": "Deadlock means programs wait forever."
+  }
 ]`
 
   const professorGradesTemplate = `[
-  { "student_id": "S001", "question_id": "q1", "score": 8, "max_score": 10, "comment": "Good but missing detail." },
-  { "student_id": "S002", "question_id": "q1", "score": 4, "max_score": 10, "comment": "Too vague." }
+  {
+    "student_id": "S001",
+    "question_id": "q1",
+    "score": 8,
+    "max_score": 10,
+    "comment": "Good but missing detail."
+  },
+  {
+    "student_id": "S002",
+    "question_id": "q1",
+    "score": 4,
+    "max_score": 10,
+    "comment": "Too vague."
+  }
 ]`
 
-  const rubricTemplate = `- Correct concept (0-5)\n- Clear reasoning (0-5)`
+  const rubricTemplate = `- Conceptual accuracy and correct definitions (0-5)\n- Step-by-step reasoning and justification (0-5)`
 
   const [backendUrl, setBackendUrl] = useState('')
   const [geminiKey, setGeminiKey] = useState('')
@@ -105,7 +135,31 @@ export default function EvaluationPage() {
         }))
         .filter((row: any) => row.student_id && row.answer)
 
-      const result = await gradeBatch(normalized, { apiKey: geminiKey })
+      const questionEntries = loadSavedQuestions()
+        .map((q: any): [string, any] | null => {
+          const id = String(q?.question_id || '').trim()
+          return id ? [id, q] : null
+        })
+        .filter((x): x is [string, any] => Boolean(x))
+      const questionById = new Map<string, any>(questionEntries)
+
+      const enriched = normalized.map((row: any) => {
+        const q: any = questionById.get(String(row.question_id || ''))
+        const questionText =
+          String(q?.question_text || q?.question || q?.text || '').trim() || `Question ${row.question_id}`
+        const maxScore = Number(q?.max_score ?? 10)
+        const benchmarkType = q?.benchmark_type ? String(q.benchmark_type) : undefined
+
+        return {
+          ...row,
+          question_text: questionText,
+          rubric: rubricText,
+          max_score: Number.isFinite(maxScore) ? maxScore : 10,
+          benchmark_type: benchmarkType,
+        }
+      })
+
+      const result = await gradeBatch(enriched, { apiKey: geminiKey })
       setAiResults(result?.results || [])
     } catch (error: any) {
       alert(error?.message || 'Backend error while grading submissions.')
@@ -168,6 +222,16 @@ export default function EvaluationPage() {
         }))
         .filter((row: any) => row.student_id && row.answer)
 
+      const questionEntries = loadSavedQuestions()
+        .map((q: any): [string, any] | null => {
+          const id = String(q?.question_id || '').trim()
+          return id ? [id, q] : null
+        })
+        .filter((x): x is [string, any] => Boolean(x))
+      const questionById = new Map<string, any>(questionEntries)
+      const q: any = questionById.get(String(questionId || ''))
+      const questionText = String(q?.question_text || q?.question || q?.text || '').trim() || `Question ${questionId}`
+
       const normalizedGrades = professorGrades
         .map((row: any) => ({
           student_id: row.student_id || row.id || '',
@@ -180,6 +244,7 @@ export default function EvaluationPage() {
 
       const payload = {
         question_id: questionId,
+        question_text: questionText,
         original_rubric: rubricText,
         submissions: normalizedSubmissions,
         professor_grades: normalizedGrades,
@@ -206,7 +271,7 @@ export default function EvaluationPage() {
           <p className="eyebrow">Evaluation Metrics</p>
           <h1>Evaluate & calibrate against ground truth</h1>
           <p className="subtle">
-            Training data → rubric → AI grading vs ground truth → MSE/variance → revise rubric to reduce MSE.
+            Submissions + professor grades → rubric-based AI grading → compare vs ground truth → MSE/variance → revise rubric.
           </p>
         </div>
 
@@ -325,8 +390,8 @@ export default function EvaluationPage() {
       <section className="panel" style={{ marginTop: '18px' }}>
         <div className="panel-head">
           <div>
-            <h3>Training data</h3>
-            <span className="tiny-label">Submissions + ground truth grades (JSON arrays)</span>
+            <h3>Inputs</h3>
+            <span className="tiny-label">Submissions + professor grades (JSON arrays)</span>
           </div>
 
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -356,14 +421,14 @@ export default function EvaluationPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
           <div>
-            <p className="tiny-label">Submissions</p>
+            <p className="tiny-label">Submissions (JSON array)</p>
             <textarea className="editor-textarea code-textarea" style={{ minHeight: '200px' }} value={submissionsJson} onChange={(e) => setSubmissionsJson(e.target.value)} />
             <p className="section-note" style={{ marginTop: '8px' }}>
               Parsed rows: <strong>{submissions.length}</strong>
             </p>
           </div>
           <div>
-            <p className="tiny-label">Professor grades (ground truth)</p>
+            <p className="tiny-label">Professor grades (ground truth, JSON array)</p>
             <textarea className="editor-textarea code-textarea" style={{ minHeight: '200px' }} value={professorGradesJson} onChange={(e) => setProfessorGradesJson(e.target.value)} />
             <p className="section-note" style={{ marginTop: '8px' }}>
               Parsed rows: <strong>{professorGrades.length}</strong>

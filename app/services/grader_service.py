@@ -32,6 +32,7 @@ from src.grading_tool.evaluation.metrics import (
     score_variance,
     within_threshold_rate,
 )
+from src.grading_tool.grading.rubric_grader import RubricGrader
 from src.grading_tool.grading.rubric_reviser import revise_rubric as revise_rubric_core
 
 
@@ -91,15 +92,114 @@ def score_answer(student_id: str, answer: str, question_id: str = "Q1") -> Grade
     )
 
 
-def grade_batch(submissions: List[GradeRequest]) -> BatchGradeResponse:
-    results = [
-        score_answer(
-            student_id=item.student_id,
-            answer=item.answer,
-            question_id=item.question_id,
+def _parse_rubric_text(rubric_text: str, score_max: float) -> dict:
+    import re
+
+    lines = [line.strip() for line in (rubric_text or "").splitlines() if line.strip()]
+    criteria = []
+    idx = 1
+
+    for line in lines:
+        cleaned = re.sub(r"^[-*\d.\s]+", "", line).strip()
+        match = re.search(r"\((\s*0\s*[-–]\s*(\d+(?:\.\d+)?)\s*)\)", cleaned)
+        if match:
+            max_points = float(match.group(2))
+            desc = re.sub(r"\(\s*0\s*[-–]\s*(\d+(?:\.\d+)?)\s*\)", "", cleaned).strip()
+        else:
+            max_points = None
+            desc = cleaned
+
+
+
+        if not desc:
+            continue
+
+        criteria.append(
+            {
+                "criterion_id": f"c{idx}",
+                "points": float(max_points) if max_points is not None else 0.0,
+                "description": desc,
+            }
         )
-        for item in submissions
-    ]
+        idx += 1
+
+    # If no explicit point ranges were provided, allocate all points to a single criterion.
+    if not criteria:
+        criteria = [
+            {
+                "criterion_id": "c1",
+                "points": float(score_max),
+                "description": rubric_text.strip() or "Overall correctness and reasoning",
+            }
+        ]
+
+    # If some criteria have 0 points because we couldn't parse ranges, spread remaining.
+    parsed_total = sum(float(c.get("points", 0.0) or 0.0) for c in criteria)
+    if parsed_total <= 0:
+        criteria[0]["points"] = float(score_max)
+    elif parsed_total != float(score_max):
+        # Keep relative weights but normalize to score_max.
+        scale = float(score_max) / parsed_total
+        for c in criteria:
+            c["points"] = round(float(c.get("points", 0.0) or 0.0) * scale, 4)
+
+    return {"criteria": criteria}
+
+
+def grade_batch(submissions: List[GradeRequest], api_key: str | None = None) -> BatchGradeResponse:
+    results = []
+
+    for item in submissions:
+        use_rubric = bool(item.rubric) and bool(item.question_text)
+
+        if use_rubric:
+            try:
+                score_max = float(item.max_score or 10)
+                benchmark_type = item.benchmark_type or "short_answer"
+
+                if isinstance(item.rubric, str):
+                    rubric_payload = _parse_rubric_text(item.rubric, score_max)
+                elif isinstance(item.rubric, dict):
+                    rubric_payload = item.rubric
+                else:
+                    rubric_payload = {"criteria": []}
+
+                grader = RubricGrader(prompt_name="prompt_v1", api_key=api_key)
+                grade = grader.grade_question(
+                    student_id=item.student_id,
+                    question_id=item.question_id,
+                    benchmark_type=benchmark_type,
+                    question_text=item.question_text or "",
+                    rubric=rubric_payload,
+                    student_answer=item.answer,
+                    score_max=score_max,
+                    reference_solution=item.reference_solution,
+                )
+
+                results.append(
+                    GradeResult(
+                        student_id=grade.student_id,
+                        question_id=grade.question_id,
+                        score=float(grade.score_awarded),
+                        max_score=float(grade.score_max),
+                        confidence=float(grade.confidence),
+                        review_required=bool(grade.review_required),
+                        review_reason="rubric_grader_flag" if grade.review_required else "",
+                        reasoning=str(grade.feedback or ""),
+                    )
+                )
+                continue
+            except Exception:
+                # Fall back to rule-based scorer if Gemini grading fails.
+                pass
+
+        results.append(
+            score_answer(
+                student_id=item.student_id,
+                answer=item.answer,
+                question_id=item.question_id,
+            )
+        )
 
     review_queue = [
         ReviewQueueItem(
@@ -349,42 +449,136 @@ def _compute_evaluation_metrics(
 # ---------------------------------------------------------------------
 
 
-def calibrate_rubric_rounds(payload: CalibrationRequest) -> CalibrationResponse:
+def _infer_score_max_from_professor_grades(professor_grades: list[dict]) -> float:
+    for item in professor_grades or []:
+        try:
+            value = float(item.get("max_score", 0) or 0)
+            if value > 0:
+                return value
+        except (TypeError, ValueError):
+            continue
+    return 10.0
+
+
+def _normalize_rubric_for_llm(rubric_any, score_max: float) -> dict:
+    """Return a rubric dict suitable for prompt payload.
+
+    Handles:
+    - plain rubric text (string)
+    - rubric dicts that already have `criteria`
+    - rubric dicts produced by rubric_reviser (e.g. {original_rubric: ..., revision_notes: ...})
+    """
+    if isinstance(rubric_any, str):
+        return _parse_rubric_text(rubric_any, score_max)
+
+    if isinstance(rubric_any, dict):
+        if isinstance(rubric_any.get("criteria"), list):
+            return rubric_any
+
+        original = rubric_any.get("original_rubric")
+        if isinstance(original, str) and original.strip():
+            payload = _parse_rubric_text(original, score_max)
+            if rubric_any.get("revision_notes") is not None:
+                payload["revision_notes"] = rubric_any.get("revision_notes")
+            if rubric_any.get("calibration_round") is not None:
+                payload["calibration_round"] = rubric_any.get("calibration_round")
+            return payload
+
+        return rubric_any
+
+    return {"criteria": []}
+
+
+def calibrate_rubric_rounds(
+    payload: CalibrationRequest,
+    api_key: str | None = None,
+) -> CalibrationResponse:
+    submissions_dump = [submission.model_dump() for submission in payload.submissions]
+    professor_dump = [grade.model_dump() for grade in payload.professor_grades]
+
+    score_max = _infer_score_max_from_professor_grades(professor_dump)
+
+    # Prefer explicit question_text; fall back to submission-provided question_text if present.
+    question_text = (payload.question_text or "").strip()
+    if not question_text and submissions_dump:
+        question_text = str(submissions_dump[0].get("question_text") or "").strip()
+
+    benchmark_type = "short_answer"
+    if submissions_dump:
+        bt = submissions_dump[0].get("benchmark_type")
+        if isinstance(bt, str) and bt.strip():
+            benchmark_type = bt.strip()
+
+    reference_solution = payload.solution
+
+    def grade_fn(submissions: list[dict], rubric_any) -> list[dict]:
+        results: list[dict] = []
+
+        # If we have rubric + any question context, use the real rubric grader.
+        if rubric_any is not None and question_text:
+            try:
+                rubric_payload = _normalize_rubric_for_llm(rubric_any, score_max)
+                grader = RubricGrader(prompt_name="prompt_v1", api_key=api_key)
+
+                for submission in submissions:
+                    qid = submission.get("question_id") or payload.question_id or "Q1"
+                    grade = grader.grade_question(
+                        student_id=submission["student_id"],
+                        question_id=qid,
+                        benchmark_type=benchmark_type,
+                        question_text=question_text,
+                        rubric=rubric_payload,
+                        student_answer=submission["answer"],
+                        score_max=score_max,
+                        reference_solution=reference_solution,
+                    )
+
+                    results.append(
+                        GradeResult(
+                            student_id=grade.student_id,
+                            question_id=grade.question_id,
+                            score=float(grade.score_awarded),
+                            max_score=float(grade.score_max),
+                            confidence=float(grade.confidence),
+                            review_required=bool(grade.review_required),
+                            review_reason=(
+                                "rubric_grader_flag" if grade.review_required else ""
+                            ),
+                            reasoning=str(grade.feedback or ""),
+                        ).model_dump()
+                    )
+
+                return results
+            except Exception:
+                # Fall back to rule-based scorer if Gemini grading fails.
+                results = []
+
+        for submission in submissions:
+            result = score_answer(
+                student_id=submission["student_id"],
+                answer=submission["answer"],
+                question_id=submission.get("question_id", "Q1"),
+            )
+            results.append(result.model_dump())
+
+        return results
+
     result = run_calibration(
         question_id=payload.question_id,
         original_rubric=payload.original_rubric,
-        submissions=[submission.model_dump() for submission in payload.submissions],
-        professor_grades=[grade.model_dump() for grade in payload.professor_grades],
-        grade_fn=_calibration_grade_fn,
+        submissions=submissions_dump,
+        professor_grades=professor_dump,
+        grade_fn=grade_fn,
         evaluate_fn=_calibration_evaluate_fn,
         max_rounds=payload.max_rounds,
         difference_threshold=payload.difference_threshold,
         target_mse=payload.target_mse,
         min_improvement=payload.min_improvement,
         include_semantic_metrics=payload.include_semantic_metrics,
+        instructor_note=None,
     )
 
     return CalibrationResponse.model_validate(result)
-
-
-def _calibration_grade_fn(submissions: list[dict], rubric: dict) -> list[dict]:
-    """
-    Adapter for calibration.py.
-
-    For now, this uses score_answer().
-    Later, replace this with the real Gemini rubric grader.
-    """
-    results = []
-
-    for submission in submissions:
-        result = score_answer(
-            student_id=submission["student_id"],
-            answer=submission["answer"],
-            question_id=submission.get("question_id", "Q1"),
-        )
-        results.append(result.model_dump())
-
-    return results
 
 
 def _calibration_evaluate_fn(

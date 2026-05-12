@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.schemas.api_models import (
     CalibrationRequest,
@@ -40,7 +40,7 @@ def run_evaluation(payload: EvaluationRequest):
 
 
 @router.post("/api/evaluation/calibrate", response_model=CalibrationResponse)
-def run_calibration(payload: CalibrationRequest):
+def run_calibration(payload: CalibrationRequest, request: Request):
     """
     Run rubric calibration for up to max_rounds.
 
@@ -52,4 +52,10 @@ def run_calibration(payload: CalibrationRequest):
     4. records a rubric revision note
     5. keeps the best round by lowest MSE
     """
-    return calibrate_rubric_rounds(payload)
+    api_key = request.headers.get("x-api-key") or request.headers.get("X-API-Key")
+    if not api_key:
+        auth = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth and auth.lower().startswith("bearer "):
+            api_key = auth.split(" ", 1)[1].strip() or None
+
+    return calibrate_rubric_rounds(payload, api_key=api_key)

@@ -7,6 +7,11 @@ class GradeRequest(BaseModel):
     student_id: str
     answer: str
     question_id: str = "Q1"
+    question_text: Optional[str] = None
+    rubric: Optional[Any] = None
+    max_score: float = 10
+    benchmark_type: Optional[str] = None
+    reference_solution: Optional[str] = None
 
 
 class BatchGradeRequest(BaseModel):

@@ -4,6 +4,26 @@ import { gradeBatch } from '../lib/api'
 type SubmissionMode = 'json' | 'csv'
 type Decision = 'pending' | 'approved' | 'rejected'
 
+function loadSavedQuestions(): any[] {
+  try {
+    const raw = window.localStorage.getItem('grading_questions')
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function loadSavedRubrics(): Record<string, string> {
+  try {
+    const raw = window.localStorage.getItem('grading_rubrics')
+    const parsed = raw ? JSON.parse(raw) : {}
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 const sampleJsonInput = `[
   {
     "student_id": "S10485739",
@@ -216,7 +236,33 @@ export default function SubmissionGradingPage() {
         question_id: row.question_id || 'Q1',
       }))
 
-      const result = await gradeBatch(normalizedSubmissions)
+      const questionEntries = loadSavedQuestions()
+        .map((q: any): [string, any] | null => {
+          const id = String(q?.question_id || '').trim()
+          return id ? [id, q] : null
+        })
+        .filter((x): x is [string, any] => Boolean(x))
+
+      const questionById = new Map<string, any>(questionEntries)
+      const rubricsById = loadSavedRubrics()
+
+      const enriched = normalizedSubmissions.map((row: any) => {
+        const q: any = questionById.get(String(row.question_id || ''))
+        const questionText = String(q?.question_text || q?.question || q?.text || '').trim() || `Question ${row.question_id}`
+        const maxScore = Number(q?.max_score ?? 10)
+        const benchmarkType = q?.benchmark_type ? String(q.benchmark_type) : undefined
+        const rubricText = rubricsById[String(row.question_id || '')] || ''
+
+        return {
+          ...row,
+          question_text: questionText,
+          rubric: rubricText || undefined,
+          max_score: Number.isFinite(maxScore) ? maxScore : 10,
+          benchmark_type: benchmarkType,
+        }
+      })
+
+      const result = await gradeBatch(enriched)
 
       setData(result)
       setDecisions({})

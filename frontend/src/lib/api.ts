@@ -16,6 +16,26 @@ type Submission = {
 const DEFAULT_API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 const SETTINGS_STORAGE_KEY = 'grading_tool.api_settings'
 
+function normalizeBaseUrl(raw: unknown) {
+  if (typeof raw !== 'string') return DEFAULT_API_BASE
+
+  // Users sometimes paste multiple tokens or accidental suffixes.
+  // Keep only the first token and trim whitespace.
+  let url = raw.trim().split(/\s+/)[0] || ''
+
+  // Fix common typo: "http//" or "https//" (missing colon).
+  if (url.startsWith('http//')) url = url.replace(/^http\/\//, 'http://')
+  if (url.startsWith('https//')) url = url.replace(/^https\/\//, 'https://')
+
+  // Remove trailing slash to keep `${base}${path}` stable.
+  url = url.replace(/\/+$/, '')
+
+  if (!url) return DEFAULT_API_BASE
+  if (!/^https?:\/\//.test(url)) return DEFAULT_API_BASE
+
+  return url
+}
+
 export function loadApiSettings(): ApiSettings {
   if (typeof window === 'undefined') {
     return { backend_api_base_url: DEFAULT_API_BASE }
@@ -26,12 +46,7 @@ export function loadApiSettings(): ApiSettings {
     if (!raw) return { backend_api_base_url: DEFAULT_API_BASE }
 
     const parsed = JSON.parse(raw)
-    const backend_api_base_url =
-      typeof parsed?.backend_api_base_url === 'string' && parsed.backend_api_base_url.trim()
-        ? parsed.backend_api_base_url.trim()
-        : DEFAULT_API_BASE
-
-    return { backend_api_base_url }
+    return { backend_api_base_url: normalizeBaseUrl(parsed?.backend_api_base_url) }
   } catch {
     return { backend_api_base_url: DEFAULT_API_BASE }
   }
@@ -42,15 +57,15 @@ export function saveApiSettings(next: Partial<ApiSettings>) {
 
   const current = loadApiSettings()
   const merged: ApiSettings = {
-    backend_api_base_url: (next.backend_api_base_url ?? current.backend_api_base_url).trim(),
+    backend_api_base_url: normalizeBaseUrl(next.backend_api_base_url ?? current.backend_api_base_url),
   }
 
   window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(merged))
 }
 
 function resolveApiBaseUrl(options?: RequestOptions) {
-  if (options?.apiBaseUrl?.trim()) return options.apiBaseUrl.trim()
-  return loadApiSettings().backend_api_base_url
+  if (options?.apiBaseUrl) return normalizeBaseUrl(options.apiBaseUrl)
+  return normalizeBaseUrl(loadApiSettings().backend_api_base_url)
 }
 
 function buildHeaders(options?: RequestOptions) {

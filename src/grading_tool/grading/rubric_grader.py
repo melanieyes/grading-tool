@@ -8,8 +8,13 @@ from src.grading_tool.models.gemini_client import GeminiClient
 
 
 class RubricGrader:
-    def __init__(self, model_name: str | None = None, prompt_name: str = "prompt_v1"):
-        self.client = GeminiClient(model_name=model_name)
+    def __init__(
+        self,
+        model_name: str | None = None,
+        prompt_name: str = "prompt_v1",
+        api_key: str | None = None,
+    ):
+        self.client = GeminiClient(model_name=model_name, api_key=api_key)
         self.prompt_name = prompt_name
 
     def grade_question(
