@@ -1,7 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 type IntakeMode = 'csv' | 'json'
+type RowStatus = 'draft' | 'approved' | 'revised'
+type RevisionMode = 'manual' | 'suggested'
+
+const revisionOptions = [
+  'Criteria are too generic',
+  'Scoring weights are unclear',
+  'Rubric does not match reasoning depth',
+  'Need more partial-credit guidance',
+  'Expected key points are missing',
+]
 
 const csvTemplate = `question_id,question,max_score
 q1,"Explain why deadlock happens and how resource ordering prevents it.",10
@@ -92,20 +102,109 @@ function flattenJsonQuestions(data: any): any[] {
   })
 }
 
+function flattenQuestionsFromSubmissions(data: any): any[] {
+  if (!Array.isArray(data)) return []
+
+  const candidates = data
+    .map((row: any) => {
+      const question_id = row.question_id || row.qid || ''
+      const question = row.question || row.question_text || row.prompt || ''
+      const max_score = Number(row.max_score || row.points || row.score_max || 10)
+      const benchmark_type = row.benchmark_type || ''
+      return { question_id, question, max_score, benchmark_type }
+    })
+    .filter((q: any) => q.question_id && q.question)
+
+  const uniq: Record<string, any> = {}
+  candidates.forEach((q: any) => {
+    if (!uniq[q.question_id]) uniq[q.question_id] = q
+  })
+
+  return Object.values(uniq)
+}
+
 function parseJson(text: string) {
   try {
     const parsed = JSON.parse(text)
-    return flattenJsonQuestions(parsed).filter((q) => q.question_id && q.question)
+    const fromQuestions = flattenJsonQuestions(parsed).filter((q) => q.question_id && q.question)
+    if (fromQuestions.length) return fromQuestions
+    return flattenQuestionsFromSubmissions(parsed)
   } catch {
     return []
   }
 }
 
-export default function QuestionIntakePage() {
+function loadSavedRubrics() {
+  try {
+    const saved = localStorage.getItem('grading_rubrics')
+    if (!saved) return {}
+    const parsed = JSON.parse(saved)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function allocatePoints(maxScore: number, weights: number[]) {
+  const cleanedMax = Number.isFinite(maxScore) && maxScore > 0 ? Math.round(maxScore) : 10
+  const cleanedWeights = weights.map((w) => Math.max(0, Number.isFinite(w) ? w : 0))
+  const total = cleanedWeights.reduce((sum, w) => sum + w, 0) || 1
+  const raw = cleanedWeights.map((w) => (cleanedMax * w) / total)
+
+  const floored = raw.map((x) => Math.floor(x))
+  let remaining = cleanedMax - floored.reduce((sum, n) => sum + n, 0)
+
+  const order = raw
+    .map((x, idx) => ({ idx, frac: x - Math.floor(x) }))
+    .sort((a, b) => b.frac - a.frac)
+
+  for (let i = 0; i < order.length && remaining > 0; i++) {
+    floored[order[i].idx] += 1
+    remaining -= 1
+  }
+
+  return floored
+}
+
+function improveRubricForQuestion(params: {
+  questionText: string
+  maxScore: number
+  revisionFocus: string
+}) {
+  const question = params.questionText.trim()
+  const focus = params.revisionFocus.trim() || 'Improve reasoning depth and partial-credit clarity'
+  const [p1, p2, p3, p4] = allocatePoints(params.maxScore, [0.3, 0.3, 0.2, 0.2])
+
+  return [
+    `Revision focus: ${focus}`,
+    '',
+    `Question: ${question}`,
+    '',
+    `- Conceptual accuracy and correct definitions (0-${p1})`,
+    `- Step-by-step reasoning and logical justification (0-${p2})`,
+    `- Applies to the specific prompt (0-${p3})`,
+    `- Completeness, precision, and clarity (0-${p4})`,
+    '- Full credit: directly addresses the prompt, uses correct theory, and explains why the conclusion follows.',
+    '- Partial credit: relevant concepts but incomplete reasoning, missing steps, or weak explanation.',
+    '- Low credit: generic, unsupported, or only states a conclusion.',
+    '- Manual review trigger: contradictions, hallucinated facts, vague reasoning, or unusually short response.',
+  ].join('\n')
+}
+
+export default function QuestionUploadPage() {
   const [mode, setMode] = useState<IntakeMode>('csv')
   const [csvInput, setCsvInput] = useState(csvTemplate)
   const [jsonInput, setJsonInput] = useState(jsonTemplate)
   const [fileName, setFileName] = useState('')
+
+  const [rubrics, setRubrics] = useState<Record<string, string>>({})
+  const [rowStatuses, setRowStatuses] = useState<Record<string, RowStatus>>({})
+  const [globalStatus, setGlobalStatus] = useState<'draft' | 'generated'>('draft')
+  const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null)
+  const [revisionMode, setRevisionMode] = useState<RevisionMode>('suggested')
+  const [selectedReason, setSelectedReason] = useState(revisionOptions[0])
+  const [reviewerComment, setReviewerComment] = useState('')
+  const [revisionOriginalRubric, setRevisionOriginalRubric] = useState('')
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -118,6 +217,20 @@ export default function QuestionIntakePage() {
       localStorage.setItem('grading_questions', JSON.stringify(questions))
     }
   }, [questions])
+
+  useEffect(() => {
+    const savedRubrics = loadSavedRubrics()
+    if (savedRubrics && Object.keys(savedRubrics).length) {
+      setRubrics(savedRubrics)
+      setGlobalStatus('generated')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (Object.keys(rubrics).length) {
+      localStorage.setItem('grading_rubrics', JSON.stringify(rubrics))
+    }
+  }, [rubrics])
 
   const isValid = questions.length > 0
 
@@ -148,15 +261,242 @@ export default function QuestionIntakePage() {
     reader.readAsText(file)
   }
 
+  function handleGenerateAllRubrics() {
+    if (!questions.length) return
+
+    const newRubrics: Record<string, string> = {}
+    const newStatuses: Record<string, RowStatus> = {}
+
+    questions.forEach((q: any) => {
+      const maxScore = Number(q.max_score || 10)
+      newRubrics[q.question_id] = `- Correct concept (0-${Math.floor(maxScore / 2)})\n- Clear reasoning (0-${Math.ceil(maxScore / 2)})`
+      newStatuses[q.question_id] = 'draft'
+    })
+
+    setRubrics(newRubrics)
+    setRowStatuses(newStatuses)
+    setGlobalStatus('generated')
+    setActiveRevisionId(null)
+  }
+
+  function handleRubricChange(id: string, newText: string) {
+    setRubrics((prev) => ({ ...prev, [id]: newText }))
+  }
+
+  function handleAcceptRow(id: string) {
+    setRowStatuses((prev) => ({ ...prev, [id]: 'approved' }))
+    if (activeRevisionId === id) setActiveRevisionId(null)
+  }
+
+  function handleOpenRevision(id: string) {
+    setActiveRevisionId(id)
+    setRevisionMode('suggested')
+    setSelectedReason(revisionOptions[0])
+    setReviewerComment('')
+    setRevisionOriginalRubric(rubrics[id] || '')
+    // If they revise after accepting, treat as draft until accepted again.
+    setRowStatuses((prev) => ({
+      ...prev,
+      [id]: prev[id] === 'approved' ? 'draft' : (prev[id] || 'draft'),
+    }))
+  }
+
+  function handleCloseRevision(id: string) {
+    const current = rubrics[id] || ''
+    if (revisionMode === 'manual' && current.trim() && current !== revisionOriginalRubric) {
+      setRowStatuses((prev) => ({ ...prev, [id]: 'revised' }))
+    }
+    setActiveRevisionId(null)
+  }
+
+  function handleGenerateSuggestedRevision(id: string, questionText: string, maxScore: number) {
+    const focus = (reviewerComment.trim() || selectedReason.trim() || 'Improve reasoning depth and partial-credit clarity')
+    const next = improveRubricForQuestion({ questionText, maxScore, revisionFocus: focus })
+    setRubrics((prev) => ({ ...prev, [id]: next }))
+    setRowStatuses((prev) => ({ ...prev, [id]: 'revised' }))
+    setActiveRevisionId(null)
+  }
+
+  const renderRubricCell = (id: string, questionText: string, maxScore: number) => {
+    const status = rowStatuses[id] || 'draft'
+    const isApproved = status === 'approved'
+    const isRevising = activeRevisionId === id
+    const allowManualEdit = isRevising && revisionMode === 'manual'
+
+    if (globalStatus === 'draft') {
+      return (
+        <td>
+          <textarea
+            className="editor-textarea preview-textarea"
+            style={{ minHeight: '120px' }}
+            readOnly
+            placeholder="Waiting for generation..."
+          />
+        </td>
+      )
+    }
+
+    return (
+      <td>
+        <textarea
+          className={`editor-textarea ${!allowManualEdit ? 'preview-textarea' : ''}`}
+          style={{ minHeight: '120px', padding: '12px' }}
+          value={rubrics[id] || ''}
+          onChange={(e) => handleRubricChange(id, e.target.value)}
+          readOnly={isApproved || !allowManualEdit}
+          placeholder={allowManualEdit ? 'Edit rubric manually…' : ''}
+        />
+
+        {activeRevisionId === id && (
+          <div
+            style={{
+              marginTop: '12px',
+              padding: '12px',
+              background: 'var(--info-bg)',
+              borderRadius: '12px',
+              border: '1px solid var(--brand-200)',
+            }}
+          >
+            <p className="tiny-label" style={{ marginBottom: '10px', color: 'var(--brand-700)' }}>
+              Revise rubric
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+              <label className="field" style={{ margin: 0 }}>
+                <span className="tiny-label">Revision mode</span>
+                <select
+                  className="select-input"
+                  value={revisionMode}
+                  onChange={(e) => setRevisionMode(e.target.value as RevisionMode)}
+                >
+                  <option value="manual">Manual edit</option>
+                  <option value="suggested">Suggested criteria</option>
+                </select>
+              </label>
+
+              {revisionMode === 'suggested' ? (
+                <label className="field" style={{ margin: 0 }}>
+                  <span className="tiny-label">Suggested focus</span>
+                  <select
+                    className="select-input"
+                    value={selectedReason}
+                    onChange={(e) => setSelectedReason(e.target.value)}
+                  >
+                    {revisionOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <div />
+              )}
+            </div>
+
+            {revisionMode === 'manual' ? (
+              <p className="section-note" style={{ marginTop: '10px' }}>
+                Manual edit enabled — update the rubric in the text box above, then click Done.
+              </p>
+            ) : (
+              <label className="field" style={{ marginTop: '10px' }}>
+                <span className="tiny-label">Optional reviewer comment</span>
+                <textarea
+                  className="editor-textarea"
+                  style={{ minHeight: '74px' }}
+                  value={reviewerComment}
+                  onChange={(e) => setReviewerComment(e.target.value)}
+                  placeholder="Example: Add stronger partial-credit guidance and list expected key points."
+                />
+              </label>
+            )}
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', justifyContent: 'flex-end' }}>
+              {revisionMode === 'suggested' && (
+                <button
+                  className="primary-btn"
+                  style={{ minHeight: '36px', padding: '0 12px', fontSize: '0.85rem' }}
+                  onClick={() => handleGenerateSuggestedRevision(id, questionText, maxScore)}
+                >
+                  Generate
+                </button>
+              )}
+              <button
+                className="ghost-btn"
+                style={{ minHeight: '36px', padding: '0 12px', fontSize: '0.85rem' }}
+                onClick={() => handleCloseRevision(id)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+      </td>
+    )
+  }
+
+  const renderActionCell = (id: string) => {
+    if (globalStatus === 'draft') {
+      return (
+        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+          <span className="status-pill status-pill--neutral" style={{ opacity: 0.5 }}>
+            Pending
+          </span>
+        </td>
+      )
+    }
+
+    const status = rowStatuses[id] || 'draft'
+    const isApproved = status === 'approved'
+    const isRevised = status === 'revised'
+
+    return (
+      <td style={{ textAlign: 'center', verticalAlign: 'top' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          {isApproved ? (
+            <span className="status-pill status-pill--success" style={{ width: '100%' }}>
+              Accepted
+            </span>
+          ) : isRevised ? (
+            <span className="status-pill status-pill--info" style={{ width: '100%' }}>
+              Revised
+            </span>
+          ) : (
+            <span className="status-pill status-pill--neutral" style={{ width: '100%' }}>
+              Draft
+            </span>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+            <button
+              className="row-action-btn"
+              style={{ width: '100%', justifyContent: 'center', opacity: isApproved ? 0.6 : 1 }}
+              onClick={() => handleAcceptRow(id)}
+              disabled={isApproved}
+            >
+              Accept
+            </button>
+            <button
+              className="row-action-btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => handleOpenRevision(id)}
+            >
+              Revise
+            </button>
+          </div>
+        </div>
+      </td>
+    )
+  }
+
   return (
     <main className="shell page">
       <section className="page-head compact-head">
         <div>
-          <p className="eyebrow">Question Intake</p>
-          <h1>Prepare grading questions</h1>
+          <p className="eyebrow">Question Upload</p>
+          <h1>Question upload & rubric generate</h1>
           <p className="subtle">
-            Upload a structured CSV or JSON file, then preview the detected
-            questions before rubric generation.
+            Upload training questions, generate rubrics, and then run grading or calibration.
           </p>
         </div>
 
@@ -231,10 +571,10 @@ export default function QuestionIntakePage() {
             <span className="tiny-label">Structured output</span>
           </div>
 
-          {isValid && (
-            <Link to="/rubric" className="primary-btn">
-              Continue to Rubric Review
-            </Link>
+          {isValid && globalStatus === 'draft' && (
+            <button type="button" className="primary-btn" onClick={handleGenerateAllRubrics}>
+              Generate All Rubrics
+            </button>
           )}
         </div>
 
@@ -263,6 +603,73 @@ export default function QuestionIntakePage() {
                 <tr>
                   <td className="center-col" colSpan={4}>
                     No valid questions detected yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel rubric-builder" style={{ marginTop: '18px' }}>
+        <div className="panel-head">
+          <div>
+            <h3>Rubric Review</h3>
+            <span className="tiny-label">Create → revise → approve</span>
+          </div>
+
+          <div className="action-stack">
+            {globalStatus === 'draft' ? (
+              <button type="button" className="primary-btn" onClick={handleGenerateAllRubrics} disabled={!isValid}>
+                Generate All Rubrics
+              </button>
+            ) : (
+              <Link to="/grading" className="primary-btn">
+                Continue to Submission Grading
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <div className="table-wrap">
+          <table className="clean-table">
+            <thead>
+              <tr>
+                <th className="center-col" style={{ width: '60px' }}>
+                  Index
+                </th>
+                <th style={{ width: '120px' }}>Q. ID</th>
+                <th style={{ width: '30%' }}>Question</th>
+                <th style={{ width: '45%' }}>Scoring Rubric</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>Status / Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {questions.length > 0 ? (
+                questions.map((q: any, index: number) => {
+                  const isApproved = rowStatuses[q.question_id] === 'approved'
+                  return (
+                    <Fragment key={q.question_id}>
+                      <tr
+                        style={{
+                          backgroundColor: isApproved ? 'rgba(31, 153, 91, 0.05)' : '',
+                          transition: 'background-color 0.3s ease',
+                        }}
+                      >
+                        <td className="center-col">{index + 1}</td>
+                        <td className="mono-cell">{q.question_id}</td>
+                        <td>{q.question}</td>
+                        {renderRubricCell(q.question_id, q.question, Number(q.max_score ?? 10))}
+                        {renderActionCell(q.question_id)}
+                      </tr>
+                    </Fragment>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td className="center-col" colSpan={5}>
+                    No questions available.
                   </td>
                 </tr>
               )}

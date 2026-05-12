@@ -14,10 +14,7 @@ export default function TopNav() {
 
         <nav className="nav-links">
           <NavLink to="/intake" className="nav-link">
-            Question Intake
-          </NavLink>
-          <NavLink to="/rubric" className="nav-link">
-            Rubric Review
+            Question Upload
           </NavLink>
           <NavLink to="/grading" className="nav-link">
             Submission Grading
