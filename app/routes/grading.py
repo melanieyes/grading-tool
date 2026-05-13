@@ -7,6 +7,10 @@ from app.schemas.api_models import (
     GradeResult,
     MistakeStatsRequest,
     MistakeStatsResponse,
+    RubricGenerationRequest,
+    RubricGenerationResponse,
+    RubricLLMReviseRequest,
+    RubricLLMReviseResponse,
     RubricRevisionRequest,
     RubricRevisionResponse,
     SurveyBatchRequest,
@@ -14,8 +18,10 @@ from app.schemas.api_models import (
 )
 from app.services.grader_service import (
     analyze_mistakes,
+    generate_rubric,
     grade_batch,
     revise_rubric,
+    revise_rubric_llm,
     score_answer,
     survey_submissions,
 )
@@ -52,3 +58,25 @@ def mistake_stats_endpoint(payload: MistakeStatsRequest):
 @router.post("/api/revise-rubric", response_model=RubricRevisionResponse)
 def revise_rubric_endpoint(payload: RubricRevisionRequest):
     return revise_rubric(payload)
+
+
+@router.post("/api/generate-rubric", response_model=RubricGenerationResponse)
+def generate_rubric_endpoint(payload: RubricGenerationRequest, request: Request):
+    api_key = request.headers.get("x-api-key") or request.headers.get("X-API-Key")
+    if not api_key:
+        auth = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth and auth.lower().startswith("bearer "):
+            api_key = auth.split(" ", 1)[1].strip() or None
+
+    return generate_rubric(payload, api_key=api_key)
+
+
+@router.post("/api/revise-rubric-llm", response_model=RubricLLMReviseResponse)
+def revise_rubric_llm_endpoint(payload: RubricLLMReviseRequest, request: Request):
+    api_key = request.headers.get("x-api-key") or request.headers.get("X-API-Key")
+    if not api_key:
+        auth = request.headers.get("authorization") or request.headers.get("Authorization")
+        if auth and auth.lower().startswith("bearer "):
+            api_key = auth.split(" ", 1)[1].strip() or None
+
+    return revise_rubric_llm(payload, api_key=api_key)

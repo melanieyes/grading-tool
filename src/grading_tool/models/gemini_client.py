@@ -27,7 +27,17 @@ class GeminiClient:
             f"INPUT:\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
         )
 
-        response = self.model.generate_content(prompt)
+        # temperature=0 + top_p=1 + top_k=1 makes the model greedy: same prompt
+        # should produce the same (or near-identical) output across calls.
+        response = self.model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": 0.0,
+                "top_p": 1.0,
+                "top_k": 1,
+                "response_mime_type": "application/json",
+            },
+        )
         text = (response.text or "").strip()
 
         if text.startswith("```json"):

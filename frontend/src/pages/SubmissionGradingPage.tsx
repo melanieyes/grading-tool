@@ -1,7 +1,9 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import { gradeBatch } from '../lib/api'
 
-type SubmissionMode = 'json' | 'csv'
 type Decision = 'pending' | 'approved' | 'rejected'
 
 function loadSavedQuestions(): any[] {
@@ -35,32 +37,6 @@ const sampleJsonInput = `[
   }
 ]`
 
-const sampleCsvInput = `student_id,answer
-S10485739,"Deadlock happens when processes wait in a circular chain. Resource ordering can prevent circular wait."
-S10492811,"Deadlock means programs wait forever."`
-
-function splitCsvLine(line: string) {
-  const result: string[] = []
-  let current = ''
-  let insideQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-
-    if (char === '"') {
-      insideQuotes = !insideQuotes
-    } else if (char === ',' && !insideQuotes) {
-      result.push(current.trim().replace(/^"|"$/g, ''))
-      current = ''
-    } else {
-      current += char
-    }
-  }
-
-  result.push(current.trim().replace(/^"|"$/g, ''))
-  return result
-}
-
 function normalizeSubmissionRows(rows: any[]) {
   return rows
     .map((row) => ({
@@ -74,26 +50,6 @@ function normalizeSubmissionRows(rows: any[]) {
         '',
     }))
     .filter((row) => row.student_id && row.answer)
-}
-
-function parseCsvSubmissions(text: string) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean)
-  if (lines.length < 2) return []
-
-  const headers = splitCsvLine(lines[0]).map((h) => h.trim())
-
-  const rows = lines.slice(1).map((line) => {
-    const values = splitCsvLine(line)
-    const row: Record<string, string> = {}
-
-    headers.forEach((header, index) => {
-      row[header] = values[index] || ''
-    })
-
-    return row
-  })
-
-  return normalizeSubmissionRows(rows)
 }
 
 function parseJsonSubmissions(text: string) {
@@ -143,9 +99,7 @@ function downloadFile(filename: string, content: string, type: string) {
 }
 
 export default function SubmissionGradingPage() {
-  const [mode, setMode] = useState<SubmissionMode>('json')
   const [jsonInput, setJsonInput] = useState(sampleJsonInput)
-  const [csvInput, setCsvInput] = useState(sampleCsvInput)
   const [fileName, setFileName] = useState('')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -153,26 +107,68 @@ export default function SubmissionGradingPage() {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({})
   const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>({})
   const [editedScores, setEditedScores] = useState<Record<string, number>>({})
+  const [smoothProgress, setSmoothProgress] = useState(0)
+  const gradingStartRef = useRef<number>(0)
+  const gradingTotalRef = useRef<number>(0)
+
+  useEffect(() => {
+    if (!loading) return
+    const tick = () => {
+      const elapsed = Date.now() - gradingStartRef.current
+      const total = Math.max(1, gradingTotalRef.current)
+      const expectedMs = Math.max(8000, total * 9000)
+      const timePct = Math.min(95, (elapsed / expectedMs) * 100)
+      setSmoothProgress((prev) => Math.max(prev, timePct))
+    }
+    tick()
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [loading])
+
+  useEffect(() => {
+    try {
+      const rawResults = window.localStorage.getItem('grading_results')
+      if (rawResults) setData(JSON.parse(rawResults))
+      const rawDecisions = window.localStorage.getItem('grading_decisions')
+      if (rawDecisions) setDecisions(JSON.parse(rawDecisions))
+      const rawReasoning = window.localStorage.getItem('grading_edited_reasoning')
+      if (rawReasoning) setEditedReasoning(JSON.parse(rawReasoning))
+      const rawScores = window.localStorage.getItem('grading_edited_scores')
+      if (rawScores) setEditedScores(JSON.parse(rawScores))
+    } catch {
+      // ignore corrupted storage
+    }
+  }, [])
+
+  useEffect(() => {
+    if (data) window.localStorage.setItem('grading_results', JSON.stringify(data))
+  }, [data])
+  useEffect(() => {
+    window.localStorage.setItem('grading_decisions', JSON.stringify(decisions))
+  }, [decisions])
+  useEffect(() => {
+    window.localStorage.setItem('grading_edited_reasoning', JSON.stringify(editedReasoning))
+  }, [editedReasoning])
+  useEffect(() => {
+    window.localStorage.setItem('grading_edited_scores', JSON.stringify(editedScores))
+  }, [editedScores])
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const submissions = useMemo(() => {
-    return mode === 'json'
-      ? parseJsonSubmissions(jsonInput)
-      : parseCsvSubmissions(csvInput)
-  }, [mode, jsonInput, csvInput])
+  const submissions = useMemo(() => parseJsonSubmissions(jsonInput), [jsonInput])
 
   const results = data?.results || []
 
   const stats = useMemo(() => {
     if (!results.length) return { min: 0, max: 0, mean: 0, review: 0 }
 
-    const scores = results.map((r: any) => Number(r.score || 0))
+    const gradable = results.filter((r: any) => r.review_reason !== 'no_rubric')
+    const scores = gradable.map((r: any) => Number(r.score || 0))
 
     return {
-      min: Math.min(...scores),
-      max: Math.max(...scores),
-      mean: scores.reduce((a: number, b: number) => a + b, 0) / scores.length,
+      min: scores.length ? Math.min(...scores) : 0,
+      max: scores.length ? Math.max(...scores) : 0,
+      mean: scores.length ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0,
       review: results.filter((r: any) => r.review_required).length,
     }
   }, [results])
@@ -187,6 +183,7 @@ export default function SubmissionGradingPage() {
     ]
 
     results.forEach((r: any) => {
+      if (r.review_reason === 'no_rubric') return
       const score = Number(r.score || 0)
       const bucket = buckets.find((b) => score >= b.min && score <= b.max)
       if (bucket) bucket.count += 1
@@ -209,14 +206,7 @@ export default function SubmissionGradingPage() {
 
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
-
-      if (file.name.endsWith('.csv')) {
-        setMode('csv')
-        setCsvInput(text)
-      } else {
-        setMode('json')
-        setJsonInput(text)
-      }
+      setJsonInput(text)
     }
 
     reader.readAsText(file)
@@ -224,12 +214,14 @@ export default function SubmissionGradingPage() {
 
   async function handleRun() {
     try {
-      setLoading(true)
-
       if (!submissions.length) {
-        alert('No valid submissions detected. Please upload a CSV or JSON file with student_id and answer.')
+        alert('No valid submissions detected. Please upload a JSON file with student_id and answer.')
         return
       }
+      setLoading(true)
+      setSmoothProgress(0)
+      gradingStartRef.current = Date.now()
+      gradingTotalRef.current = submissions.length
 
       const normalizedSubmissions = submissions.map((row: any) => ({
         ...row,
@@ -266,6 +258,7 @@ export default function SubmissionGradingPage() {
 
       setData(result)
       setDecisions({})
+      setSmoothProgress(100)
     } catch (error: any) {
       alert(error?.message || 'Invalid file format or backend error.')
     } finally {
@@ -293,69 +286,78 @@ export default function SubmissionGradingPage() {
     }
   }
 
-  function exportCsv() {
-    const rows = [
-      ['student_id', 'score', 'status', 'decision', 'reasoning'],
-      ...results.map((r: any, index: number) => {
-        const rowKey = getRowKey(r, index)
-        return [
-          r.student_id,
-          r.score,
-          r.review_required ? 'Needs Review' : 'Ready',
-          decisions[rowKey] || 'pending',
-          `"${String(r.reasoning || '').replaceAll('"', '""')}"`,
-        ]
-      }),
-    ]
+  function exportJson() {
+    const payload = results.map((r: any, index: number) => {
+      const rowKey = getRowKey(r, index)
+      return {
+        student_id: r.student_id,
+        question_id: r.question_id,
+        score: editedScores[rowKey] ?? r.score,
+        max_score: r.max_score ?? 10,
+        status: r.review_required ? 'Needs Review' : 'Ready',
+        decision: decisions[rowKey] || 'pending',
+        reasoning: editedReasoning[rowKey] ?? r.reasoning ?? '',
+      }
+    })
 
-    downloadFile('grading_report.csv', rows.map((r) => r.join(',')).join('\n'), 'text/csv')
+    downloadFile(
+      'grading_report.json',
+      JSON.stringify(payload, null, 2),
+      'application/json',
+    )
   }
 
   function exportPdf() {
-    const html = `
-      <html>
-        <head>
-          <title>Grading Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 32px; color: #102246; }
-            h1 { margin-bottom: 8px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-            th, td { border: 1px solid #d7def0; padding: 10px; text-align: left; vertical-align: top; }
-            th { background: #f3f6ff; }
-          </style>
-        </head>
-        <body>
-          <h1>Grading Report</h1>
-          <p>Mean: ${stats.mean.toFixed(1)} | Min: ${stats.min} | Max: ${stats.max}</p>
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
 
-          <table>
-            <tr>
-              <th>Student</th>
-              <th>Score</th>
-              <th>Status</th>
-              <th>Decision</th>
-              <th>Reasoning</th>
-            </tr>
-            ${results.map((r: any, index: number) => `
-              <tr>
-                <td>${r.student_id}</td>
-                <td>${r.score}/10</td>
-                <td>${r.review_required ? 'Needs Review' : 'Ready'}</td>
-                <td>${decisions[getRowKey(r, index)] || 'pending'}</td>
-                <td>${r.reasoning || ''}</td>
-              </tr>
-            `).join('')}
-          </table>
-        </body>
-      </html>
-    `
+    doc.setFontSize(18)
+    doc.text('Grading Report', 40, 40)
 
-    const win = window.open('', '_blank')
-    if (!win) return
+    doc.setFontSize(11)
+    doc.setTextColor(80)
+    doc.text(
+      `Mean: ${stats.mean.toFixed(1)}   Min: ${stats.min}   Max: ${stats.max}   Needs Review: ${stats.review}`,
+      40,
+      62,
+    )
 
-    win.document.write(html)
-    win.document.close()
-    win.print()
+    const body = results.map((r: any, index: number) => {
+      const rowKey = getRowKey(r, index)
+      const noRubric = r.review_reason === 'no_rubric'
+      const score = editedScores[rowKey] ?? r.score
+      const maxScore = r.max_score ?? 10
+      const scoreCell = noRubric ? '-/-' : `${score}/${maxScore}`
+      const reasoning = editedReasoning[rowKey] ?? r.reasoning ?? ''
+      return [
+        String(index + 1),
+        String(r.student_id ?? ''),
+        String(r.question_id ?? '—'),
+        scoreCell,
+        r.review_required ? 'Needs Review' : 'Ready',
+        decisions[rowKey] || 'pending',
+        reasoning,
+      ]
+    })
+
+    autoTable(doc, {
+      startY: 84,
+      head: [['#', 'Student', 'Question', 'Score', 'Status', 'Decision', 'Reasoning']],
+      body,
+      styles: { fontSize: 9, cellPadding: 6, valign: 'top', overflow: 'linebreak' },
+      headStyles: { fillColor: [243, 246, 255], textColor: [16, 34, 70], fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 32, halign: 'center' },
+        1: { cellWidth: 100 },
+        2: { cellWidth: 80 },
+        3: { cellWidth: 60, halign: 'center' },
+        4: { cellWidth: 80, halign: 'center' },
+        5: { cellWidth: 70, halign: 'center' },
+        6: { cellWidth: 'auto' },
+      },
+      margin: { left: 40, right: 40 },
+    })
+
+    doc.save('grading_report.pdf')
   }
 
   return (
@@ -368,11 +370,48 @@ export default function SubmissionGradingPage() {
             Upload submissions, run batch grading, inspect reasoning, and approve or reject outputs.
           </p>
         </div>
-
-        <button className="primary-btn" onClick={handleRun} disabled={loading}>
-          {loading ? 'Grading...' : 'Start grading'}
-        </button>
       </section>
+
+      {loading && (
+        <section
+          className="panel"
+          style={{
+            padding: '14px 16px',
+            background: 'var(--info-bg, #eef4ff)',
+            border: '1px solid var(--brand-200, #c7d7ff)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+            }}
+          >
+            <strong style={{ fontSize: '0.95rem' }}>Grading submissions…</strong>
+            <span className="tiny-label">{Math.round(smoothProgress)}%</span>
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '8px',
+              background: 'rgba(0,0,0,0.08)',
+              borderRadius: '999px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${smoothProgress}%`,
+                background: 'var(--brand-500, #3a6dff)',
+                transition: 'width 280ms ease',
+              }}
+            />
+          </div>
+        </section>
+      )}
 
       <section className="panel input-panel">
         <div className="panel-head">
@@ -383,37 +422,19 @@ export default function SubmissionGradingPage() {
 
           <div className="upload-actions">
             <button type="button" className="primary-btn" onClick={handleUploadClick}>
-              Upload {mode.toUpperCase()}
+              Upload JSON
             </button>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.json,text/csv,application/json"
+              accept=".json,application/json"
               className="sr-only"
               onChange={handleFileUpload}
             />
 
             {fileName && <span className="file-name-pill">{fileName}</span>}
           </div>
-        </div>
-
-        <div className="mode-switch grading-mode-switch">
-          <button
-            type="button"
-            className={`mode-btn ${mode === 'json' ? 'active' : ''}`}
-            onClick={() => setMode('json')}
-          >
-            JSON Input
-          </button>
-
-          <button
-            type="button"
-            className={`mode-btn ${mode === 'csv' ? 'active' : ''}`}
-            onClick={() => setMode('csv')}
-          >
-            CSV Input
-          </button>
         </div>
 
         <div className="template-card">
@@ -423,12 +444,8 @@ export default function SubmissionGradingPage() {
 
         <textarea
           className="editor-textarea code-textarea input-textarea"
-          value={mode === 'json' ? jsonInput : csvInput}
-          onChange={(e) =>
-            mode === 'json'
-              ? setJsonInput(e.target.value)
-              : setCsvInput(e.target.value)
-          }
+          value={jsonInput}
+          onChange={(e) => setJsonInput(e.target.value)}
         />
       </section>
 
@@ -458,12 +475,15 @@ export default function SubmissionGradingPage() {
               <h3>Grade Distribution</h3>
 
               <div className="export-actions">
-                <button type="button" className="ghost-btn" onClick={exportCsv}>
-                  Export CSV
+                <button type="button" className="ghost-btn" onClick={exportJson}>
+                  Export JSON
                 </button>
                 <button type="button" className="ghost-btn" onClick={exportPdf}>
                   Export PDF
                 </button>
+                <Link to="/evaluation" className="primary-btn">
+                  Continue to Evaluation
+                </Link>
               </div>
             </div>
 
@@ -496,11 +516,11 @@ export default function SubmissionGradingPage() {
                   <tr>
                     <th className="center-col">Index</th>
                     <th>Student ID</th>
+                    <th>Question ID</th>
                     <th>Score</th>
                     <th>Status</th>
                     <th>Reasoning</th>
-                    <th>Decision</th>
-                    <th className="action-col">Action</th>
+                    <th className="action-col">Status / Action</th>
                   </tr>
                 </thead>
 
@@ -514,27 +534,35 @@ export default function SubmissionGradingPage() {
                       <tr key={rowKey} className={item.review_required ? 'warn-row' : ''}>
                         <td className="center-col">{index + 1}</td>
                         <td className="mono-cell">{item.student_id}</td>
+                        <td className="mono-cell">{item.question_id || '—'}</td>
                         <td>
-                          {decision === 'rejected' ? (
-                            <div className="score-editor">
-                              <input
-                                type="number"
-                                min={0}
-                                max={10}
-                                step={0.5}
-                                value={editedScores[rowKey] ?? item.score}
-                                onChange={(e) =>
-                                  setEditedScores((prev) => ({
-                                    ...prev,
-                                    [rowKey]: Number(e.target.value),
-                                  }))
-                                }
-                              />
-                              <span>/10</span>
-                            </div>
-                          ) : (
-                            <strong>{editedScores[rowKey] ?? item.score}/10</strong>
-                          )}
+                          {(() => {
+                            const maxScore = Number(item.max_score ?? 10)
+                            const noRubric = item.review_reason === 'no_rubric'
+                            if (noRubric && decision !== 'rejected') {
+                              return <strong>-/-</strong>
+                            }
+                            return decision === 'rejected' ? (
+                              <div className="score-editor">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={maxScore}
+                                  step={0.5}
+                                  value={editedScores[rowKey] ?? item.score}
+                                  onChange={(e) =>
+                                    setEditedScores((prev) => ({
+                                      ...prev,
+                                      [rowKey]: Number(e.target.value),
+                                    }))
+                                  }
+                                />
+                                <span>/{maxScore}</span>
+                              </div>
+                            ) : (
+                              <strong>{editedScores[rowKey] ?? item.score}/{maxScore}</strong>
+                            )
+                          })()}
                         </td>
                         <td>
                           <span className={item.review_required ? 'status-pill status-pill--warning' : 'status-pill status-pill--success'}>
@@ -548,12 +576,20 @@ export default function SubmissionGradingPage() {
                             onClick={() => setExpandedId(isExpanded ? null : rowKey)}
                           >
                             {isExpanded ? 'Hide reasoning' : 'View reasoning'}
+                            {editedReasoning[rowKey] !== undefined && (
+                              <span
+                                className="status-pill status-pill--info"
+                                style={{ marginLeft: '6px', padding: '0 8px', fontSize: '0.7rem' }}
+                              >
+                                edited
+                              </span>
+                            )}
                           </button>
 
                           {isExpanded && decision === 'rejected' && (
                             <textarea
                               className="inline-reasoning-editor"
-                              value={editedReasoning[rowKey] || item.reasoning || ''}
+                              value={editedReasoning[rowKey] ?? item.reasoning ?? ''}
                               onChange={(e) =>
                                 setEditedReasoning((prev) => ({
                                   ...prev,
@@ -565,29 +601,36 @@ export default function SubmissionGradingPage() {
                           )}
 
                           {isExpanded && decision !== 'rejected' && (
-                            <p className="reasoning-detail">{item.reasoning}</p>
+                            <p className="reasoning-detail">
+                              {editedReasoning[rowKey] ?? item.reasoning}
+                            </p>
                           )}
                         </td>
-                        <td>
-                          <span className={`status-pill decision-${decision}`}>
-                            {decision}
-                          </span>
-                        </td>
-                        <td className="action-col action-stack">
-                          <button
-                            type="button"
-                            className="row-action-btn"
-                            onClick={() => setDecision(rowKey, 'approved')}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            className="row-action-btn danger"
-                            onClick={() => setDecision(rowKey, 'rejected', item.reasoning, item.score)}
-                          >
-                            Reject
-                          </button>
+                        <td className="action-col">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
+                            <span
+                              className={`status-pill decision-${decision}`}
+                              style={{ justifyContent: 'center' }}
+                            >
+                              {decision}
+                            </span>
+                            <button
+                              type="button"
+                              className="row-action-btn"
+                              style={{ width: '100%', justifyContent: 'center' }}
+                              onClick={() => setDecision(rowKey, 'approved')}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="row-action-btn danger"
+                              style={{ width: '100%', justifyContent: 'center' }}
+                              onClick={() => setDecision(rowKey, 'rejected', item.reasoning, item.score)}
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )

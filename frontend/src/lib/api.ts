@@ -102,6 +102,61 @@ export async function gradeBatch(submissions: Submission[], options?: RequestOpt
   return await postJson<any>('/api/grade-batch', { submissions }, options)
 }
 
+type RubricGenerationQuestion = {
+  question_id: string
+  question_text: string
+  max_score: number
+  reference_solution?: string
+}
+
+type RubricGenerationPayload = {
+  questions: RubricGenerationQuestion[]
+  solutions?: Array<Record<string, unknown>>
+  style_hints?: string
+}
+
+export type RubricGenerationResponse = {
+  count: number
+  generated: number
+  failed: number
+  rubrics: Record<string, string>
+  items: Array<{
+    question_id: string
+    rubric_text: string
+    rubric: unknown
+    error?: string | null
+  }>
+}
+
+export async function generateRubric(
+  payload: RubricGenerationPayload,
+  options?: RequestOptions,
+): Promise<RubricGenerationResponse> {
+  return await postJson<RubricGenerationResponse>('/api/generate-rubric', payload, options)
+}
+
+type RubricLLMRevisePayload = {
+  question_id: string
+  question_text: string
+  current_rubric: string
+  revision_focus: string
+  max_score: number
+  reference_solution?: string
+}
+
+export type RubricLLMReviseResponse = {
+  question_id: string
+  rubric_text: string
+  rubric: unknown
+}
+
+export async function reviseRubricLLM(
+  payload: RubricLLMRevisePayload,
+  options?: RequestOptions,
+): Promise<RubricLLMReviseResponse> {
+  return await postJson<RubricLLMReviseResponse>('/api/revise-rubric-llm', payload, options)
+}
+
 export async function runEvaluation(payload: unknown, options?: RequestOptions): Promise<any> {
   return await postJson<any>('/api/evaluation/run', payload, options)
 }

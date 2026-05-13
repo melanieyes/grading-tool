@@ -310,7 +310,7 @@ export default function EvaluationPage() {
             />
           </label>
           <label className="field">
-            <span className="tiny-label">Gemini API Key</span>
+            <span className="tiny-label">API Key</span>
             <input
               className="text-input"
               type="password"

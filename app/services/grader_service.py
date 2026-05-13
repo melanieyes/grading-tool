@@ -17,6 +17,11 @@ from app.schemas.api_models import (
     ProfessorGradeInput,
     ReviewQueueItem,
     RubricChangeLogItem,
+    GeneratedRubricItem,
+    RubricGenerationRequest,
+    RubricGenerationResponse,
+    RubricLLMReviseRequest,
+    RubricLLMReviseResponse,
     RubricRevisionRequest,
     RubricRevisionResponse,
     ScoreComparisonItem,
@@ -31,6 +36,10 @@ from src.grading_tool.evaluation.metrics import (
     mean_squared_error,
     score_variance,
     within_threshold_rate,
+)
+from src.grading_tool.grading.rubric_generator import (
+    RubricGenerator,
+    format_rubric_as_text,
 )
 from src.grading_tool.grading.rubric_grader import RubricGrader
 from src.grading_tool.grading.rubric_reviser import revise_rubric as revise_rubric_core
@@ -151,6 +160,22 @@ def grade_batch(submissions: List[GradeRequest], api_key: str | None = None) -> 
 
     for item in submissions:
         use_rubric = bool(item.rubric) and bool(item.question_text)
+
+        # In case there are questions in the Submissions that are not in the Generated Rubric
+        if not use_rubric:
+            results.append(
+                GradeResult(
+                    student_id=item.student_id,
+                    question_id=item.question_id,
+                    score=0.0,
+                    max_score=float(0),
+                    confidence=0.0,
+                    review_required=True,
+                    review_reason="no_rubric",
+                    reasoning="No rubric found for this question. Cannot grade automatically.",
+                )
+            )
+            continue
 
         if use_rubric:
             try:
@@ -364,6 +389,86 @@ def revise_rubric(payload: RubricRevisionRequest) -> RubricRevisionResponse:
             for item in core_result.get("change_log", [])
         ],
         justification=core_result.get("justification", ""),
+    )
+
+
+# ---------------------------------------------------------------------
+# Rubric generation
+# ---------------------------------------------------------------------
+
+
+def generate_rubric(
+    payload: RubricGenerationRequest,
+    api_key: str | None = None,
+) -> RubricGenerationResponse:
+    solution_lookup: Dict[str, str] = {}
+    for raw in payload.solutions or []:
+        if not isinstance(raw, dict):
+            continue
+        qid = raw.get("question_id") or raw.get("id")
+        sol = raw.get("solution") or raw.get("reference_solution") or raw.get("answer")
+        if qid and isinstance(sol, str) and sol.strip():
+            solution_lookup[str(qid)] = sol.strip()
+
+    generator = RubricGenerator(api_key=api_key)
+
+    items: List[GeneratedRubricItem] = []
+    rubrics: Dict[str, str] = {}
+    failed = 0
+
+    for q in payload.questions:
+        solution = q.reference_solution or solution_lookup.get(q.question_id)
+        try:
+            rubric_obj = generator.generate(
+                question_text=q.question_text,
+                max_score=q.max_score,
+                reference_solution=solution,
+            )
+            rubric_text = format_rubric_as_text(rubric_obj)
+            rubrics[q.question_id] = rubric_text
+            items.append(
+                GeneratedRubricItem(
+                    question_id=q.question_id,
+                    rubric_text=rubric_text,
+                    rubric=rubric_obj,
+                )
+            )
+        except Exception as exc:
+            failed += 1
+            items.append(
+                GeneratedRubricItem(
+                    question_id=q.question_id,
+                    rubric_text="",
+                    rubric=None,
+                    error=str(exc),
+                )
+            )
+
+    return RubricGenerationResponse(
+        count=len(payload.questions),
+        generated=len(payload.questions) - failed,
+        failed=failed,
+        rubrics=rubrics,
+        items=items,
+    )
+
+
+def revise_rubric_llm(
+    payload: RubricLLMReviseRequest,
+    api_key: str | None = None,
+) -> RubricLLMReviseResponse:
+    generator = RubricGenerator(api_key=api_key)
+    rubric_obj = generator.revise(
+        question_text=payload.question_text,
+        current_rubric_text=payload.current_rubric,
+        revision_focus=payload.revision_focus,
+        max_score=payload.max_score,
+        reference_solution=payload.reference_solution,
+    )
+    return RubricLLMReviseResponse(
+        question_id=payload.question_id,
+        rubric_text=format_rubric_as_text(rubric_obj),
+        rubric=rubric_obj,
     )
 
 

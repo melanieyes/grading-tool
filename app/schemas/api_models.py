@@ -125,6 +125,54 @@ class RubricRevisionResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------
+# Rubric generation (from scratch)
+# ---------------------------------------------------------------------
+
+
+class RubricGenerationQuestion(BaseModel):
+    question_id: str
+    question_text: str
+    max_score: float = 10
+    reference_solution: Optional[str] = None
+
+
+class RubricGenerationRequest(BaseModel):
+    questions: List[RubricGenerationQuestion]
+    solutions: Optional[List[Dict[str, Any]]] = None
+    style_hints: Optional[str] = None
+
+
+class GeneratedRubricItem(BaseModel):
+    question_id: str
+    rubric_text: str
+    rubric: Any
+    error: Optional[str] = None
+
+
+class RubricGenerationResponse(BaseModel):
+    count: int
+    generated: int
+    failed: int
+    rubrics: Dict[str, str]
+    items: List[GeneratedRubricItem]
+
+
+class RubricLLMReviseRequest(BaseModel):
+    question_id: str
+    question_text: str
+    current_rubric: str
+    revision_focus: str
+    max_score: float = 10
+    reference_solution: Optional[str] = None
+
+
+class RubricLLMReviseResponse(BaseModel):
+    question_id: str
+    rubric_text: str
+    rubric: Any
+
+
+# ---------------------------------------------------------------------
 # Ground-truth evaluation
 # ---------------------------------------------------------------------
 

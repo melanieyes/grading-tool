@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { generateRubric, reviseRubricLLM } from '../lib/api'
 
-type IntakeMode = 'csv' | 'json'
 type RowStatus = 'draft' | 'approved' | 'revised'
 type RevisionMode = 'manual' | 'suggested'
 
@@ -12,10 +12,6 @@ const revisionOptions = [
   'Need more partial-credit guidance',
   'Expected key points are missing',
 ]
-
-const csvTemplate = `question_id,question,max_score
-q1,"Explain why deadlock happens and how resource ordering prevents it.",10
-q2,"Compare paging and segmentation in memory management.",10`
 
 const jsonTemplate = `[
   {
@@ -29,54 +25,6 @@ const jsonTemplate = `[
     "max_score": 10
   }
 ]`
-
-function splitCsvLine(line: string) {
-  const result: string[] = []
-  let current = ''
-  let insideQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-
-    if (char === '"') {
-      insideQuotes = !insideQuotes
-    } else if (char === ',' && !insideQuotes) {
-      result.push(current.trim().replace(/^"|"$/g, ''))
-      current = ''
-    } else {
-      current += char
-    }
-  }
-
-  result.push(current.trim().replace(/^"|"$/g, ''))
-  return result
-}
-
-function parseCsv(text: string) {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean)
-  if (lines.length < 2) return []
-
-  const headers = splitCsvLine(lines[0]).map((h) => h.trim())
-
-  return lines
-    .slice(1)
-    .map((line) => {
-      const values = splitCsvLine(line)
-      const row: Record<string, string> = {}
-
-      headers.forEach((header, index) => {
-        row[header] = values[index] || ''
-      })
-
-      return {
-        question_id: row.question_id || row.id || '',
-        question: row.question || row.question_text || row.prompt || '',
-        max_score: Number(row.max_score || row.points || 10),
-        benchmark_type: row.benchmark_type || '',
-      }
-    })
-    .filter((q) => q.question_id && q.question)
-}
 
 function flattenJsonQuestions(data: any): any[] {
   if (Array.isArray(data)) return data
@@ -192,8 +140,6 @@ function improveRubricForQuestion(params: {
 }
 
 export default function QuestionUploadPage() {
-  const [mode, setMode] = useState<IntakeMode>('csv')
-  const [csvInput, setCsvInput] = useState(csvTemplate)
   const [jsonInput, setJsonInput] = useState(jsonTemplate)
   const [fileName, setFileName] = useState('')
 
@@ -207,10 +153,9 @@ export default function QuestionUploadPage() {
   const [revisionOriginalRubric, setRevisionOriginalRubric] = useState('')
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const rubricPanelRef = useRef<HTMLElement | null>(null)
 
-  const questions = useMemo(() => {
-    return mode === 'csv' ? parseCsv(csvInput) : parseJson(jsonInput)
-  }, [mode, csvInput, jsonInput])
+  const questions = useMemo(() => parseJson(jsonInput), [jsonInput])
 
   useEffect(() => {
     if (questions.length > 0) {
@@ -222,9 +167,19 @@ export default function QuestionUploadPage() {
     const savedRubrics = loadSavedRubrics()
     if (savedRubrics && Object.keys(savedRubrics).length) {
       setRubrics(savedRubrics)
-      setGlobalStatus('generated')
     }
   }, [])
+
+  useEffect(() => {
+    if (!questions.length) {
+      setGlobalStatus('draft')
+      return
+    }
+    const allHaveRubric = questions.every(
+      (q: any) => typeof rubrics[q.question_id] === 'string' && rubrics[q.question_id].trim().length > 0,
+    )
+    setGlobalStatus(allHaveRubric ? 'generated' : 'draft')
+  }, [questions, rubrics])
 
   useEffect(() => {
     if (Object.keys(rubrics).length) {
@@ -245,38 +200,95 @@ export default function QuestionUploadPage() {
     setFileName(file.name)
 
     const reader = new FileReader()
-
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : ''
-
-      if (file.name.endsWith('.json')) {
-        setMode('json')
-        setJsonInput(text)
-      } else {
-        setMode('csv')
-        setCsvInput(text)
-      }
+      setJsonInput(text)
     }
-
     reader.readAsText(file)
   }
 
-  function handleGenerateAllRubrics() {
-    if (!questions.length) return
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generationError, setGenerationError] = useState<string | null>(null)
+  const [progressDone, setProgressDone] = useState(0)
+  const [progressTotal, setProgressTotal] = useState(0)
+  const [smoothProgress, setSmoothProgress] = useState(0)
+  const [justGenerated, setJustGenerated] = useState(false)
+  const [revisingId, setRevisingId] = useState<string | null>(null)
+  const generationStartRef = useRef<number>(0)
 
-    const newRubrics: Record<string, string> = {}
+  useEffect(() => {
+    if (!isGenerating || progressTotal === 0) return
+    const tick = () => {
+      const elapsed = Date.now() - generationStartRef.current
+      const expectedMs = Math.max(8000, progressTotal * 9000)
+      const realPct = (progressDone / progressTotal) * 100
+      const timePct = Math.min(95, (elapsed / expectedMs) * 100)
+      setSmoothProgress((prev) => Math.max(prev, realPct, timePct))
+    }
+    tick()
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [isGenerating, progressDone, progressTotal])
+
+  function fallbackRubricFor(maxScore: number) {
+    const safe = Number.isFinite(maxScore) && maxScore > 0 ? Math.round(maxScore) : 10
+    return `- Correct concept (0-${Math.floor(safe / 2)})\n- Clear reasoning (0-${Math.ceil(safe / 2)})`
+  }
+
+  async function handleGenerateAllRubrics() {
+    if (!questions.length || isGenerating) return
+
+    setIsGenerating(true)
+    setGenerationError(null)
+    setJustGenerated(false)
+    setProgressDone(0)
+    setProgressTotal(questions.length)
+    setSmoothProgress(0)
+    generationStartRef.current = Date.now()
+
+    rubricPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    const payloadQuestions = questions.map((q: any) => ({
+      question_id: String(q.question_id),
+      question_text: String(q.question ?? q.question_text ?? ''),
+      max_score: Number(q.max_score || 10),
+    }))
+
     const newStatuses: Record<string, RowStatus> = {}
-
     questions.forEach((q: any) => {
-      const maxScore = Number(q.max_score || 10)
-      newRubrics[q.question_id] = `- Correct concept (0-${Math.floor(maxScore / 2)})\n- Clear reasoning (0-${Math.ceil(maxScore / 2)})`
       newStatuses[q.question_id] = 'draft'
     })
-
-    setRubrics(newRubrics)
     setRowStatuses(newStatuses)
-    setGlobalStatus('generated')
     setActiveRevisionId(null)
+
+    let failed = 0
+
+    await Promise.all(
+      payloadQuestions.map(async (q) => {
+        try {
+          const response = await generateRubric({ questions: [q] })
+          const text = response.rubrics?.[q.question_id]
+          const finalText = text && text.trim() ? text : fallbackRubricFor(q.max_score)
+          if (!text || !text.trim()) failed += 1
+          setRubrics((prev) => ({ ...prev, [q.question_id]: finalText }))
+        } catch {
+          failed += 1
+          setRubrics((prev) => ({ ...prev, [q.question_id]: fallbackRubricFor(q.max_score) }))
+        } finally {
+          setProgressDone((n) => n + 1)
+        }
+      }),
+    )
+
+    setSmoothProgress(100)
+    setIsGenerating(false)
+    if (failed > 0) {
+      setGenerationError(
+        `${failed} of ${payloadQuestions.length} rubric(s) failed; used a basic template for those.`,
+      )
+    }
+    setJustGenerated(true)
+    window.setTimeout(() => setJustGenerated(false), 2500)
   }
 
   function handleRubricChange(id: string, newText: string) {
@@ -309,12 +321,36 @@ export default function QuestionUploadPage() {
     setActiveRevisionId(null)
   }
 
-  function handleGenerateSuggestedRevision(id: string, questionText: string, maxScore: number) {
+  async function handleGenerateSuggestedRevision(id: string, questionText: string, maxScore: number) {
+    if (revisingId) return
     const focus = (reviewerComment.trim() || selectedReason.trim() || 'Improve reasoning depth and partial-credit clarity')
-    const next = improveRubricForQuestion({ questionText, maxScore, revisionFocus: focus })
-    setRubrics((prev) => ({ ...prev, [id]: next }))
-    setRowStatuses((prev) => ({ ...prev, [id]: 'revised' }))
-    setActiveRevisionId(null)
+    const currentRubric = rubrics[id] || ''
+
+    setRevisingId(id)
+    try {
+      const response = await reviseRubricLLM({
+        question_id: id,
+        question_text: questionText,
+        current_rubric: currentRubric,
+        revision_focus: focus,
+        max_score: maxScore,
+      })
+      const next = (response.rubric_text && response.rubric_text.trim())
+        ? response.rubric_text
+        : improveRubricForQuestion({ questionText, maxScore, revisionFocus: focus })
+      setRubrics((prev) => ({ ...prev, [id]: next }))
+      setRowStatuses((prev) => ({ ...prev, [id]: 'revised' }))
+      setActiveRevisionId(null)
+    } catch (err: any) {
+      const fallback = improveRubricForQuestion({ questionText, maxScore, revisionFocus: focus })
+      setRubrics((prev) => ({ ...prev, [id]: fallback }))
+      setRowStatuses((prev) => ({ ...prev, [id]: 'revised' }))
+      setActiveRevisionId(null)
+      setGenerationError(`Revise via API failed (${err?.message ?? 'unknown'}). Used local template.`)
+      window.setTimeout(() => setGenerationError(null), 3000)
+    } finally {
+      setRevisingId(null)
+    }
   }
 
   const renderRubricCell = (id: string, questionText: string, maxScore: number) => {
@@ -417,8 +453,9 @@ export default function QuestionUploadPage() {
                   className="primary-btn"
                   style={{ minHeight: '36px', padding: '0 12px', fontSize: '0.85rem' }}
                   onClick={() => handleGenerateSuggestedRevision(id, questionText, maxScore)}
+                  disabled={revisingId === id}
                 >
-                  Generate
+                  {revisingId === id ? 'Revising…' : 'Generate'}
                 </button>
               )}
               <button
@@ -513,33 +550,15 @@ export default function QuestionUploadPage() {
 
       <section className="panel intake-console">
         <div className="intake-upload-row">
-          <div className="mode-switch">
-            <button
-              type="button"
-              className={`mode-btn ${mode === 'csv' ? 'active' : ''}`}
-              onClick={() => setMode('csv')}
-            >
-              CSV Input
-            </button>
-
-            <button
-              type="button"
-              className={`mode-btn ${mode === 'json' ? 'active' : ''}`}
-              onClick={() => setMode('json')}
-            >
-              JSON Input
-            </button>
-          </div>
-
           <div className="upload-actions">
             <button type="button" className="primary-btn" onClick={handleUploadClick}>
-              Upload {mode.toUpperCase()}
+              Upload JSON
             </button>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.json,text/csv,application/json"
+              accept=".json,application/json"
               className="sr-only"
               onChange={handleFileUpload}
             />
@@ -555,12 +574,8 @@ export default function QuestionUploadPage() {
 
         <textarea
           className="editor-textarea code-textarea intake-textarea"
-          value={mode === 'csv' ? csvInput : jsonInput}
-          onChange={(e) =>
-            mode === 'csv'
-              ? setCsvInput(e.target.value)
-              : setJsonInput(e.target.value)
-          }
+          value={jsonInput}
+          onChange={(e) => setJsonInput(e.target.value)}
         />
       </section>
 
@@ -572,8 +587,13 @@ export default function QuestionUploadPage() {
           </div>
 
           {isValid && globalStatus === 'draft' && (
-            <button type="button" className="primary-btn" onClick={handleGenerateAllRubrics}>
-              Generate All Rubrics
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={handleGenerateAllRubrics}
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Generating…' : 'Generate All Rubrics'}
             </button>
           )}
         </div>
@@ -611,7 +631,7 @@ export default function QuestionUploadPage() {
         </div>
       </section>
 
-      <section className="panel rubric-builder" style={{ marginTop: '18px' }}>
+      <section className="panel rubric-builder" style={{ marginTop: '18px' }} ref={rubricPanelRef}>
         <div className="panel-head">
           <div>
             <h3>Rubric Review</h3>
@@ -619,17 +639,69 @@ export default function QuestionUploadPage() {
           </div>
 
           <div className="action-stack">
-            {globalStatus === 'draft' ? (
-              <button type="button" className="primary-btn" onClick={handleGenerateAllRubrics} disabled={!isValid}>
-                Generate All Rubrics
-              </button>
-            ) : (
+            {globalStatus === 'generated' && !isGenerating && (
               <Link to="/grading" className="primary-btn">
                 Continue to Submission Grading
               </Link>
             )}
           </div>
         </div>
+
+        {(isGenerating || justGenerated || generationError) && (
+          <div
+            style={{
+              margin: '8px 0 14px',
+              padding: '14px 16px',
+              background: 'var(--info-bg, #eef4ff)',
+              border: '1px solid var(--brand-200, #c7d7ff)',
+              borderRadius: '12px',
+            }}
+          >
+            {isGenerating ? (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <strong style={{ fontSize: '0.95rem' }}>Generating rubrics…</strong>
+                  <span className="tiny-label">
+                    {progressDone} of {progressTotal}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '8px',
+                    background: 'rgba(0,0,0,0.08)',
+                    borderRadius: '999px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${smoothProgress}%`,
+                      background: 'var(--brand-500, #3a6dff)',
+                      transition: 'width 280ms ease',
+                    }}
+                  />
+                </div>
+              </>
+            ) : justGenerated ? (
+              <strong style={{ fontSize: '0.95rem', color: 'var(--brand-700, #1f3fae)' }}>
+                ✓ Rubric is ready
+              </strong>
+            ) : (
+              <div className="tiny-label" style={{ color: '#b3261e' }}>
+                {generationError}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="table-wrap">
           <table className="clean-table">
