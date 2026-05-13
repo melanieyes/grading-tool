@@ -575,7 +575,7 @@ export default function EvaluationPage() {
                 type="password"
                 value={geminiKey}
                 onChange={(e) => setGeminiKey(e.target.value)}
-                placeholder="GEMINI_API_KEY"
+                placeholder="API_KEY"
               />
             </label>
           </div>
