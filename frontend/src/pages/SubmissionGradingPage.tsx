@@ -370,6 +370,9 @@ export default function SubmissionGradingPage() {
             Upload submissions, run batch grading, inspect reasoning, and approve or reject outputs.
           </p>
         </div>
+        <button className="primary-btn" onClick={handleRun} disabled={loading}>
+          {loading ? 'Grading…' : 'Start grading'}
+        </button>
       </section>
 
       {loading && (
