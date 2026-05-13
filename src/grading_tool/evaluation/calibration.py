@@ -6,6 +6,9 @@ from src.grading_tool.grading.rubric_reviser import revise_rubric
 
 GradeFn = Callable[[list[dict], Any], list[dict]]
 EvaluateFn = Callable[[list[dict], list[dict], float, bool], dict]
+# (current_rubric, flagged_cases, metrics, round_index) -> revision dict
+# Returned dict must contain keys: revised_rubric, revision_needed, justification, change_log
+ReviseFn = Callable[[Any, list[dict], dict, int], dict]
 
 
 def run_calibration(
@@ -22,6 +25,7 @@ def run_calibration(
     min_improvement: float = 0.01,
     include_semantic_metrics: bool = True,
     instructor_note: str | None = None,
+    revise_fn: ReviseFn | None = None,
 ) -> dict:
     """
     Run rubric calibration for several rounds.
@@ -62,13 +66,23 @@ def run_calibration(
 
         flagged_cases = evaluation.get("flagged_cases", [])
 
-        revision = revise_rubric(
-            original_rubric=current_rubric,
-            mistake_stats=None,
-            flagged_cases=flagged_cases,
-            instructor_note=instructor_note,
-            round_index=round_index,
-        )
+        revision: dict | None = None
+        if revise_fn is not None:
+            try:
+                revision = revise_fn(current_rubric, flagged_cases, metrics, round_index)
+            except Exception:
+                # LLM revise failed; fall through to rule-based reviser below so
+                # the loop still produces some revision for this round.
+                revision = None
+
+        if revision is None:
+            revision = revise_rubric(
+                original_rubric=current_rubric,
+                mistake_stats=None,
+                flagged_cases=flagged_cases,
+                instructor_note=instructor_note,
+                round_index=round_index,
+            )
 
         rounds.append(
             {

@@ -125,33 +125,14 @@ export default function SubmissionGradingPage() {
     return () => window.clearInterval(id)
   }, [loading])
 
-  useEffect(() => {
-    try {
-      const rawResults = window.localStorage.getItem('grading_results')
-      if (rawResults) setData(JSON.parse(rawResults))
-      const rawDecisions = window.localStorage.getItem('grading_decisions')
-      if (rawDecisions) setDecisions(JSON.parse(rawDecisions))
-      const rawReasoning = window.localStorage.getItem('grading_edited_reasoning')
-      if (rawReasoning) setEditedReasoning(JSON.parse(rawReasoning))
-      const rawScores = window.localStorage.getItem('grading_edited_scores')
-      if (rawScores) setEditedScores(JSON.parse(rawScores))
-    } catch {
-      // ignore corrupted storage
-    }
-  }, [])
+  // NOTE: we intentionally do NOT hydrate `data`, `decisions`, `editedReasoning`,
+  // or `editedScores` from localStorage on mount. The page should reload to a
+  // ready (empty) state. We still persist results + submissions to localStorage
+  // so the Evaluation page can consume them — those writes happen below.
 
   useEffect(() => {
     if (data) window.localStorage.setItem('grading_results', JSON.stringify(data))
   }, [data])
-  useEffect(() => {
-    window.localStorage.setItem('grading_decisions', JSON.stringify(decisions))
-  }, [decisions])
-  useEffect(() => {
-    window.localStorage.setItem('grading_edited_reasoning', JSON.stringify(editedReasoning))
-  }, [editedReasoning])
-  useEffect(() => {
-    window.localStorage.setItem('grading_edited_scores', JSON.stringify(editedScores))
-  }, [editedScores])
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -218,6 +199,15 @@ export default function SubmissionGradingPage() {
         alert('No valid submissions detected. Please upload a JSON file with student_id and answer.')
         return
       }
+
+      // Clear the UI back to "ready" before starting a new run so the table
+      // empties immediately and the user sees fresh state, not stale results.
+      setData(null)
+      setDecisions({})
+      setEditedReasoning({})
+      setEditedScores({})
+      setExpandedId(null)
+
       setLoading(true)
       setSmoothProgress(0)
       gradingStartRef.current = Date.now()
@@ -259,6 +249,14 @@ export default function SubmissionGradingPage() {
       setData(result)
       setDecisions({})
       setSmoothProgress(100)
+
+      // Persist the enriched submissions so the Evaluation page can use them
+      // for calibration (calibration needs the answer text to re-grade rounds 2+).
+      try {
+        window.localStorage.setItem('grading_submissions', JSON.stringify(enriched))
+      } catch {
+        // ignore quota errors
+      }
     } catch (error: any) {
       alert(error?.message || 'Invalid file format or backend error.')
     } finally {

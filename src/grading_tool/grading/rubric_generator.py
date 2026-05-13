@@ -32,7 +32,7 @@ RESPONSE_SCHEMA_HINT = {
 }
 
 
-REVISE_SYSTEM_PROMPT = (
+REVISE_SYSTEM_PROMPT_BASE = (
     "You are an expert instructor REVISING an existing grading rubric. "
     "You receive a question, its current rubric (as text), the reviewer's revision "
     "focus / complaint, and the max score. Produce a meaningfully improved rubric.\n\n"
@@ -43,6 +43,25 @@ REVISE_SYSTEM_PROMPT = (
     "- Max points MUST sum exactly to the provided max_score.\n"
     "- Do not output the same wording as the original rubric — every revision must be visibly different.\n"
     "- Return ONLY JSON matching the schema."
+)
+
+# Appended to the base prompt when a reference solution is available. This
+# instructs the LLM to anchor partial credit to specific solution components,
+# which is what enables proportional grading for "close-but-not-complete"
+# answers vs zero for blank/off-topic answers.
+REVISE_WITH_SOLUTION_INSTRUCTIONS = (
+    "\n\nIMPORTANT — a reference solution is provided. Use it to anchor partial credit:\n"
+    "- First, identify the KEY CONCEPTS, STEPS, or KEYWORDS in the reference solution.\n"
+    "- Each rubric criterion must map to one or more of those solution components.\n"
+    "- Describe what a FULL-credit, PARTIAL-credit, and NO-credit answer looks like in "
+    "terms of those components — e.g. 'mentions component X and explains why' (full), "
+    "'mentions component X but does not explain' (partial), 'no mention of any component' (no credit).\n"
+    "- A blank, off-topic, or contradictory answer receives 0 — state this explicitly.\n"
+    "- An answer that mentions correct keywords or partial steps but does not complete "
+    "the solution should receive proportional partial credit based on how many components "
+    "are present.\n"
+    "- The 'description' field of each criterion should reference specific solution "
+    "components by name where possible."
 )
 
 
@@ -74,6 +93,11 @@ class RubricGenerator:
         max_score: float,
         reference_solution: str | None = None,
     ) -> dict[str, Any]:
+        # Append solution-anchoring instructions only when a real solution is provided.
+        system_prompt = REVISE_SYSTEM_PROMPT_BASE
+        if reference_solution and reference_solution.strip():
+            system_prompt = system_prompt + REVISE_WITH_SOLUTION_INSTRUCTIONS
+
         payload = {
             "question_text": question_text,
             "current_rubric": current_rubric_text,
@@ -83,7 +107,7 @@ class RubricGenerator:
             "response_schema": RESPONSE_SCHEMA_HINT,
         }
 
-        raw = self.client.generate_json(REVISE_SYSTEM_PROMPT, payload)
+        raw = self.client.generate_json(system_prompt, payload)
         return _normalize_rubric(raw, max_score)
 
 

@@ -594,6 +594,133 @@ def _normalize_rubric_for_llm(rubric_any, score_max: float) -> dict:
     return {"criteria": []}
 
 
+def _bucket_answer_length(answer: str) -> str:
+    """Classify an answer by word count."""
+    n = len((answer or "").split())
+    if n < 30:
+        return "short"
+    if n < 100:
+        return "medium"
+    return "long"
+
+
+def _bucket_score(score: float, max_score: float) -> str:
+    """Classify an AI score as low / mid / high band of the max."""
+    if max_score <= 0:
+        return "unknown"
+    pct = float(score) / float(max_score)
+    if pct < 0.3:
+        return "low"
+    if pct < 0.7:
+        return "mid"
+    return "high"
+
+
+def _build_revision_focus(
+    flagged_cases: list[dict],
+    metrics: dict,
+    submissions: list[dict] | None = None,
+    max_score: float = 10.0,
+) -> str:
+    """Turn raw flagged cases into a structured revision focus string for the LLM.
+
+    The string includes:
+    - high-level over/under-credit summary,
+    - bucketed disagreements (direction x answer-length x AI score band),
+    - concrete examples with the *actual* student answer excerpt.
+    """
+    if not flagged_cases:
+        return (
+            "No specific disagreements above the threshold. Tighten ambiguous criteria "
+            "and clarify partial-credit guidance generally."
+        )
+
+    # student_id -> answer text, used for evidence in bucketing + examples.
+    answer_by_student: dict[str, str] = {}
+    for s in submissions or []:
+        sid = str(s.get("student_id") or "")
+        ans = str(s.get("answer") or "")
+        if sid and ans:
+            answer_by_student[sid] = ans
+
+    high = [c for c in flagged_cases if float(c.get("difference", 0) or 0) > 0]
+    low = [c for c in flagged_cases if float(c.get("difference", 0) or 0) < 0]
+
+    # Bucket by direction × answer length × AI score band.
+    bucket_counts: dict[tuple, list[float]] = defaultdict(list)
+    for c in flagged_cases:
+        diff = float(c.get("difference", 0) or 0)
+        if diff == 0:
+            continue
+        direction = "over-credit" if diff > 0 else "under-credit"
+        sid = str(c.get("student_id") or "")
+        answer = answer_by_student.get(sid, "")
+        length_bucket = _bucket_answer_length(answer)
+        ai_score = float(c.get("ai_score", 0) or 0)
+        score_bucket = _bucket_score(ai_score, max_score)
+        bucket_counts[(direction, length_bucket, score_bucket)].append(abs(diff))
+
+    parts: list[str] = []
+
+    mse = metrics.get("mse")
+    if mse is not None:
+        parts.append(
+            f"Current MSE: {round(float(mse), 4)} (against max_score {max_score}). "
+            f"Goal: lower this by revising criteria."
+        )
+
+    if high:
+        avg = sum(float(c.get("difference", 0) or 0) for c in high) / len(high)
+        parts.append(
+            f"OVER-CREDIT: in {len(high)} cases, AI scored HIGHER than the professor "
+            f"by an average of {round(avg, 2)} points. "
+            f"Be stricter — clarify what should NOT earn credit."
+        )
+    if low:
+        avg = sum(abs(float(c.get("difference", 0) or 0)) for c in low) / len(low)
+        parts.append(
+            f"UNDER-CREDIT: in {len(low)} cases, AI scored LOWER than the professor "
+            f"by an average of {round(avg, 2)} points. "
+            f"Add clearer partial-credit guidance for answers that have correct ideas "
+            f"but rough execution."
+        )
+
+    # Bucket summary — targets specific kinds of disagreement.
+    if bucket_counts:
+        bucket_lines = ["BUCKETED DISAGREEMENTS (target these specifically):"]
+        for (direction, length_bucket, score_bucket), diffs in sorted(
+            bucket_counts.items(), key=lambda kv: -len(kv[1])
+        ):
+            avg_diff = round(sum(diffs) / len(diffs), 2)
+            bucket_lines.append(
+                f"  - {direction} on {length_bucket} answers in the {score_bucket} score band: "
+                f"{len(diffs)} case(s), avg gap {avg_diff} pts."
+            )
+        parts.append("\n".join(bucket_lines))
+
+    # Concrete examples with the actual student answer.
+    sample = flagged_cases[:3]
+    if sample:
+        example_lines: list[str] = ["CONCRETE EXAMPLES (anchor your revisions to these):"]
+        for case in sample:
+            sid = str(case.get("student_id") or "")
+            answer_excerpt = answer_by_student.get(sid, "").strip()[:240]
+            ai_r = str(case.get("ai_reasoning") or "").strip()[:160]
+            prof_c = str(case.get("professor_comment") or "").strip()[:120]
+            ai_s = case.get("ai_score")
+            prof_s = case.get("professor_score")
+            example_lines.append(f"  Student {sid}: AI {ai_s} vs Prof {prof_s}.")
+            if answer_excerpt:
+                example_lines.append(f"    Answer: \"{answer_excerpt}\"")
+            if ai_r:
+                example_lines.append(f"    AI reasoning: \"{ai_r}\"")
+            if prof_c:
+                example_lines.append(f"    Professor note: \"{prof_c}\"")
+        parts.append("\n".join(example_lines))
+
+    return "\n\n".join(parts)
+
+
 def calibrate_rubric_rounds(
     payload: CalibrationRequest,
     api_key: str | None = None,
@@ -668,6 +795,65 @@ def calibrate_rubric_rounds(
 
         return results
 
+    def llm_revise_fn(current_rubric, flagged_cases: list[dict], metrics: dict, round_index: int) -> dict:
+        """LLM-backed reviser. Returns a dict with the same shape as rubric_reviser.revise_rubric."""
+        # Convert current rubric to text the LLM can read.
+        if isinstance(current_rubric, str):
+            current_rubric_text = current_rubric
+        elif isinstance(current_rubric, dict):
+            # Try common shapes: structured {criteria: [...]} or rubric_reviser wrapper.
+            if isinstance(current_rubric.get("rubric_text"), str):
+                current_rubric_text = current_rubric["rubric_text"]
+            elif isinstance(current_rubric.get("criteria"), list):
+                current_rubric_text = format_rubric_as_text(current_rubric)
+            elif isinstance(current_rubric.get("original_rubric"), str):
+                current_rubric_text = current_rubric["original_rubric"]
+            else:
+                current_rubric_text = str(current_rubric)
+        else:
+            current_rubric_text = str(current_rubric or "")
+
+        focus = _build_revision_focus(
+            flagged_cases,
+            metrics,
+            submissions=submissions_dump,
+            max_score=score_max,
+        )
+
+        generator = RubricGenerator(api_key=api_key)
+        revised_obj = generator.revise(
+            question_text=question_text or f"Question {payload.question_id}",
+            current_rubric_text=current_rubric_text,
+            revision_focus=focus,
+            max_score=score_max,
+            reference_solution=reference_solution,
+        )
+        revised_text = format_rubric_as_text(revised_obj)
+
+        # Build a small change log from the bucketed analysis.
+        change_log: list[dict] = []
+        high = [c for c in flagged_cases if float(c.get("difference", 0) or 0) > 0]
+        low = [c for c in flagged_cases if float(c.get("difference", 0) or 0) < 0]
+        if high:
+            change_log.append({
+                "old": None,
+                "new": "Stricter guidance for over-credit cases",
+                "justification": f"{len(high)} AI scores higher than professor",
+            })
+        if low:
+            change_log.append({
+                "old": None,
+                "new": "Clearer partial-credit guidance for under-credit cases",
+                "justification": f"{len(low)} AI scores lower than professor",
+            })
+
+        return {
+            "revision_needed": bool(flagged_cases),
+            "revised_rubric": revised_text,
+            "change_log": change_log,
+            "justification": focus,
+        }
+
     result = run_calibration(
         question_id=payload.question_id,
         original_rubric=payload.original_rubric,
@@ -681,6 +867,7 @@ def calibrate_rubric_rounds(
         min_improvement=payload.min_improvement,
         include_semantic_metrics=payload.include_semantic_metrics,
         instructor_note=None,
+        revise_fn=llm_revise_fn,
     )
 
     return CalibrationResponse.model_validate(result)
