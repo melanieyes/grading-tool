@@ -4,6 +4,13 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { gradeBatch } from '../lib/api'
 
+type MissingRubricInfo = {
+  missingQuestionIds: string[]
+  affectedSubmissions: number
+  anyRubricSaved: boolean
+  enriched: any[]
+}
+
 type Decision = 'pending' | 'approved' | 'rejected'
 
 function loadSavedQuestions(): any[] {
@@ -108,6 +115,9 @@ export default function SubmissionGradingPage() {
   const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>({})
   const [editedScores, setEditedScores] = useState<Record<string, number>>({})
   const [smoothProgress, setSmoothProgress] = useState(0)
+  const [missingRubricInfo, setMissingRubricInfo] = useState<MissingRubricInfo | null>(null)
+  const [inputView, setInputView] = useState<'table' | 'json'>('table')
+  const [submissionsForResults, setSubmissionsForResults] = useState<any[]>([])
   const gradingStartRef = useRef<number>(0)
   const gradingTotalRef = useRef<number>(0)
 
@@ -133,6 +143,15 @@ export default function SubmissionGradingPage() {
   useEffect(() => {
     if (data) window.localStorage.setItem('grading_results', JSON.stringify(data))
   }, [data])
+
+  useEffect(() => {
+    if (window.localStorage.getItem('grading_demo_prefill') === '1') {
+      const payload = window.localStorage.getItem('grading_demo_submissions') || ''
+      if (payload) setJsonInput(payload)
+      window.localStorage.removeItem('grading_demo_prefill')
+      window.localStorage.removeItem('grading_demo_submissions')
+    }
+  }, [])
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -173,6 +192,26 @@ export default function SubmissionGradingPage() {
     return buckets
   }, [results])
 
+  function handleApproveAll() {
+    const next: Record<string, Decision> = { ...decisions }
+    results.forEach((item: any, index: number) => {
+      const key = getRowKey(item, index)
+      if ((next[key] || 'pending') !== 'rejected') next[key] = 'approved'
+    })
+    setDecisions(next)
+  }
+
+  const answerByKey = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const row of submissionsForResults) {
+      const sid = String(row?.student_id ?? '')
+      const qid = String(row?.question_id ?? '')
+      const answer = String(row?.answer ?? '')
+      if (sid) map.set(`${sid}|${qid}`, answer)
+    }
+    return map
+  }, [submissionsForResults])
+
   function handleUploadClick() {
     fileInputRef.current?.click()
   }
@@ -193,60 +232,89 @@ export default function SubmissionGradingPage() {
     reader.readAsText(file)
   }
 
-  async function handleRun() {
-    try {
-      if (!submissions.length) {
-        alert('No valid submissions detected. Please upload a JSON file with student_id and answer.')
-        return
+  function buildEnrichedSubmissions(rawSubmissions: any[]) {
+    const savedQuestions = loadSavedQuestions()
+    const rawRubrics = loadSavedRubrics()
+
+    const normalizeId = (v: any) => String(v || '').trim().toLowerCase()
+
+    const questionByNormId = new Map<string, any>()
+    for (const q of savedQuestions) {
+      const id = normalizeId(q?.question_id)
+      if (id) questionByNormId.set(id, q)
+    }
+
+    const rubricByNormId = new Map<string, string>()
+    for (const [k, v] of Object.entries(rawRubrics)) {
+      const id = normalizeId(k)
+      if (id && typeof v === 'string' && v.trim()) {
+        rubricByNormId.set(id, v)
+      }
+    }
+
+    // Auto-bind: if there is exactly one question with a non-empty rubric,
+    // submissions missing question_id can fall back to it.
+    const questionsWithRubric = Array.from(rubricByNormId.keys())
+      .map((id) => ({ id, q: questionByNormId.get(id) }))
+      .filter((x) => x.q)
+    const singleAutoBind = questionsWithRubric.length === 1 ? questionsWithRubric[0] : null
+
+    const enriched = rawSubmissions.map((row: any) => {
+      const rawRowId = String(row.question_id || '').trim()
+      let normId = normalizeId(rawRowId)
+
+      if (!normId && singleAutoBind) {
+        normId = singleAutoBind.id
       }
 
-      // Clear the UI back to "ready" before starting a new run so the table
-      // empties immediately and the user sees fresh state, not stale results.
-      setData(null)
-      setDecisions({})
-      setEditedReasoning({})
-      setEditedScores({})
-      setExpandedId(null)
+      const q: any = normId ? questionByNormId.get(normId) : undefined
+      const rubricText = normId ? (rubricByNormId.get(normId) || '') : ''
 
-      setLoading(true)
-      setSmoothProgress(0)
-      gradingStartRef.current = Date.now()
-      gradingTotalRef.current = submissions.length
+      // Display id: prefer the saved question's exact-case id, then the
+      // submission's own id, then the auto-bound id.
+      const displayId = String(q?.question_id || rawRowId || normId || '')
 
-      const normalizedSubmissions = submissions.map((row: any) => ({
+      const questionText =
+        String(q?.question_text || q?.question || q?.text || '').trim() ||
+        (displayId ? `Question ${displayId}` : 'Question')
+      const maxScore = Number(q?.max_score ?? 10)
+      const benchmarkType = q?.benchmark_type ? String(q.benchmark_type) : undefined
+
+      return {
         ...row,
-        question_id: row.question_id || 'Q1',
-      }))
+        question_id: displayId,
+        question_text: questionText,
+        rubric: rubricText || undefined,
+        max_score: Number.isFinite(maxScore) ? maxScore : 10,
+        benchmark_type: benchmarkType,
+      }
+    })
 
-      const questionEntries = loadSavedQuestions()
-        .map((q: any): [string, any] | null => {
-          const id = String(q?.question_id || '').trim()
-          return id ? [id, q] : null
-        })
-        .filter((x): x is [string, any] => Boolean(x))
+    const anyRubricSaved = rubricByNormId.size > 0
+    const missingRows = enriched.filter((r: any) => !r.rubric)
+    const missingQuestionIds = Array.from(
+      new Set(missingRows.map((r: any) => String(r.question_id || '').trim() || '(no id)')),
+    )
 
-      const questionById = new Map<string, any>(questionEntries)
-      const rubricsById = loadSavedRubrics()
+    return {
+      enriched,
+      missingRows,
+      missingQuestionIds,
+      anyRubricSaved,
+    }
+  }
 
-      const enriched = normalizedSubmissions.map((row: any) => {
-        const q: any = questionById.get(String(row.question_id || ''))
-        const questionText = String(q?.question_text || q?.question || q?.text || '').trim() || `Question ${row.question_id}`
-        const maxScore = Number(q?.max_score ?? 10)
-        const benchmarkType = q?.benchmark_type ? String(q.benchmark_type) : undefined
-        const rubricText = rubricsById[String(row.question_id || '')] || ''
+  async function runGradeBatch(enriched: any[]) {
+    setLoading(true)
+    setSmoothProgress(0)
+    gradingStartRef.current = Date.now()
+    gradingTotalRef.current = enriched.length
 
-        return {
-          ...row,
-          question_text: questionText,
-          rubric: rubricText || undefined,
-          max_score: Number.isFinite(maxScore) ? maxScore : 10,
-          benchmark_type: benchmarkType,
-        }
-      })
-
+    try {
       const result = await gradeBatch(enriched)
 
       setData(result)
+      setSubmissionsForResults(enriched)
       setDecisions({})
       setSmoothProgress(100)
 
@@ -262,6 +330,45 @@ export default function SubmissionGradingPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleRun() {
+    if (!submissions.length) {
+      alert('No valid submissions detected. Please upload a JSON file with student_id and answer.')
+      return
+    }
+
+    // Clear the UI back to "ready" before starting a new run so the table
+    // empties immediately and the user sees fresh state, not stale results.
+    setData(null)
+    setSubmissionsForResults([])
+    setDecisions({})
+    setEditedReasoning({})
+    setEditedScores({})
+    setExpandedId(null)
+    setMissingRubricInfo(null)
+
+    const { enriched, missingRows, missingQuestionIds, anyRubricSaved } =
+      buildEnrichedSubmissions(submissions)
+
+    if (missingRows.length > 0) {
+      setMissingRubricInfo({
+        missingQuestionIds,
+        affectedSubmissions: missingRows.length,
+        anyRubricSaved,
+        enriched,
+      })
+      return
+    }
+
+    await runGradeBatch(enriched)
+  }
+
+  async function handleGradeAnyway() {
+    const info = missingRubricInfo
+    if (!info) return
+    setMissingRubricInfo(null)
+    await runGradeBatch(info.enriched)
   }
 
   function getRowKey(item: any, index: number) {
@@ -373,6 +480,63 @@ export default function SubmissionGradingPage() {
         </button>
       </section>
 
+      {missingRubricInfo && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 60,
+            padding: 16,
+          }}
+          onClick={() => setMissingRubricInfo(null)}
+        >
+          <div
+            className="panel"
+            style={{
+              maxWidth: 520,
+              width: '100%',
+              padding: 24,
+              background: 'white',
+              borderRadius: 12,
+              boxShadow: '0 24px 48px rgba(15,23,42,0.18)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Missing rubric{missingRubricInfo.missingQuestionIds.length > 1 ? 's' : ''}</h3>
+            <p className="subtle" style={{ marginTop: 0 }}>
+              {missingRubricInfo.anyRubricSaved
+                ? `No saved rubric matches ${missingRubricInfo.missingQuestionIds.length > 1 ? 'these question ids' : 'this question id'}. Check that the question_id in your submissions matches the one on the Questions & Rubrics page.`
+                : `You haven't generated any rubrics yet. Generate them first so the grader knows how to score each answer.`}
+            </p>
+            <ul style={{ marginTop: 8, marginBottom: 16, paddingLeft: 20 }}>
+              {missingRubricInfo.missingQuestionIds.map((id) => (
+                <li key={id}><code>{id}</code></li>
+              ))}
+            </ul>
+            <p className="tiny-label" style={{ marginBottom: 16 }}>
+              {missingRubricInfo.affectedSubmissions} submission{missingRubricInfo.affectedSubmissions === 1 ? '' : 's'} affected.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button type="button" className="ghost-btn" onClick={() => setMissingRubricInfo(null)}>
+                Cancel
+              </button>
+              <button type="button" className="ghost-btn" onClick={handleGradeAnyway}>
+                Grade anyway
+              </button>
+              <Link to="/intake" className="primary-btn" style={{ textDecoration: 'none' }}>
+                Generate / check rubrics
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && (
         <section
           className="panel"
@@ -421,7 +585,30 @@ export default function SubmissionGradingPage() {
             <span className="tiny-label">student_id + answer required</span>
           </div>
 
-          <div className="upload-actions">
+          <div className="upload-actions" style={{ alignItems: 'center', gap: 8 }}>
+            <div role="tablist" aria-label="Submissions view" style={{ display: 'inline-flex', border: '1px solid #d6dbe6', borderRadius: 8, overflow: 'hidden' }}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inputView === 'table'}
+                onClick={() => setInputView('table')}
+                className={inputView === 'table' ? 'primary-btn' : 'ghost-btn'}
+                style={{ borderRadius: 0, padding: '4px 12px', fontSize: '0.85rem' }}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={inputView === 'json'}
+                onClick={() => setInputView('json')}
+                className={inputView === 'json' ? 'primary-btn' : 'ghost-btn'}
+                style={{ borderRadius: 0, padding: '4px 12px', fontSize: '0.85rem' }}
+              >
+                JSON
+              </button>
+            </div>
+
             <button type="button" className="primary-btn" onClick={handleUploadClick}>
               Upload JSON
             </button>
@@ -443,11 +630,46 @@ export default function SubmissionGradingPage() {
           <span>student_id, question_id, answer / answer_text / student_answer</span>
         </div>
 
-        <textarea
-          className="editor-textarea code-textarea input-textarea"
-          value={jsonInput}
-          onChange={(e) => setJsonInput(e.target.value)}
-        />
+        {inputView === 'table' ? (
+          submissions.length > 0 ? (
+            <div className="table-wrap">
+              <table className="clean-table clean-table--compact">
+                <thead>
+                  <tr>
+                    <th className="center-col" style={{ width: 48 }}>#</th>
+                    <th style={{ width: 120 }}>Student ID</th>
+                    <th style={{ width: 100 }}>Question ID</th>
+                    <th>Answer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissions.map((row: any, idx: number) => {
+                    const answer = String(row.answer || '')
+                    const truncated = answer.length > 160 ? answer.slice(0, 157) + '…' : answer
+                    return (
+                      <tr key={`${row.student_id}-${row.question_id || idx}`}>
+                        <td className="center-col">{idx + 1}</td>
+                        <td className="mono-cell">{row.student_id}</td>
+                        <td className="mono-cell">{row.question_id || '—'}</td>
+                        <td title={answer} style={{ whiteSpace: 'pre-wrap' }}>{truncated}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="section-note" style={{ marginTop: 12 }}>
+              No valid submissions parsed yet — switch to <strong>JSON</strong> view to paste or edit input.
+            </p>
+          )
+        ) : (
+          <textarea
+            className="editor-textarea code-textarea input-textarea"
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+          />
+        )}
       </section>
 
       {results.length > 0 && (
@@ -507,8 +729,19 @@ export default function SubmissionGradingPage() {
 
           <section className="panel">
             <div className="panel-head">
-              <h3>All Results</h3>
-              <span className="tiny-label">Interactive review table</span>
+              <div>
+                <h3>All Results</h3>
+                <span className="tiny-label">Interactive review table</span>
+              </div>
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={handleApproveAll}
+                disabled={results.length === 0}
+                title="Set every pending row to approved (rejected rows are left as-is)"
+              >
+                Approve all
+              </button>
             </div>
 
             <div className="table-wrap">
@@ -518,6 +751,7 @@ export default function SubmissionGradingPage() {
                     <th className="center-col">Index</th>
                     <th>Student ID</th>
                     <th>Question ID</th>
+                    <th>Answer</th>
                     <th>Score</th>
                     <th>Status</th>
                     <th>Reasoning</th>
@@ -530,12 +764,17 @@ export default function SubmissionGradingPage() {
                     const rowKey = getRowKey(item, index)
                     const decision = decisions[rowKey] || 'pending'
                     const isExpanded = expandedId === rowKey
+                    const fullAnswer = answerByKey.get(`${item.student_id ?? ''}|${item.question_id ?? ''}`) || ''
+                    const answerPreview = fullAnswer.length > 80 ? fullAnswer.slice(0, 77) + '…' : fullAnswer
 
                     return (
                       <tr key={rowKey} className={item.review_required ? 'warn-row' : ''}>
                         <td className="center-col">{index + 1}</td>
                         <td className="mono-cell">{item.student_id}</td>
                         <td className="mono-cell">{item.question_id || '—'}</td>
+                        <td title={fullAnswer} style={{ maxWidth: 240, whiteSpace: 'pre-wrap', fontSize: '0.85rem', color: 'var(--ink-700, #444)' }}>
+                          {answerPreview || <span className="subtle">—</span>}
+                        </td>
                         <td>
                           {(() => {
                             const maxScore = Number(item.max_score ?? 10)
@@ -586,6 +825,16 @@ export default function SubmissionGradingPage() {
                               </span>
                             )}
                           </button>
+
+                          {isExpanded && fullAnswer && (
+                            <div style={{ marginTop: 8 }}>
+                              <p className="tiny-label" style={{ marginBottom: 4 }}>Student answer</p>
+                              <p className="reasoning-detail" style={{ whiteSpace: 'pre-wrap', background: 'rgba(0,0,0,0.03)', padding: 8, borderRadius: 6 }}>
+                                {fullAnswer}
+                              </p>
+                              <p className="tiny-label" style={{ marginTop: 8, marginBottom: 4 }}>AI reasoning</p>
+                            </div>
+                          )}
 
                           {isExpanded && decision === 'rejected' && (
                             <textarea

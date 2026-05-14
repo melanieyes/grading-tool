@@ -69,7 +69,11 @@ def run_calibration(
         revision: dict | None = None
         if revise_fn is not None:
             try:
-                revision = revise_fn(current_rubric, flagged_cases, metrics, round_index)
+                # Inject the full comparisons list so the reviser can see matching
+                # (non-flagged) cases too — needed to avoid breaking what works.
+                metrics_with_context = dict(metrics)
+                metrics_with_context["_all_comparisons"] = evaluation.get("comparisons", [])
+                revision = revise_fn(current_rubric, flagged_cases, metrics_with_context, round_index)
             except Exception:
                 # LLM revise failed; fall through to rule-based reviser below so
                 # the loop still produces some revision for this round.
@@ -101,7 +105,8 @@ def run_calibration(
         if previous_mse is not None:
             improvement = previous_mse - current_mse
 
-            if 0 <= improvement < min_improvement:
+            if improvement < min_improvement:
+                # Covers both marginal improvement and worsening rounds (negative improvement).
                 stopping_reason = (
                     f"Stopped because MSE improvement {round(improvement, 4)} "
                     f"was below min_improvement {min_improvement}."

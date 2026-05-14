@@ -621,6 +621,7 @@ def _build_revision_focus(
     metrics: dict,
     submissions: list[dict] | None = None,
     max_score: float = 10.0,
+    all_comparisons: list[dict] | None = None,
 ) -> str:
     """Turn raw flagged cases into a structured revision focus string for the LLM.
 
@@ -701,7 +702,7 @@ def _build_revision_focus(
     # Concrete examples with the actual student answer.
     sample = flagged_cases[:3]
     if sample:
-        example_lines: list[str] = ["CONCRETE EXAMPLES (anchor your revisions to these):"]
+        example_lines: list[str] = ["FLAGGED CASES (fix these — but don't break the matching cases below):"]
         for case in sample:
             sid = str(case.get("student_id") or "")
             answer_excerpt = answer_by_student.get(sid, "").strip()[:240]
@@ -717,6 +718,45 @@ def _build_revision_focus(
             if prof_c:
                 example_lines.append(f"    Professor note: \"{prof_c}\"")
         parts.append("\n".join(example_lines))
+
+    # Matching cases — what the current rubric grades correctly.
+    # The LLM must not break these when fixing the flagged ones.
+    if all_comparisons:
+        flagged_ids = {
+            (str(c.get("student_id") or ""), str(c.get("question_id") or ""))
+            for c in flagged_cases
+        }
+        matching = [
+            c for c in all_comparisons
+            if (str(c.get("student_id") or ""), str(c.get("question_id") or "")) not in flagged_ids
+        ]
+        # Prefer matching cases that span the score range (low/mid/high) so the
+        # LLM sees variety, not just "all 40/40" matches.
+        matching_sorted = sorted(
+            matching,
+            key=lambda c: float(c.get("professor_score", 0) or 0),
+        )
+        # Pick up to 3 spread across the range.
+        picks: list[dict] = []
+        if matching_sorted:
+            n = len(matching_sorted)
+            indices = sorted({0, n // 2, n - 1})[:3]
+            picks = [matching_sorted[i] for i in indices]
+
+        if picks:
+            match_lines: list[str] = [
+                f"MATCHING CASES (the current rubric grades these CORRECTLY — "
+                f"your revision MUST still grade them the same):"
+            ]
+            for case in picks:
+                sid = str(case.get("student_id") or "")
+                answer_excerpt = answer_by_student.get(sid, "").strip()[:200]
+                ai_s = case.get("ai_score")
+                prof_s = case.get("professor_score")
+                match_lines.append(f"  Student {sid}: AI {ai_s} = Prof {prof_s} ✓")
+                if answer_excerpt:
+                    match_lines.append(f"    Answer: \"{answer_excerpt}\"")
+            parts.append("\n".join(match_lines))
 
     return "\n\n".join(parts)
 
@@ -750,7 +790,7 @@ def calibrate_rubric_rounds(
         if rubric_any is not None and question_text:
             try:
                 rubric_payload = _normalize_rubric_for_llm(rubric_any, score_max)
-                grader = RubricGrader(prompt_name="prompt_v1", api_key=api_key)
+                grader = RubricGrader(prompt_name="prompt_v3", api_key=api_key)
 
                 for submission in submissions:
                     qid = submission.get("question_id") or payload.question_id or "Q1"
@@ -818,6 +858,7 @@ def calibrate_rubric_rounds(
             metrics,
             submissions=submissions_dump,
             max_score=score_max,
+            all_comparisons=metrics.get("_all_comparisons"),
         )
 
         generator = RubricGenerator(api_key=api_key)
@@ -828,7 +869,6 @@ def calibrate_rubric_rounds(
             max_score=score_max,
             reference_solution=reference_solution,
         )
-        revised_text = format_rubric_as_text(revised_obj)
 
         # Build a small change log from the bucketed analysis.
         change_log: list[dict] = []
@@ -847,9 +887,11 @@ def calibrate_rubric_rounds(
                 "justification": f"{len(low)} AI scores lower than professor",
             })
 
+        # Return the structured rubric dict (not the text form) so the next round's
+        # grader sees real criteria with point values, not 0-point guidance lines.
         return {
             "revision_needed": bool(flagged_cases),
-            "revised_rubric": revised_text,
+            "revised_rubric": revised_obj,
             "change_log": change_log,
             "justification": focus,
         }

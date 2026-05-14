@@ -1,6 +1,25 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { demoSlices, type DemoSlice } from '../demo'
 
 export default function HomePage() {
+  const navigate = useNavigate()
+
+  function handleLoadDemo(slice: DemoSlice) {
+    localStorage.setItem('grading_questions', JSON.stringify(slice.questions))
+    localStorage.setItem('grading_rubrics', JSON.stringify(slice.rubrics))
+    const approved = Object.fromEntries(
+      Object.keys(slice.rubrics).map((id) => [id, 'approved'] as const),
+    )
+    localStorage.setItem('grading_row_statuses', JSON.stringify(approved))
+    localStorage.setItem('grading_demo_submissions', slice.submissions)
+    localStorage.setItem('grading_demo_prefill', '1')
+    localStorage.setItem('grading_demo_professor_grades', slice.professorGrades)
+    localStorage.setItem('grading_demo_eval_prefill', '1')
+    localStorage.removeItem('grading_results')
+    localStorage.removeItem('grading_submissions')
+    navigate('/grading')
+  }
+
   return (
     <main className="shell home-page">
       <section className="hero-card">
@@ -20,6 +39,24 @@ export default function HomePage() {
             <Link to="/intake" className="ghost-btn hero-secondary-btn">
               Question upload & rubric
             </Link>
+          </div>
+
+          <div className="demo-data-actions" style={{ marginTop: 16 }}>
+            <p className="tiny-label" style={{ marginBottom: 8 }}>Or try with a demo dataset</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {demoSlices.map((slice) => (
+                <button
+                  key={slice.id}
+                  type="button"
+                  className="ghost-btn hero-secondary-btn"
+                  onClick={() => handleLoadDemo(slice)}
+                  title={slice.description}
+                  style={{ textAlign: 'left' }}
+                >
+                  {slice.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

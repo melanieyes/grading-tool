@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/run_calibration.py --benchmark data/benchmarks/synthesis --question_id midterm1_q6 --max_rounds 3 --difference_threshold 0.5 --min_improvement 0.5 --no_semantic --output data/outputs/reports/calibration_midterm1_q6_smarter.json)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3)"
+    ]
+  }
+}

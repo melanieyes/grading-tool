@@ -168,6 +168,17 @@ export default function QuestionUploadPage() {
     if (savedRubrics && Object.keys(savedRubrics).length) {
       setRubrics(savedRubrics)
     }
+    try {
+      const raw = localStorage.getItem('grading_row_statuses')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setRowStatuses(parsed)
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
   }, [])
 
   useEffect(() => {
@@ -186,6 +197,12 @@ export default function QuestionUploadPage() {
       localStorage.setItem('grading_rubrics', JSON.stringify(rubrics))
     }
   }, [rubrics])
+
+  useEffect(() => {
+    if (Object.keys(rowStatuses).length) {
+      localStorage.setItem('grading_row_statuses', JSON.stringify(rowStatuses))
+    }
+  }, [rowStatuses])
 
   const isValid = questions.length > 0
 

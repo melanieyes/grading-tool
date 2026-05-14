@@ -143,6 +143,7 @@ export default function EvaluationPage() {
   const [calibration, setCalibration] = useState<any | null>(null)
   const [loading, setLoading] = useState(false)
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(true)
+  const [gradesView, setGradesView] = useState<'table' | 'json'>('table')
 
   const gradesFileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -168,6 +169,15 @@ export default function EvaluationPage() {
         ? fromResults
         : qs[0].question_id
       setSelectedQid(String(initial))
+    }
+
+    // One-shot demo prefill: if HomePage seeded professor grades for the demo,
+    // drop them into the textarea and consume the flag so re-visits don't clobber edits.
+    if (window.localStorage.getItem('grading_demo_eval_prefill') === '1') {
+      const payload = window.localStorage.getItem('grading_demo_professor_grades') || ''
+      if (payload) setProfessorGradesJson(payload)
+      window.localStorage.removeItem('grading_demo_eval_prefill')
+      window.localStorage.removeItem('grading_demo_professor_grades')
     }
   }, [])
 
@@ -469,7 +479,29 @@ export default function EvaluationPage() {
             <h3>Step 2 — Provide professor grades</h3>
             <span className="tiny-label">Ground truth for the selected question</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div role="tablist" aria-label="Grades view" style={{ display: 'inline-flex', border: '1px solid #d6dbe6', borderRadius: 8, overflow: 'hidden' }}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={gradesView === 'table'}
+                onClick={() => setGradesView('table')}
+                className={gradesView === 'table' ? 'primary-btn' : 'ghost-btn'}
+                style={{ borderRadius: 0, padding: '4px 12px', fontSize: '0.85rem' }}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={gradesView === 'json'}
+                onClick={() => setGradesView('json')}
+                className={gradesView === 'json' ? 'primary-btn' : 'ghost-btn'}
+                style={{ borderRadius: 0, padding: '4px 12px', fontSize: '0.85rem' }}
+              >
+                JSON
+              </button>
+            </div>
             <button type="button" className="ghost-btn" onClick={handleUploadGrades}>
               Upload JSON
             </button>
@@ -483,12 +515,45 @@ export default function EvaluationPage() {
           </div>
         </div>
 
-        <textarea
-          className="editor-textarea code-textarea"
-          style={{ minHeight: '160px' }}
-          value={professorGradesJson}
-          onChange={(e) => setProfessorGradesJson(e.target.value)}
-        />
+        {gradesView === 'table' ? (
+          flatProfGrades.length > 0 ? (
+            <div className="table-wrap">
+              <table className="clean-table clean-table--compact">
+                <thead>
+                  <tr>
+                    <th className="center-col" style={{ width: 48 }}>#</th>
+                    <th style={{ width: 120 }}>Student ID</th>
+                    <th style={{ width: 100 }}>Question ID</th>
+                    <th style={{ width: 100 }}>Score</th>
+                    <th>Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flatProfGrades.map((g: any, idx: number) => (
+                    <tr key={`${g.student_id}-${g.question_id}-${idx}`}>
+                      <td className="center-col">{idx + 1}</td>
+                      <td className="mono-cell">{g.student_id}</td>
+                      <td className="mono-cell">{g.question_id || '—'}</td>
+                      <td><strong>{g.score}/{g.max_score}</strong></td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--ink-700, #444)' }}>{g.comment || <span className="subtle">—</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="section-note" style={{ marginTop: 12 }}>
+              No grades parsed yet — switch to <strong>JSON</strong> view to paste or edit input.
+            </p>
+          )
+        ) : (
+          <textarea
+            className="editor-textarea code-textarea"
+            style={{ minHeight: '160px' }}
+            value={professorGradesJson}
+            onChange={(e) => setProfessorGradesJson(e.target.value)}
+          />
+        )}
         <p className="section-note" style={{ marginTop: '8px' }}>
           Parsed rows: <strong>{flatProfGrades.length}</strong> total
           {!isAllQuestions && (
