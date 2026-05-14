@@ -48,7 +48,7 @@ export default function HomePage() {
 
           <div className="hero-actions">
             <Link to="/intake" className="primary-btn">
-              Question upload & rubric
+              Upload Questions
             </Link>
           </div>
 
