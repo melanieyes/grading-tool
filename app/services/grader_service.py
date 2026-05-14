@@ -189,7 +189,7 @@ def grade_batch(submissions: List[GradeRequest], api_key: str | None = None) -> 
                 else:
                     rubric_payload = {"criteria": []}
 
-                grader = RubricGrader(prompt_name="prompt_v1", api_key=api_key)
+                grader = RubricGrader(prompt_name="prompt_v3", api_key=api_key)
                 grade = grader.grade_question(
                     student_id=item.student_id,
                     question_id=item.question_id,

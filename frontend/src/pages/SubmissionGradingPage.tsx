@@ -105,19 +105,43 @@ function downloadFile(filename: string, content: string, type: string) {
   URL.revokeObjectURL(url)
 }
 
+function readLocal<T>(key: string, fallback: T): T {
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (raw == null) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
 export default function SubmissionGradingPage() {
-  const [jsonInput, setJsonInput] = useState(sampleJsonInput)
-  const [fileName, setFileName] = useState('')
-  const [data, setData] = useState<any>(null)
+  const [jsonInput, setJsonInput] = useState<string>(() => {
+    const saved = window.localStorage.getItem('grading_json_input')
+    return saved && saved.trim() ? saved : sampleJsonInput
+  })
+  const [fileName, setFileName] = useState(() => window.localStorage.getItem('grading_file_name') || '')
+  const [data, setData] = useState<any>(() => readLocal<any>('grading_results', null))
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [decisions, setDecisions] = useState<Record<string, Decision>>({})
-  const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>({})
-  const [editedScores, setEditedScores] = useState<Record<string, number>>({})
+  const [decisions, setDecisions] = useState<Record<string, Decision>>(
+    () => readLocal<Record<string, Decision>>('grading_decisions', {}),
+  )
+  const [editedReasoning, setEditedReasoning] = useState<Record<string, string>>(
+    () => readLocal<Record<string, string>>('grading_edited_reasoning', {}),
+  )
+  const [editedScores, setEditedScores] = useState<Record<string, number>>(
+    () => readLocal<Record<string, number>>('grading_edited_scores', {}),
+  )
   const [smoothProgress, setSmoothProgress] = useState(0)
   const [missingRubricInfo, setMissingRubricInfo] = useState<MissingRubricInfo | null>(null)
   const [inputView, setInputView] = useState<'table' | 'json'>('table')
-  const [submissionsForResults, setSubmissionsForResults] = useState<any[]>([])
+  const [submissionsForResults, setSubmissionsForResults] = useState<any[]>(
+    () => readLocal<any[]>('grading_submissions', []),
+  )
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
+  const exportMenuRef = useRef<HTMLDivElement | null>(null)
+  const [selectedDistQid, setSelectedDistQid] = useState<string>('')
   const gradingStartRef = useRef<number>(0)
   const gradingTotalRef = useRef<number>(0)
 
@@ -135,14 +159,49 @@ export default function SubmissionGradingPage() {
     return () => window.clearInterval(id)
   }, [loading])
 
-  // NOTE: we intentionally do NOT hydrate `data`, `decisions`, `editedReasoning`,
-  // or `editedScores` from localStorage on mount. The page should reload to a
-  // ready (empty) state. We still persist results + submissions to localStorage
-  // so the Evaluation page can consume them — those writes happen below.
-
+  // Persist everything so navigating to another page and back does not lose state.
+  // Restart button on the Home page is the official way to wipe this.
   useEffect(() => {
     if (data) window.localStorage.setItem('grading_results', JSON.stringify(data))
   }, [data])
+
+  useEffect(() => {
+    window.localStorage.setItem('grading_decisions', JSON.stringify(decisions))
+  }, [decisions])
+
+  useEffect(() => {
+    window.localStorage.setItem('grading_edited_reasoning', JSON.stringify(editedReasoning))
+  }, [editedReasoning])
+
+  useEffect(() => {
+    window.localStorage.setItem('grading_edited_scores', JSON.stringify(editedScores))
+  }, [editedScores])
+
+  useEffect(() => {
+    window.localStorage.setItem('grading_json_input', jsonInput)
+  }, [jsonInput])
+
+  useEffect(() => {
+    window.localStorage.setItem('grading_file_name', fileName)
+  }, [fileName])
+
+  useEffect(() => {
+    if (submissionsForResults.length > 0) {
+      window.localStorage.setItem('grading_submissions', JSON.stringify(submissionsForResults))
+    }
+  }, [submissionsForResults])
+
+  // Close the export dropdown when clicking outside it.
+  useEffect(() => {
+    if (!exportMenuOpen) return
+    function onClick(e: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false)
+      }
+    }
+    window.addEventListener('mousedown', onClick)
+    return () => window.removeEventListener('mousedown', onClick)
+  }, [exportMenuOpen])
 
   useEffect(() => {
     if (window.localStorage.getItem('grading_demo_prefill') === '1') {
@@ -173,24 +232,83 @@ export default function SubmissionGradingPage() {
     }
   }, [results])
 
-  const distribution = useMemo(() => {
-    const buckets = [
-      { label: '0–2', min: 0, max: 2, count: 0 },
-      { label: '3–4', min: 3, max: 4, count: 0 },
-      { label: '5–6', min: 5, max: 6, count: 0 },
-      { label: '7–8', min: 7, max: 8, count: 0 },
-      { label: '9–10', min: 9, max: 10, count: 0 },
-    ]
-
-    results.forEach((r: any) => {
+  // Per-question stats for the box plot. Groups gradable results by question_id
+  // and computes min / Q1 / median / Q3 / max / mean / count / max_score.
+  const perQuestionStats = useMemo(() => {
+    const byQid = new Map<string, { rowKey: string; score: number; maxScore: number }[]>()
+    results.forEach((r: any, index: number) => {
       if (r.review_reason === 'no_rubric') return
-      const score = Number(r.score || 0)
-      const bucket = buckets.find((b) => score >= b.min && score <= b.max)
-      if (bucket) bucket.count += 1
+      const rowKey = getRowKey(r, index)
+      const score = Number(editedScores[rowKey] ?? r.score ?? 0)
+      const maxScore = Number(r.max_score ?? 10)
+      const qid = String(r.question_id ?? '—')
+      if (!byQid.has(qid)) byQid.set(qid, [])
+      byQid.get(qid)!.push({ rowKey, score, maxScore })
     })
 
-    return buckets
-  }, [results])
+    function quantile(sorted: number[], q: number): number {
+      if (sorted.length === 0) return 0
+      if (sorted.length === 1) return sorted[0]
+      const pos = (sorted.length - 1) * q
+      const lo = Math.floor(pos)
+      const hi = Math.ceil(pos)
+      if (lo === hi) return sorted[lo]
+      return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo)
+    }
+
+    return Array.from(byQid.entries()).map(([qid, rows]) => {
+      const scores = rows.map((r) => r.score).sort((a, b) => a - b)
+      const maxScore = Math.max(...rows.map((r) => r.maxScore), 0) || 10
+      const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+      return {
+        qid,
+        n: scores.length,
+        maxScore,
+        min: scores[0],
+        max: scores[scores.length - 1],
+        mean,
+        q1: quantile(scores, 0.25),
+        median: quantile(scores, 0.5),
+        q3: quantile(scores, 0.75),
+      }
+    })
+  }, [results, editedScores])
+
+  // Default the dropdown to the first question once stats are available.
+  useEffect(() => {
+    if (perQuestionStats.length === 0) return
+    if (!selectedDistQid || !perQuestionStats.find((s) => s.qid === selectedDistQid)) {
+      setSelectedDistQid(perQuestionStats[0].qid)
+    }
+  }, [perQuestionStats, selectedDistQid])
+
+  // Per-student totals (sum of scores across questions, ignoring no_rubric rows).
+  const studentTotals = useMemo(() => {
+    const byStudent = new Map<string, { total: number; max: number; n: number }>()
+    results.forEach((r: any, index: number) => {
+      if (r.review_reason === 'no_rubric') return
+      const sid = String(r.student_id ?? '')
+      if (!sid) return
+      const rowKey = getRowKey(r, index)
+      const score = Number(editedScores[rowKey] ?? r.score ?? 0)
+      const maxScore = Number(r.max_score ?? 10)
+      const cur = byStudent.get(sid) || { total: 0, max: 0, n: 0 }
+      cur.total += score
+      cur.max += maxScore
+      cur.n += 1
+      byStudent.set(sid, cur)
+    })
+
+    return Array.from(byStudent.entries())
+      .map(([student_id, v]) => ({
+        student_id,
+        total: Math.round(v.total * 100) / 100,
+        max: Math.round(v.max * 100) / 100,
+        n: v.n,
+        pct: v.max > 0 ? (v.total / v.max) * 100 : 0,
+      }))
+      .sort((a, b) => b.total - a.total)
+  }, [results, editedScores])
 
   function handleApproveAll() {
     const next: Record<string, Decision> = { ...decisions }
@@ -392,7 +510,7 @@ export default function SubmissionGradingPage() {
   }
 
   function exportJson() {
-    const payload = results.map((r: any, index: number) => {
+    const rows = results.map((r: any, index: number) => {
       const rowKey = getRowKey(r, index)
       return {
         student_id: r.student_id,
@@ -405,11 +523,71 @@ export default function SubmissionGradingPage() {
       }
     })
 
+    const payload = {
+      results: rows,
+      student_totals: studentTotals.map((s) => ({
+        student_id: s.student_id,
+        total_score: s.total,
+        max_score: s.max,
+        questions_graded: s.n,
+        percentage: Math.round(s.pct * 100) / 100,
+      })),
+    }
+
     downloadFile(
       'grading_report.json',
       JSON.stringify(payload, null, 2),
       'application/json',
     )
+  }
+
+  function exportCsv() {
+    const headers = ['#', 'Student ID', 'Question ID', 'Score', 'Max Score', 'Status', 'Decision', 'Reasoning']
+
+    const escape = (val: unknown) => {
+      const s = String(val ?? '')
+      // RFC 4180: quote if it contains comma, quote, newline, or carriage return.
+      if (/[",\r\n]/.test(s)) {
+        return `"${s.replace(/"/g, '""')}"`
+      }
+      return s
+    }
+
+    const rows = results.map((r: any, index: number) => {
+      const rowKey = getRowKey(r, index)
+      const noRubric = r.review_reason === 'no_rubric'
+      const maxScore = r.max_score ?? 10
+      const score = noRubric ? '' : (editedScores[rowKey] ?? r.score)
+      const reasoning = editedReasoning[rowKey] ?? r.reasoning ?? ''
+      return [
+        index + 1,
+        r.student_id ?? '',
+        r.question_id ?? '',
+        score,
+        noRubric ? '' : maxScore,
+        r.review_required ? 'Needs Review' : 'Ready',
+        decisions[rowKey] || 'pending',
+        reasoning,
+      ].map(escape).join(',')
+    })
+
+    const totalHeaders = ['Rank', 'Student ID', 'Questions', 'Total Score', 'Max Score', 'Percentage']
+    const totalRows = studentTotals.map((s, i) =>
+      [i + 1, s.student_id, s.n, s.total, s.max, s.pct.toFixed(2) + '%']
+        .map(escape)
+        .join(','),
+    )
+
+    const csv = [
+      headers.map(escape).join(','),
+      ...rows,
+      '',
+      'Student Totals',
+      totalHeaders.map(escape).join(','),
+      ...totalRows,
+    ].join('\r\n')
+    // Prepend BOM so Excel detects UTF-8 correctly.
+    downloadFile('grading_report.csv', '﻿' + csv, 'text/csv;charset=utf-8')
   }
 
   function exportPdf() {
@@ -461,6 +639,40 @@ export default function SubmissionGradingPage() {
       },
       margin: { left: 40, right: 40 },
     })
+
+    if (studentTotals.length > 0) {
+      doc.addPage()
+      doc.setFontSize(16)
+      doc.setTextColor(16, 34, 70)
+      doc.text('Student Totals', 40, 40)
+      doc.setFontSize(10)
+      doc.setTextColor(80)
+      doc.text('Total score across all graded questions, sorted high to low.', 40, 58)
+
+      autoTable(doc, {
+        startY: 76,
+        head: [['Rank', 'Student ID', 'Questions', 'Total', 'Max', 'Percentage']],
+        body: studentTotals.map((s, i) => [
+          String(i + 1),
+          String(s.student_id),
+          String(s.n),
+          String(s.total),
+          String(s.max),
+          `${s.pct.toFixed(1)}%`,
+        ]),
+        styles: { fontSize: 10, cellPadding: 6, valign: 'middle' },
+        headStyles: { fillColor: [243, 246, 255], textColor: [16, 34, 70], fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 50, halign: 'center' },
+          1: { cellWidth: 160 },
+          2: { cellWidth: 80, halign: 'center' },
+          3: { cellWidth: 70, halign: 'center' },
+          4: { cellWidth: 70, halign: 'center' },
+          5: { cellWidth: 90, halign: 'center' },
+        },
+        margin: { left: 40, right: 40 },
+      })
+    }
 
     doc.save('grading_report.pdf')
   }
@@ -695,36 +907,172 @@ export default function SubmissionGradingPage() {
 
           <section className="panel chart-panel">
             <div className="panel-head">
-              <h3>Grade Distribution</h3>
+              <div>
+                <h3>Grade Distribution</h3>
+                <span className="tiny-label">Box plot per question (min · Q1 · median · Q3 · max, with mean marker)</span>
+              </div>
 
               <div className="export-actions">
-                <button type="button" className="ghost-btn" onClick={exportJson}>
-                  Export JSON
-                </button>
-                <button type="button" className="ghost-btn" onClick={exportPdf}>
-                  Export PDF
-                </button>
+                <div ref={exportMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+                  <button
+                    type="button"
+                    className="ghost-btn"
+                    aria-haspopup="menu"
+                    aria-expanded={exportMenuOpen}
+                    onClick={() => setExportMenuOpen((v) => !v)}
+                  >
+                    Export ▾
+                  </button>
+                  {exportMenuOpen && (
+                    <div
+                      role="menu"
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        right: 0,
+                        minWidth: 160,
+                        background: 'white',
+                        border: '1px solid #d6dbe6',
+                        borderRadius: 8,
+                        boxShadow: '0 12px 24px rgba(15,23,42,0.12)',
+                        zIndex: 20,
+                        padding: 4,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="ghost-btn"
+                        style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', borderRadius: 6 }}
+                        onClick={() => { setExportMenuOpen(false); exportJson() }}
+                      >
+                        Export JSON
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="ghost-btn"
+                        style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', borderRadius: 6 }}
+                        onClick={() => { setExportMenuOpen(false); exportCsv() }}
+                      >
+                        Export CSV
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="ghost-btn"
+                        style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', borderRadius: 6 }}
+                        onClick={() => { setExportMenuOpen(false); exportPdf() }}
+                      >
+                        Export PDF
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <Link to="/evaluation" className="primary-btn">
                   Continue to Evaluation
                 </Link>
               </div>
             </div>
 
-            <div className="grade-bars">
-              {distribution.map((bucket) => {
-                const height = Math.max(8, bucket.count * 24)
+            {perQuestionStats.length === 0 ? (
+              <p className="section-note" style={{ marginTop: 12 }}>
+                No gradable rows yet — the box plot will appear once submissions are graded.
+              </p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8, marginBottom: 16 }}>
+                  <label htmlFor="dist-qid" className="tiny-label" style={{ margin: 0 }}>Question</label>
+                  <select
+                    id="dist-qid"
+                    value={selectedDistQid}
+                    onChange={(e) => setSelectedDistQid(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d6dbe6', fontSize: '0.9rem' }}
+                  >
+                    {perQuestionStats.map((s) => (
+                      <option key={s.qid} value={s.qid}>
+                        {s.qid} (n={s.n}, max {s.maxScore})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                return (
-                  <div className="grade-bar-item" key={bucket.label}>
-                    <div className="grade-bar-track">
-                      <div className="grade-bar-fill" style={{ height }} />
+                {(() => {
+                  const s = perQuestionStats.find((x) => x.qid === selectedDistQid) || perQuestionStats[0]
+                  if (!s) return null
+                  const W = 720
+                  const H = 180
+                  const PAD_L = 40
+                  const PAD_R = 30
+                  const innerW = W - PAD_L - PAD_R
+                  const axisY = 130
+                  const boxTop = 70
+                  const boxBottom = 110
+                  const xFor = (v: number) => PAD_L + (Math.max(0, Math.min(v, s.maxScore)) / Math.max(s.maxScore, 1e-9)) * innerW
+                  const tickCount = 6
+                  const ticks = Array.from({ length: tickCount + 1 }, (_, i) => (s.maxScore * i) / tickCount)
+
+                  return (
+                    <div style={{ overflowX: 'auto' }}>
+                      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, display: 'block' }} aria-label={`Box plot for ${s.qid}`}>
+                        {/* axis */}
+                        <line x1={PAD_L} y1={axisY} x2={W - PAD_R} y2={axisY} stroke="#cbd5e1" />
+                        {ticks.map((t, i) => (
+                          <g key={i}>
+                            <line x1={xFor(t)} y1={axisY} x2={xFor(t)} y2={axisY + 5} stroke="#94a3b8" />
+                            <text x={xFor(t)} y={axisY + 18} fontSize="10" textAnchor="middle" fill="#475569">
+                              {Number.isInteger(t) ? t : t.toFixed(1)}
+                            </text>
+                          </g>
+                        ))}
+                        <text x={W / 2} y={H - 6} fontSize="11" textAnchor="middle" fill="#475569">
+                          Score (0 – {s.maxScore})
+                        </text>
+
+                        {/* whiskers */}
+                        <line x1={xFor(s.min)} y1={(boxTop + boxBottom) / 2} x2={xFor(s.q1)} y2={(boxTop + boxBottom) / 2} stroke="#3a6dff" strokeWidth={2} />
+                        <line x1={xFor(s.q3)} y1={(boxTop + boxBottom) / 2} x2={xFor(s.max)} y2={(boxTop + boxBottom) / 2} stroke="#3a6dff" strokeWidth={2} />
+                        {/* whisker caps */}
+                        <line x1={xFor(s.min)} y1={boxTop + 8} x2={xFor(s.min)} y2={boxBottom - 8} stroke="#3a6dff" strokeWidth={2} />
+                        <line x1={xFor(s.max)} y1={boxTop + 8} x2={xFor(s.max)} y2={boxBottom - 8} stroke="#3a6dff" strokeWidth={2} />
+                        {/* box */}
+                        <rect
+                          x={xFor(s.q1)}
+                          y={boxTop}
+                          width={Math.max(1, xFor(s.q3) - xFor(s.q1))}
+                          height={boxBottom - boxTop}
+                          fill="#c7d7ff"
+                          stroke="#3a6dff"
+                          strokeWidth={2}
+                        />
+                        {/* median */}
+                        <line x1={xFor(s.median)} y1={boxTop} x2={xFor(s.median)} y2={boxBottom} stroke="#102246" strokeWidth={2} />
+                        {/* mean */}
+                        <circle cx={xFor(s.mean)} cy={(boxTop + boxBottom) / 2} r={5} fill="#f5b301" stroke="#102246" strokeWidth={1.5} />
+
+                        {/* labels above */}
+                        <text x={xFor(s.min)} y={boxTop - 8} fontSize="10" textAnchor="middle" fill="#475569">min {s.min}</text>
+                        <text x={xFor(s.max)} y={boxTop - 8} fontSize="10" textAnchor="middle" fill="#475569">max {s.max}</text>
+                        <text x={xFor(s.mean)} y={boxBottom + 18} fontSize="10" textAnchor="middle" fill="#102246">
+                          mean {s.mean.toFixed(1)}
+                        </text>
+                      </svg>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8, fontSize: '0.85rem', color: '#475569' }}>
+                        <span><strong>n</strong>: {s.n}</span>
+                        <span><strong>Min</strong>: {s.min}</span>
+                        <span><strong>Q1</strong>: {s.q1.toFixed(1)}</span>
+                        <span><strong>Median</strong>: {s.median.toFixed(1)}</span>
+                        <span><strong>Q3</strong>: {s.q3.toFixed(1)}</span>
+                        <span><strong>Max</strong>: {s.max}</span>
+                        <span><strong>Mean</strong>: {s.mean.toFixed(2)}</span>
+                        <span><strong>Out of</strong>: {s.maxScore}</span>
+                      </div>
                     </div>
-                    <strong>{bucket.count}</strong>
-                    <span>{bucket.label}</span>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })()}
+              </>
+            )}
           </section>
 
           <section className="panel">
@@ -748,14 +1096,14 @@ export default function SubmissionGradingPage() {
               <table className="clean-table clean-table--compact results-table">
                 <thead>
                   <tr>
-                    <th className="center-col">Index</th>
-                    <th>Student ID</th>
-                    <th>Question ID</th>
-                    <th>Answer</th>
-                    <th>Score</th>
-                    <th>Status</th>
+                    <th className="center-col" style={{ width: 56 }}>Index</th>
+                    <th style={{ width: 110 }}>Student ID</th>
+                    <th style={{ width: 90 }}>Question ID</th>
+                    <th style={{ width: 220 }}>Answer</th>
+                    <th style={{ width: 80 }}>Score</th>
+                    <th style={{ width: 90 }}>Status</th>
                     <th>Reasoning</th>
-                    <th className="action-col">Status / Action</th>
+                    <th className="action-col" style={{ width: 120 }}>Action</th>
                   </tr>
                 </thead>
 
@@ -889,6 +1237,43 @@ export default function SubmissionGradingPage() {
               </table>
             </div>
           </section>
+
+          {studentTotals.length > 0 && (
+            <section className="panel">
+              <div className="panel-head">
+                <div>
+                  <h3>Student Totals</h3>
+                  <span className="tiny-label">Total score across all graded questions, sorted high to low</span>
+                </div>
+                <span className="tiny-label">{studentTotals.length} student{studentTotals.length === 1 ? '' : 's'}</span>
+              </div>
+
+              <div className="table-wrap">
+                <table className="clean-table clean-table--compact">
+                  <thead>
+                    <tr>
+                      <th className="center-col" style={{ width: 56 }}>Rank</th>
+                      <th style={{ width: 140 }}>Student ID</th>
+                      <th className="center-col" style={{ width: 80 }}>Questions</th>
+                      <th style={{ width: 160 }}>Total / Max</th>
+                      <th style={{ width: 90 }}>%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentTotals.map((row, idx) => (
+                      <tr key={row.student_id}>
+                        <td className="center-col">{idx + 1}</td>
+                        <td className="mono-cell">{row.student_id}</td>
+                        <td className="center-col">{row.n}</td>
+                        <td><strong>{row.total}</strong> / {row.max}</td>
+                        <td><strong>{row.pct.toFixed(1)}%</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
         </>
       )}
     </main>

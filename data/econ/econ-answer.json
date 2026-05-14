@@ -1,0 +1,112 @@
+[
+  {
+    "student_id": "001",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "I would recommend using both policies together. A congestion charge makes driving downtown more expensive during peak hours, so some drivers will reduce unnecessary trips, carpool, travel at other times, or switch to public transportation. This reduces the negative externality of congestion because drivers now face more of the social cost they impose on others. A public transportation subsidy lowers the price of buses or trains, increasing demand for transit and making the switch away from cars easier. The congestion charge is more directly targeted at the externality, while the subsidy helps with equity and substitution. However, the city should avoid making the subsidy too large if it becomes fiscally costly. A good policy would charge drivers during peak hours and use some revenue to improve and subsidize public transit.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "002",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "The congestion charge will increase the cost of driving, so the demand for driving should decrease. The public transport subsidy will decrease the cost of public transport, so demand for public transport should increase. I think the government should choose the subsidy because people like cheaper public transport and it is less politically controversial than charging drivers. It will probably reduce congestion because more people will take buses.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "003",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "A congestion charge is basically a tax, so it is bad for consumers because they have to pay more. A subsidy is better because it gives people cheaper public transportation. If the city wants to improve welfare, it should subsidize buses and trains instead of charging people. Lower prices are always better for consumers, and more people will be able to travel downtown.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "004",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "The main problem is that driving downtown creates a negative externality: each driver considers their own time and fuel cost but not the delay they impose on other drivers. A congestion charge can improve efficiency by making the private cost closer to the social marginal cost. This should reduce peak-hour driving and raise social welfare if the fee is set correctly. A transit subsidy can also reduce driving by making substitutes cheaper, but it is less targeted because it subsidizes all transit users, including people who were already using transit. I would recommend a congestion charge as the main policy, with revenue used to improve public transportation or compensate low-income commuters.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "005",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "Both policies change incentives. The charge lowers demand for cars by raising the price of driving. The subsidy raises demand for public transportation by lowering its price. However, I think the government should only use the congestion charge because subsidies cost money and taxes raise money. The charge will solve the whole problem because once driving becomes more expensive, everyone will stop driving downtown.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "006",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "The two policies work through opposite price changes. The congestion charge increases the monetary cost of driving, so quantity demanded for driving falls according to the law of demand. The public transport subsidy lowers the price of public transport, so quantity demanded rises. Since cars and public transport are substitutes, cheaper transit may also reduce car demand. For welfare, the congestion charge is stronger because it addresses the external cost directly. The subsidy may improve access but can create government budget costs and possible crowding on transit. I recommend combining them if the city uses charge revenue to fund the subsidy.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "007",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "A subsidy for public transport will increase supply of public transport because the government pays for it. The congestion charge will decrease supply of cars because cars become more expensive. I recommend the subsidy because it increases supply, which lowers price and increases quantity. The congestion charge reduces quantity, so it is not good for economic growth.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "008",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "The congestion charge may reduce traffic because some people will not want to pay. But some people still need to drive, so it might be unfair. The public transportation subsidy makes buses and trains cheaper, so people may use them more. I would recommend the subsidy first because it gives people an alternative. If congestion is still bad, then the city can add a charge later.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "009",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "The best policy is to make all downtown roads free and also make public transportation free. If everything is free, people can choose whatever they want and welfare will be highest. A congestion charge would reduce freedom and make people poorer. A subsidy is good because it makes transportation cheaper, but it should not be paid for by taxes.",
+        "original_question_id": "q1"
+      }
+    ]
+  },
+  {
+    "student_id": "010",
+    "source_exam": "Synthetic economics benchmark",
+    "answers": [
+      {
+        "question_id": "econ_q1",
+        "student_answer": "A congestion charge works like a Pigouvian tax on driving during crowded times. It discourages trips where the private benefit is lower than the full social cost, so it can reduce inefficient congestion. Demand for driving falls, especially for drivers with more elastic demand. A transit subsidy lowers the relative price of public transport and increases transit demand, but by itself it may not fully reduce congestion if many drivers have inelastic demand or if transit is not a close substitute. I would recommend a combined policy: peak-hour congestion pricing, targeted discounts for low-income commuters, and investment in transit capacity so the shift from cars to transit does not create overcrowding.",
+        "original_question_id": "q1"
+      }
+    ]
+  }
+]

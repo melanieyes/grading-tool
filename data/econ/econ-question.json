@@ -1,0 +1,33 @@
+{
+  "course": "ECON",
+  "term": "Synthetic benchmark",
+  "exam": "Cross-disciplinary reasoning benchmark",
+  "source_exams": [
+    "Synthetic economics benchmark"
+  ],
+  "total_points": 20,
+  "benchmark_notes": {
+    "selected_for": "Generalized grading prompt test outside CS",
+    "discipline": "Economics",
+    "total_selected_questions": 1,
+    "question_ids": [
+      "econ_q1"
+    ],
+    "selection": {
+      "Synthetic economics benchmark": [
+        "q1"
+      ]
+    }
+  },
+  "questions": [
+    {
+      "question_id": "econ_q1",
+      "points": 20,
+      "benchmark_type": "economic_reasoning",
+      "question": "A city government wants to reduce traffic congestion downtown. It is considering two policies: (1) a congestion charge that requires drivers to pay a fee to enter the downtown area during peak hours, and (2) a subsidy that makes public transportation cheaper. Using economic reasoning, compare how each policy would affect incentives, demand for driving, demand for public transportation, and social welfare. Which policy, or combination of policies, would you recommend, and why?",
+      "source_exam": "Synthetic economics benchmark",
+      "source_file": "synthesis_econ_question.json",
+      "source_question_id": "q1"
+    }
+  ]
+}

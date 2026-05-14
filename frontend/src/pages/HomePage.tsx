@@ -1,8 +1,22 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { demoSlices, type DemoSlice } from '../demo'
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const [demoMenuOpen, setDemoMenuOpen] = useState(false)
+  const demoMenuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!demoMenuOpen) return
+    function onClick(e: MouseEvent) {
+      if (demoMenuRef.current && !demoMenuRef.current.contains(e.target as Node)) {
+        setDemoMenuOpen(false)
+      }
+    }
+    window.addEventListener('mousedown', onClick)
+    return () => window.removeEventListener('mousedown', onClick)
+  }, [demoMenuOpen])
 
   function handleLoadDemo(slice: DemoSlice) {
     localStorage.setItem('grading_questions', JSON.stringify(slice.questions))
@@ -33,29 +47,60 @@ export default function HomePage() {
           </p>
 
           <div className="hero-actions">
-            <Link to="/grading" className="primary-btn">
-              Start grading
-            </Link>
-            <Link to="/intake" className="ghost-btn hero-secondary-btn">
+            <Link to="/intake" className="primary-btn">
               Question upload & rubric
             </Link>
           </div>
 
           <div className="demo-data-actions" style={{ marginTop: 16 }}>
             <p className="tiny-label" style={{ marginBottom: 8 }}>Or try with a demo dataset</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {demoSlices.map((slice) => (
-                <button
-                  key={slice.id}
-                  type="button"
-                  className="ghost-btn hero-secondary-btn"
-                  onClick={() => handleLoadDemo(slice)}
-                  title={slice.description}
-                  style={{ textAlign: 'left' }}
+            <div ref={demoMenuRef} style={{ position: 'relative', display: 'inline-block' }}>
+              <button
+                type="button"
+                className="ghost-btn hero-secondary-btn"
+                aria-haspopup="menu"
+                aria-expanded={demoMenuOpen}
+                onClick={() => setDemoMenuOpen((v) => !v)}
+              >
+                Demo Data ▾
+              </button>
+              {demoMenuOpen && (
+                <div
+                  role="menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    minWidth: 360,
+                    background: 'white',
+                    border: '1px solid #d6dbe6',
+                    borderRadius: 8,
+                    boxShadow: '0 12px 24px rgba(15,23,42,0.12)',
+                    zIndex: 20,
+                    padding: 4,
+                  }}
                 >
-                  {slice.label}
-                </button>
-              ))}
+                  {demoSlices.map((slice) => (
+                    <button
+                      key={slice.id}
+                      type="button"
+                      role="menuitem"
+                      className="ghost-btn"
+                      onClick={() => { setDemoMenuOpen(false); handleLoadDemo(slice) }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '8px 10px',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600 }}>{slice.label}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
