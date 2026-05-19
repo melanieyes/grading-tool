@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="hero-left">
           <p className="eyebrow">Fulbright University Vietnam</p>
 
-          <h1 className="hero-title" style={{ whiteSpace: 'nowrap' }}>Grading tool for reasoning work.</h1>
+          <h1 className="hero-title" style={{ whiteSpace: 'nowrap' }}>Grading Tool for Reasoning Work</h1>
 
           <p className="hero-copy">
             Upload submissions, apply rubric-aligned grading, and review uncertain cases before releasing feedback.
