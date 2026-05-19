@@ -32,8 +32,7 @@ tests/              pytest suite + reference run/eval fixtures
 docs/               API.md, DATA_FORMATS.md, DEVELOPMENT.MD,
                     GETTING_STARTED.MD, ARCHITECTURE_DIAGRAM.md, REPO_NOTES.md
 ```
-
-Additional design notes live at the repo root: `CALIBRATION.md`, `Evaluation_Improvement_Plan.md`, `FOLDER_STRUCTURE.md`, `PRESENTATION.md`, `Summary.md`, `Summary-Changes.md`.
+More details in `FOLDER_STRUCTURE.md`
 
 ## Quickstart
 
